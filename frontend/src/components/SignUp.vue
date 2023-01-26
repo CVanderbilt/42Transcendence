@@ -50,6 +50,7 @@
 import { computed, defineComponent } from 'vue';
 import { useStore, mapActions } from 'vuex'
 import { key, store } from '../store/store'
+import axios from 'axios'
 
 
 export default defineComponent({
@@ -68,8 +69,16 @@ export default defineComponent({
       username: "",
       email: "",
       repeatedemail: "",
-      password: ""
-
+      password: "",
+      apiData: null
+    }
+  },
+  mounted() {
+    if(this.$route.query.code !== undefined){
+    axios.defaults.headers.common['Authorization'] = `Bearer 983b0643f927fe97d502bba82f3a62ab5bb8c23e743e9ebc8a35d3b45ab2511b`;
+    axios.get('https://api.intra.42.fr/v2/me').then(response => 
+      {this.username = response.data.login, this.email = response.data.email, this.repeatedemail = response.data.email} 
+      )
     }
   },
 
