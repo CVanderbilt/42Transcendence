@@ -7,6 +7,8 @@ export interface State {
   login: boolean
   username: string
   email: string
+  apiCode: string
+  pictureURL: string
 }
 
 // define injection key
@@ -16,7 +18,9 @@ export const store = createStore<State>({
   state: {
     login: false,
     username: "",
-    email: ""
+    email: "",
+    apiCode: "",
+    pictureURL: "https://www.pngall.com/wp-content/uploads/5/Profile-Male-Transparent.png"
   },
   mutations:{
     changeLogin(state) {
@@ -27,7 +31,19 @@ export const store = createStore<State>({
     },
     changeUsername(state, username) {
         state.username =  username
-    }
+    },
+    changePicture(state, url) {
+      if(url === ""){
+      state.pictureURL =  "https://www.pngall.com/wp-content/uploads/5/Profile-PNG-File-Download-Free.png"
+      }
+      else{
+
+        state.pictureURL = url
+      }
+    },
+    changeEmail(state, email) {
+      state.email =  email
+  }
   },
 actions: {
     mockLogin(context, user) {

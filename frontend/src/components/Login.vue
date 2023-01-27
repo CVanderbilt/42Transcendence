@@ -14,12 +14,12 @@
               <p class="text-white-50 mb-5">Please enter your login and password!</p>
 
               <div class="form-outline form-white mb-4">
-                <input type="username" id="typeusernameX" class="form-control form-control-lg" v-model="username"/>
+                <input type="username" id="typeusernameX" class="form-control form-control-lg" v-on:keyup.enter=validateLogin() v-model="username"/>
                 <label class="form-label" for="typeusernameX">Username</label>
               </div>
 
               <div class="form-outline form-white mb-4">
-                <input type="password" id="typePasswordX" class="form-control form-control-lg" v-model="password"/>
+                <input type="password" id="typePasswordX" class="form-control form-control-lg" v-on:keyup.enter=validateLogin() v-model="password"/>
                 <label class="form-label" for="typePasswordX">Password</label>
               </div>
 
@@ -52,10 +52,6 @@ import { key, store } from '../store/store'
 import axios from 'axios'
 import { anyTypeAnnotation } from '@babel/types';
 
-function axiosGetUserData() {
-      axios.defaults.headers.common['Authorization'] = `Bearer 4c1e0b9efa29eaf56a2cf4b9089be934f3ba83e44c7c85062b2da3fd953c02dd`;
-    return axios.get('https://api.intra.42.fr/v2/me').then(response => console.log(response.data))
-  }
 
 export default defineComponent({
   name: 'Login',
@@ -72,51 +68,64 @@ export default defineComponent({
       username: "",
       password: "",
       info: "" as any,
-      data: null
+      data: {
+        username: ""
+      },
+      code: "",
+      apiToken: "",
+      profilepicture: ""
     }
   },
   mounted() {
-
-
     if(this.$route.query.code !== undefined){
-      this.username = this.$route.query.code as string
-      let code = this.$route.query.code as string;
+      this.code = this.$route.query.code as string;
+      this.getSessionToken()
+      this.axiosGetUserData()
+    }
+  },
+
+  methods: {
+    getSessionToken() {
+      console.log(this.code)
       var bodyFormData = new FormData();
       bodyFormData.append('grant_type', 'authorization_code');
       bodyFormData.append('client_id', 'u-s4t2ud-8b7831bc16e1b149ccb268da713c3705b61d3f9728492946634a9ba532d731fe');
       bodyFormData.append('client_secret', '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');
-      bodyFormData.append('code', code);
+      bodyFormData.append('code', this.code);
       bodyFormData.append('redirect_uri', 'http://localhost:8080/login');
-
-      console.log(bodyFormData)
-      console.log(code)
-      axios({
+       axios({
         method: "post",
         url: "https://api.intra.42.fr/oauth/token",
         data: bodyFormData,
         headers: { "content-type": "application/x-www-form-urlencoded" },
-      }).then(response => console.log(response.data.access_token))
-      axiosGetUserData()
-    }
-      /*curl -F grant_type=authorization_code \
--F client_id=9b36d8c0db59eff5038aea7a417d73e69aea75b41aac771816d2ef1b3109cc2f \
--F client_secret=d6ea27703957b69939b8104ed4524595e210cd2e79af587744a7eb6e58f5b3d2 \
--F code=fd0847dbb559752d932dd3c1ac34ff98d27b11fe2fea5a864f44740cd7919ad0 \
--F redirect_uri=https://myawesomeweb.site/callback \
--X POST https://api.intra.42.fr/oauth/token*/
+      }).then(response => {
+        console.log("token de acceso: " + response.data.access_token)
+        axios({
+        method: "get",
+        url: "https://api.intra.42.fr/v2/me",
+        headers: {  Authorization: 'Bearer ' + response.data.access_token},
+      }).then(response => {
 
-
-    /*axios.defaults.headers.common['Authorization'] = `Bearer 67a9dd97389984bf1c7b666648e2fe8f49531fbc2ad21c42d06320b0ca5bdf11`;
-    axios.get('https://api.intra.42.fr/v2/me').then(response => this.username = response.data.login)*/
-    
+        store.commit('changeLogin')
+        store.commit('changeUsername', response.data.login)
+        store.commit('changePicture', response.data.image.link)
+        store.commit('changeEmail', response.data.email)
+        this.$router.push('/')
+      })
+      })
+      
+      
+    },
+    axiosGetUserData() {
+      //console.log("token: " + this.apiToken)
+      /**/
   },
-
-  methods: {
     validateLogin(){
         //aqui va a ir la validación en servidor del login
         store.commit('changeLogin')
         store.commit('changeUsername', this.username)
         this.$router.push('/')
+        
     },
     ...mapActions([
       'mockLogin'
@@ -131,9 +140,9 @@ export default defineComponent({
 background: #3609da;
 
 /* Chrome 10-25, Safari 5.1-6 */
-background: -webkit-linear-gradient(to right, rgb(37, 12, 179), rgba(3, 50, 130, 0.632));
+background: -webkit-linear-gradient(to right, rgba(4, 8, 22, 0.804), rgb(193, 209, 237));
 
 /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-background: linear-gradient(to right, rgb(24, 3, 129), rgb(193, 209, 237))
+background: linear-gradient(to right, rgba(4, 8, 22, 0.804), rgb(193, 209, 237))
 }
 </style>

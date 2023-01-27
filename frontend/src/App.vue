@@ -1,12 +1,12 @@
 
 
 <template>
-  <div id="nav">
-    
-    
-    
+  
+    <div id="nav">
+  
+<!-- Navbar -->
+
       <router-view/>
-    
   </div>
 
 </template>
@@ -46,5 +46,18 @@ export default defineComponent({
   text-align: center;
   color: #2c3e50;
   margin-top: 0px;
+}
+.form-white.input-group>.form-control:focus {
+  border-color: #fff;
+  box-shadow: inset 0 0 0 1px #fff;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+  color: #fff;
+}
+
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link:focus {
+  color: rgba(255, 255, 255, 0.75);
 }
 </style>

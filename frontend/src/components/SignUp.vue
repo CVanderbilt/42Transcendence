@@ -107,9 +107,9 @@ export default defineComponent({
 background: #3609da;
 
 /* Chrome 10-25, Safari 5.1-6 */
-background: -webkit-linear-gradient(to right, rgb(37, 12, 179), rgba(3, 50, 130, 0.632));
+background: -webkit-linear-gradient(to right, rgba(4, 8, 22, 0.804), rgb(193, 209, 237));
 
 /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-background: linear-gradient(to right, rgb(24, 3, 129), rgb(193, 209, 237))
+background: linear-gradient(to right, rgba(4, 8, 22, 0.804), rgb(193, 209, 237))
 }
 </style>
