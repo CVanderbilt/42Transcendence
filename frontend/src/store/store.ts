@@ -20,7 +20,7 @@ export const store = createStore<State>({
     username: "",
     email: "",
     apiCode: "",
-    pictureURL: "https://www.pngall.com/wp-content/uploads/5/Profile-Male-Transparent.png"
+    pictureURL: ""
   },
   mutations:{
     changeLogin(state) {
@@ -34,7 +34,7 @@ export const store = createStore<State>({
     },
     changePicture(state, url) {
       if(url === ""){
-      state.pictureURL =  "https://www.pngall.com/wp-content/uploads/5/Profile-PNG-File-Download-Free.png"
+      state.pictureURL =  ""
       }
       else{
 

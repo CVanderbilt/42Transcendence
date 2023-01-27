@@ -1,7 +1,7 @@
 <template>
 
   <section class="vh-100 gradient-custom">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
         <div class="container-fluid">
             <img src="../assets/logo.png" height="30" style="margin-right: 20px;"/>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -26,13 +26,15 @@
                 </li>
             </ul>
             <ul class="navbar-nav">
-                <img v-bind:src="profilePicture" class="rounded-circle" height="35" style="border-radius: 50%;"
+                <img :src=getImgURL(profilePicture) class="rounded-circle" height="40
+                " style="border-radius: 50%;"
                     alt="" loading="lazy" />
             </ul>
             
             <ul class="navbar-nav d-flex flex-row ms-1 me-45">
-                <b-dropdown id="dropdown-1" right text="Profile" class="m-md-2" variant="outline-primary">
-                    <b-dropdown-item>First Action</b-dropdown-item>
+                <b-dropdown id="dropdown-1" right text="Profile" class="m-md-2" variant="light">
+                    <b-dropdown-item>{{username}}</b-dropdown-item>
+                    <b-dropdown-divider></b-dropdown-divider>
                     <b-dropdown-item>Second Action</b-dropdown-item>
                     <b-dropdown-item>Third Action</b-dropdown-item>
                     <b-dropdown-divider></b-dropdown-divider>
@@ -49,7 +51,7 @@
             <div id="layoutSidenav_content">
                 <main>
                     <div class="container-fluid px-4">
-                        <h1 class="mt-4">FT_TRASCENDENCE</h1>
+                        <h1 class="mt-4" style="color:white;">FT_TRASCENDENCE</h1>
                         <ol class="breadcrumb mb-4">
                             <li class="breadcrumb-item active">Dashboard</li>
                         </ol>
@@ -131,7 +133,7 @@ import { computed, defineComponent } from 'vue';
 import { useStore, mapActions } from 'vuex'
 import { key, store } from '../store/store'
 import "../style/styles.css"
-
+declare var require: any
 
 export default defineComponent({
   name: 'Home',
@@ -146,6 +148,7 @@ export default defineComponent({
       profilePicture
     }},
 
+
     methods: {
     logOut(){
       if(this.login === true)
@@ -153,6 +156,13 @@ export default defineComponent({
       store.commit('changeUsername')
       store.commit('changePicture', "")
       this.$router.push('/login')
+    },
+    getImgURL(profilePicture: string){
+        console.log("IMG: " + profilePicture)
+        if(profilePicture === ""){
+            return require(`@/assets/noPictureProfile.png`)
+        }
+        return profilePicture
     },
     ...mapActions([
       'mockLogin'
