@@ -1,39 +1,48 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { UserDTO } from './user.dto';
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
 
-    users: UserDTO[] = [];
+    constructor(private usersService: UsersService){}
 
     @Get()
-    getAllUsers(): UserDTO[] {
-        return this.users;
+    async getAllUsers(): Promise<UserDTO[]> {
+        return await this.usersService.getAllUsers();
     }
 
     @Get(':id')
-    getUserById(@Param('id') id: string): UserDTO {
-        const user = this.users.find(user => user.id == id);
-        return user;
+    async getUserById(@Param('id') id: string): Promise<UserDTO> {
+        return await this.usersService.getUserById(id);
     }
 
+    
+
     @Post()
-    newUser(@Body() user: UserDTO): UserDTO {
-        const newUser = {...user, id: ''+(this.users.length)}
-        this.users = [...this.users, newUser];
-        return newUser;
+    async newUser(@Body() user: UserDTO): Promise<UserDTO> {
+        return await this.usersService.newUser(user);
     }
 
     @Put(':id')
-    updateUser(@Param('id') id: string, @Body() user: UserDTO): UserDTO {
-        this.users = this.users.filter(user => user.id !== id);
-        this.users = [...this.users, this.newUser(user)];
-        return user;
+    async updateUser(@Param('id') id: string, @Body() user: UserDTO): Promise<UserDTO> {
+        return await this.usersService.updateUser(id, user);
     }
 
     @Delete(':id')
-    deleteUser(@Param('id') id: string) {
-        this.users = this.users.filter(user => user.id !== id);
+    async deleteUser(@Param('id') id: string): Promise<void> {
+        return await this.usersService.deleteUser(id);
     }
 
+}
+
+@Controller('username')
+export class UsernameController {
+
+    constructor(private usersService: UsersService){}
+    
+    @Get(':username')
+    async getUserByUsername(@Param('username') username: string): Promise<UserDTO> {
+        return await this.usersService.getUserByUsername(username);
+    }
 }

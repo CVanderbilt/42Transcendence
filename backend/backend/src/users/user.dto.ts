@@ -5,10 +5,18 @@ export class UserDTO {
     readonly id?: string;
 
     @ApiProperty()
-    readonly name: string;
+    readonly username: string;
 
-    constructor(id: string, name: string) {
+    @ApiProperty()
+    readonly password: string;
+
+    @ApiProperty()
+    readonly email: string;
+
+    constructor(id: string, username: string, password: string, email: string) {
         this.id = id;
-        this.name = name;
+        this.username = username;
+        this.password = password;
+        this.email = email;
     }
 }

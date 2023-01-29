@@ -1,187 +1,189 @@
 <template>
-
   <section class="vh-100 gradient-custom">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark ">
-        <div class="container-fluid">
-            <img src="../assets/logo.png" height="30" style="margin-right: 20px;"/>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <form class="me-3">
-                <div class="form-white input-group" style="width: 250px;">
-                <input type="search" class="form-control rounded" placeholder="Search friends..."
-                    aria-label="Search" aria-describedby="search-addon" />
-                </div>
-            </form>
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                <a class="nav-link" href="#">Chats</a>
-                </li>
-                <li class="nav-item">
-                <a class="nav-link" href="#">Game</a>
-                </li>
-                <li class="nav-item">
-                <a class="nav-link" href="#">Friends</a>
-                </li>
-                <li class="nav-item">
-                <a class="nav-link" href="#">Explore</a>
-                </li>
-            </ul>
-            <ul class="navbar-nav">
-                <img :src=getImgURL(profilePicture) class="rounded-circle" height="40
-                " style="border-radius: 50%;"
-                    alt="" loading="lazy" />
-            </ul>
-            
-            <ul class="navbar-nav d-flex flex-row ms-1 me-45">
-                <b-dropdown id="dropdown-1" right text="Profile" class="m-md-2" variant="light">
-                    <b-dropdown-item>{{username}}</b-dropdown-item>
-                    <b-dropdown-divider></b-dropdown-divider>
-                    <b-dropdown-item>Second Action</b-dropdown-item>
-                    <b-dropdown-item>Third Action</b-dropdown-item>
-                    <b-dropdown-divider></b-dropdown-divider>
-                    <b-dropdown-item   v-on:click=logOut()>Logout</b-dropdown-item>
-                </b-dropdown>
-
-            </ul>
-            </div>
-        </div>
-    </nav>
-        <div >
-            <div id="layoutSidenav_nav">
-            </div>
-            <div id="layoutSidenav_content">
-                <main>
-                    <div class="container-fluid px-4">
-                        <h1 class="mt-4" style="color:white;">FT_TRASCENDENCE</h1>
-                        <ol class="breadcrumb mb-4">
-                            <li class="breadcrumb-item active">Dashboard</li>
-                        </ol>
-                        <div class="row">
-                            <div class="col-xl-3 col-md-6">
-                                <div class="card bg-primary text-white mb-4">
-                                    <div class="card-body">Primary Card</div>
-                                    <div class="card-footer d-flex align-items-center justify-content-between">
-                                        <a class="small text-white stretched-link" href="#">View Details</a>
-                                        <div class="small text-white"><i class="fas fa-angle-right"></i></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-3 col-md-6">
-                                <div class="card bg-warning text-white mb-4">
-                                    <div class="card-body">Warning Card</div>
-                                    <div class="card-footer d-flex align-items-center justify-content-between">
-                                        <a class="small text-white stretched-link" href="#">View Details</a>
-                                        <div class="small text-white"><i class="fas fa-angle-right"></i></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-3 col-md-6">
-                                <div class="card bg-success text-white mb-4">
-                                    <div class="card-body">Success Card</div>
-                                    <div class="card-footer d-flex align-items-center justify-content-between">
-                                        <a class="small text-white stretched-link" href="#">View Details</a>
-                                        <div class="small text-white"><i class="fas fa-angle-right"></i></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-3 col-md-6">
-                                <div class="card bg-danger text-white mb-4">
-                                    <div class="card-body">Danger Card</div>
-                                    <div class="card-footer d-flex align-items-center justify-content-between">
-                                        <a class="small text-white stretched-link" href="#">View Details</a>
-                                        <div class="small text-white"><i class="fas fa-angle-right"></i></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-xl-6">
-                                <div class="card mb-4">
-                                    <div class="card-header">
-                                        <i class="fas fa-chart-area me-1"></i>
-                                        Area Chart Example
-                                    </div>
-                                    <div class="card-body"><canvas id="myAreaChart" width="100%" height="40"></canvas></div>
-                                </div>
-                            </div>
-                            <div class="col-xl-6">
-                                <div class="card mb-4">
-                                    <div class="card-header">
-                                        <i class="fas fa-chart-bar me-1"></i>
-                                        Bar Chart Example
-                                    </div>
-                                    <div class="card-body"><canvas id="myBarChart" width="100%" height="40"></canvas></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <i class="fas fa-table me-1"></i>
-                                DataTable Example
-                            </div>
-
-                        </div>
+    
+    <div>
+      <div id="layoutSidenav_nav"></div>
+      <div id="layoutSidenav_content">
+        <main>
+          <div class="container-fluid px-4">
+            <h1 class="mt-0" style="color: white">FT_TRASCENDENCE</h1>
+            <ol class="breadcrumb mb-4">
+              <li class="breadcrumb-item active">Dashboard</li>
+            </ol>
+            <div class="row">
+              <div class="col-xl-3 col-md-6">
+                <div class="card bg-primary text-white mb-4">
+                  <div class="card-body">Primary Card</div>
+                  <div
+                    class="
+                      card-footer
+                      d-flex
+                      align-items-center
+                      justify-content-between
+                    "
+                  >
+                    <a class="small text-white stretched-link" href="#"
+                      >View Details</a
+                    >
+                    <div class="small text-white">
+                      <i class="fas fa-angle-right"></i>
                     </div>
-                </main>
-                
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-md-6">
+                <div class="card bg-warning text-white mb-4">
+                  <div class="card-body">Warning Card</div>
+                  <div
+                    class="
+                      card-footer
+                      d-flex
+                      align-items-center
+                      justify-content-between
+                    "
+                  >
+                    <a class="small text-white stretched-link" href="#"
+                      >View Details</a
+                    >
+                    <div class="small text-white">
+                      <i class="fas fa-angle-right"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-md-6">
+                <div class="card bg-success text-white mb-4">
+                  <div class="card-body">Success Card</div>
+                  <div
+                    class="
+                      card-footer
+                      d-flex
+                      align-items-center
+                      justify-content-between
+                    "
+                  >
+                    <a class="small text-white stretched-link" href="#"
+                      >View Details</a
+                    >
+                    <div class="small text-white">
+                      <i class="fas fa-angle-right"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-md-6">
+                <div class="card bg-danger text-white mb-4">
+                  <div class="card-body">Danger Card</div>
+                  <div
+                    class="
+                      card-footer
+                      d-flex
+                      align-items-center
+                      justify-content-between
+                    "
+                  >
+                    <a class="small text-white stretched-link" href="#"
+                      >View Details</a
+                    >
+                    <div class="small text-white">
+                      <i class="fas fa-angle-right"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-        </div>
-    </section>
+            <div class="row">
+              <div class="col-xl-6">
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <i class="fas fa-chart-area me-1"></i>
+                    Area Chart Example
+                  </div>
+                  <div class="card-body">
+                    <canvas id="myAreaChart" width="100%" height="40"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-6">
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Bar Chart Example
+                  </div>
+                  <div class="card-body">
+                    <canvas id="myBarChart" width="100%" height="40"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card mb-4">
+              <div class="card-header">
+                <i class="fas fa-table me-1"></i>
+                DataTable Example
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent } from 'vue';
-import { useStore, mapActions } from 'vuex'
-import { key, store } from '../store/store'
-import "../style/styles.css"
-declare var require: any
+import { computed, defineComponent } from "vue";
+import { useStore, mapActions } from "vuex";
+import { key, store } from "../store/store";
+import "../style/styles.css";
+declare var require: any;
 
 export default defineComponent({
-  name: 'Home',
-  setup () {
-    const store = useStore(key)
+  name: "Home",
+  setup() {
+    const store = useStore(key);
     const login = computed(() => store.state.login);
     const username = computed(() => store.state.username);
     const profilePicture = computed(() => store.state.pictureURL);
-    return{
+    return {
       login,
       username,
-      profilePicture
-    }},
+      profilePicture,
+    };
+  },
 
-
-    methods: {
-    logOut(){
-      if(this.login === true)
-      store.commit('changeLogin')
-      store.commit('changeUsername')
-      store.commit('changePicture', "")
-      this.$router.push('/login')
+  methods: {
+    modifyProfileRoute() {
+      this.$router.push("/settings");
     },
-    getImgURL(profilePicture: string){
-        console.log("IMG: " + profilePicture)
-        if(profilePicture === ""){
-            return require(`@/assets/noPictureProfile.png`)
-        }
-        return profilePicture
+    getImgURL(profilePicture: string) {
+      console.log("IMG: " + profilePicture);
+      if (profilePicture === "") {
+        return require(`@/assets/noPictureProfile.png`);
+      }
+      return profilePicture;
     },
-    ...mapActions([
-      'mockLogin'
-    ])
-}
-
-  });
+    ...mapActions(["mockLogin"]),
+  },
+});
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .gradient-custom {
-/* fallback for old browsers */
-background: #3609da;
+  /* fallback for old browsers */
+  background: #3609da;
 
-/* Chrome 10-25, Safari 5.1-6 */
-background: -webkit-linear-gradient(to right, rgba(4, 8, 22, 0.804), rgb(193, 209, 237));
+  /* Chrome 10-25, Safari 5.1-6 */
+  background: -webkit-linear-gradient(
+    to right,
+    rgba(4, 8, 22, 0.804),
+    rgb(193, 209, 237)
+  );
 
-/* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-background: linear-gradient(to right, rgba(4, 8, 22, 0.804), rgb(193, 209, 237))
+  /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: linear-gradient(
+    to right,
+    rgba(4, 8, 22, 0.804),
+    rgb(193, 209, 237)
+  );
 }
 </style>
