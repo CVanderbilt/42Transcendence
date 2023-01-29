@@ -134,6 +134,8 @@ import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
 import { key, store } from "../store/store";
 import "../style/styles.css";
+
+import { useSocketIO } from "../main";
 declare var require: any;
 
 export default defineComponent({
@@ -143,6 +145,13 @@ export default defineComponent({
     const login = computed(() => store.state.login);
     const username = computed(() => store.state.username);
     const profilePicture = computed(() => store.state.pictureURL);
+    const io = useSocketIO();
+    if (io.socket.hasListeners("new_message") === false) {
+        console.log("nos suscribimos al socket pa escuchar")
+      io.socket.on("new_message", (message) => {
+        console.log(`got ${message}`);
+      });
+    }
     return {
       login,
       username,

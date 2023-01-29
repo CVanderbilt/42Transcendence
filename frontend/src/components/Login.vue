@@ -85,31 +85,19 @@ import { anyTypeAnnotation } from "@babel/types";
 
 export default defineComponent({
   name: "Login",
-  setup() {
-    const store = useStore(key);
-    const login = computed(() => store.state.login);
-    return {
-      login,
-    };
-  },
   data() {
+
+    
     return {
       username: "",
       password: "",
-      info: "" as any,
-      data: {
-        username: "",
-      },
       code: "",
-      apiToken: "",
-      profilepicture: "",
     };
   },
   mounted() {
     if (this.$route.query.code !== undefined) {
       this.code = this.$route.query.code as string;
       this.getSessionToken();
-      this.axiosGetUserData();
     }
   },
 
@@ -142,17 +130,11 @@ export default defineComponent({
           store.commit("changeUsername", response.data.login);
           store.commit("changePicture", response.data.image.link);
           store.commit("changeEmail", response.data.email);
-
           this.$router.push("/");
         });
       });
     },
-    axiosGetUserData() {
-      //console.log("token: " + this.apiToken)
-      /**/
-    },
     validateLogin() {
-      //aqui va a ir la validación en servidor del login
       axios({
         method: "get",
         url: "http://localhost:3000/username/" + this.username,

@@ -1,6 +1,7 @@
 import { InjectionKey } from 'vue'
 import { createStore, Store } from 'vuex'
 import  createPersistedState  from  'vuex-persistedstate'
+import {io} from 'socket.io-client'
 
 // define your typings for the store state
 export interface State {
@@ -9,6 +10,7 @@ export interface State {
   email: string
   apiCode: string
   pictureURL: string
+  socket: any
 }
 
 // define injection key
@@ -20,10 +22,12 @@ export const store = createStore<State>({
     username: "",
     email: "",
     apiCode: "",
-    pictureURL: ""
+    pictureURL: "",
+    socket: ""
   },
   mutations:{
     changeLogin(state) {
+      
         state.login =  !state.login
         if(!state.login){
             state.username = ""
@@ -43,7 +47,10 @@ export const store = createStore<State>({
     },
     changeEmail(state, email) {
       state.email =  email
-  }
+  },
+  connectSocket(state, socket) {
+    state.socket = socket
+}
   },
 actions: {
     mockLogin(context, user) {

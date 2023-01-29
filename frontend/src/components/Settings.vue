@@ -28,7 +28,7 @@
                       id="typeUsername"
                       class="form-control form-control-lg"
                       :placeholder="username"
-                      v-model="username"
+                      v-model="newusername"
                     />
                     <label class="form-label" for="typeUsername">Username</label>
                   </div>
@@ -37,7 +37,8 @@
                       type="email"
                       id="typeEmailX"
                       class="form-control form-control-lg"
-                      v-model="email"
+                      :placeholder="email"
+                      v-model="newemail"
                     />
                     <label class="form-label" for="typeEmailX">Email</label>
                   </div>
@@ -52,11 +53,15 @@
                     />
                     <label class="form-label" for="typePasswordX">New Password</label>
                   </div>
+                  <div class="form-outline form-white mb-2">
+                  <input type="file" accept="image/jpeg"/>
+                  <progress id="progress"  value="0" max="100" ></progress>
+                </div>
+                
   
                   <button
                     class="btn btn-outline-light mt-3 btn-lg px-5"
                     type="submit"
-                    v-on:click="validateLogin()"
                   >
                     Change
                   </button>
@@ -74,6 +79,8 @@
   import { useStore, mapActions } from "vuex";
   import { key, store } from "../store/store";
   import axios from "axios";
+  import storage from "../firebase/firebaseconf"
+  
   declare var require: any;
   
   export default defineComponent({
@@ -81,66 +88,38 @@
     setup() {
       const store = useStore(key);
       const login = computed(() => store.state.login);
+      const username = computed(() => store.state.username);
       const profilePicture = computed(() => store.state.pictureURL);
+      const email = computed(() => store.state.email);
+
   
       return {
         login,
-        profilePicture
+        username,
+        profilePicture,
+        email
       };
     },
     data() {
       return {
-        username: "",
-        email: "",
+        newusername: "",
+        newemail: "",
         repeatedemail: "",
         password: "",
         apiData: null,
       };
     },
-    mounted() {
-      if (this.$route.query.code !== undefined) {
-        axios.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer 983b0643f927fe97d502bba82f3a62ab5bb8c23e743e9ebc8a35d3b45ab2511b`;
-        axios.get("https://api.intra.42.fr/v2/me").then((response) => {
-          (this.username = response.data.login),
-            (this.email = response.data.email),
-            (this.repeatedemail = response.data.email);
-        });
-      }
-    },
-  
+
     methods: {
         getImgURL(profilePicture: string) {
-      console.log("IMG: " + profilePicture);
       if (profilePicture === "") {
         return require(`@/assets/noPictureProfile.png`);
       }
       return profilePicture;
     },
-      reviewFields() {
-        console.log(this.email, this.password);
-        store.commit("changeLogin");
-        this.$router.push("/");
-        //this.login = true
-      },
-      validateLogin() {
-        axios({
-          method: "post",
-          url: "http://localhost:3000/users",
-          data: {
-            username: this.username,
-            password: this.password,
-            email: this.email,
-          },
-        }).then((response) => {
-          console.log(response.data);
-        });
-        store.commit("changeLogin");
-        store.commit("changeUsername", this.username);
-        this.$router.push("/");
-      },
-      ...mapActions(["mockLogin"]),
+    onUpload(){
+        //const storageRef= storage.ref(`${this.imageData.name}`).put(this.imageData);
+    }
     },
   });
   </script>

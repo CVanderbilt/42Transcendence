@@ -20,7 +20,7 @@
           </form>
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <a class="nav-link" href="#">Chats</a>
+              <a class="nav-link" href="/chats">Chats</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#">Game</a>
@@ -107,8 +107,10 @@ export default defineComponent({
     },
     logOut() {
       store.commit("changeLogin");
+
       store.commit("changeUsername");
       store.commit("changePicture", "");
+      
       this.$router.push("/login");
     }
   }

@@ -59,7 +59,7 @@
                 <button
                   class="btn btn-outline-light mt-3 btn-lg px-5"
                   type="submit"
-                  v-on:click="validateLogin()"
+                  v-on:click="signUpNewUser()"
                 >
                   Sign Up
                 </button>
@@ -83,6 +83,7 @@ export default defineComponent({
   setup() {
     const store = useStore(key);
     const login = computed(() => store.state.login);
+    
 
     return {
       login,
@@ -97,18 +98,6 @@ export default defineComponent({
       apiData: null,
     };
   },
-  mounted() {
-    if (this.$route.query.code !== undefined) {
-      axios.defaults.headers.common[
-        "Authorization"
-      ] = `Bearer 983b0643f927fe97d502bba82f3a62ab5bb8c23e743e9ebc8a35d3b45ab2511b`;
-      axios.get("https://api.intra.42.fr/v2/me").then((response) => {
-        (this.username = response.data.login),
-          (this.email = response.data.email),
-          (this.repeatedemail = response.data.email);
-      });
-    }
-  },
 
   methods: {
     reviewFields() {
@@ -117,7 +106,7 @@ export default defineComponent({
       this.$router.push("/");
       //this.login = true
     },
-    validateLogin() {
+    signUpNewUser() {
       if(this.email=== this.repeatedemail){
         axios({
         method: "post",
@@ -133,6 +122,7 @@ export default defineComponent({
       store.commit("changeLogin");
       store.commit("changeUsername", this.username);
       this.$router.push("/");
+
       }
       else{
         alert("email and repeated email are not the same")

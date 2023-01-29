@@ -4,6 +4,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
+import { ChatsModule } from './chats/chats.module';
+import { ChatGateway } from './chatSocket/chat.gateway';
 
 @Module({
   imports: [
@@ -18,9 +20,10 @@ import { UsersModule } from './users/users.module';
       autoLoadEntities: true,
       synchronize: !!true
     }),
-    UsersModule
+    UsersModule,
+    ChatsModule
   ],
   controllers: [],
-  providers: [],
+  providers: [ChatGateway],
 })
 export class AppModule {}
