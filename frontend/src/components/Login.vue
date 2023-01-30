@@ -81,7 +81,6 @@ import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
 import { key, store } from "../store/store";
 import axios from "axios";
-import { anyTypeAnnotation } from "@babel/types";
 
 export default defineComponent({
   name: "Login",
@@ -105,14 +104,8 @@ export default defineComponent({
     getSessionToken() {
       var bodyFormData = new FormData();
       bodyFormData.append("grant_type", "authorization_code");
-      bodyFormData.append(
-        "client_id",
-        "u-s4t2ud-8b7831bc16e1b149ccb268da713c3705b61d3f9728492946634a9ba532d731fe"
-      );
-      bodyFormData.append(
-        "client_secret",
-        "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"
-      );
+      bodyFormData.append("client_id","u-s4t2ud-8b7831bc16e1b149ccb268da713c3705b61d3f9728492946634a9ba532d731fe");
+      bodyFormData.append("client_secret","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");
       bodyFormData.append("code", this.code);
       bodyFormData.append("redirect_uri", "http://localhost:8080/login");
       axios({
@@ -120,19 +113,44 @@ export default defineComponent({
         url: "https://api.intra.42.fr/oauth/token",
         data: bodyFormData,
         headers: { "content-type": "application/x-www-form-urlencoded" },
-      }).then((response) => {
+      })
+      .then((response) => {
         axios({
           method: "get",
           url: "https://api.intra.42.fr/v2/me",
           headers: { Authorization: "Bearer " + response.data.access_token },
-        }).then((response) => {
+        }).
+        then((response) => {
+          axios({
+          method: "post",
+          url: "http://localhost:3000/users",
+          data: {
+            username: response.data.login,
+            password: "",
+            email: response.data.email,
+            chats: ""
+          },
+        })
+        .then((response) => {
+          console.log(response.data);
+        store.commit("changeUserUUID",response.data.id)
+        store.commit("changeUsername", response.data.username);
+        store.commit("changePicture", response.data.image.link);
+        store.commit("changeEmail", response.data.email);
+        store.commit("setupChats", response.data.chats)
+        console.log("los chats de este user son: " + response.data.chats)
+        this.$router.push("/");
+        })
+        .catch((error) => {
           store.commit("changeLogin");
+          store.commit("changeUserUUID",response.data.id)
           store.commit("changeUsername", response.data.login);
           store.commit("changePicture", response.data.image.link);
           store.commit("changeEmail", response.data.email);
-          this.$router.push("/");
+          this.$router.push("/");});
         });
-      });
+      
+    });
     },
     validateLogin() {
       axios({

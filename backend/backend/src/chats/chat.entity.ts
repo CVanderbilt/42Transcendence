@@ -22,7 +22,6 @@ export class chatEntity {
         this.chatname = name;
         this.password = password;
         this.messages = messages;
-        console.log('Creo chat Entity para ' + this.chatname);
     }
 
 }

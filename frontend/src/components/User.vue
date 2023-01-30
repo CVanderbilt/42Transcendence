@@ -1,0 +1,137 @@
+<template>
+  <section class="vh-100 gradient-custom">
+    <div class="container py-5 h-100">
+      <div class="row d-flex justify-content-center align-items-center h-100">
+        <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+          <div class="card bg-dark text-white" style="border-radius: 1rem">
+            <div class="card-body p-5 text-center">
+              <div class="mb-md-5 mt-md-4 pb-9">
+                <div
+                  class="
+                    d-flex
+                    justify-content-center
+                    text-center
+                    mt-4
+                    mb-5
+                    pt-1
+                  "
+                >
+                  <img
+                    :src="getImgURL(profilePicture)"
+                    height="200"
+                    style="border-radius: 50%"
+                  />
+                </div>
+                <h2 class="fw-bold mt-1 mb-5 text-uppercase">{{username}}</h2>
+                <h4 class="fw-bold mt-1 mb-5 ">Email: {{email}}</h4>
+                <button
+                  class="btn btn-outline-light mt-3 btn-lg px-5"
+                  type="submit"
+                  v-on:click="openChat()"
+
+                >
+                  Chat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+  
+  <script lang="ts">
+import { computed, defineComponent } from "vue";
+import { useStore, mapActions } from "vuex";
+import { key, store } from "../store/store";
+import axios from "axios";
+import storage from "../firebase/firebaseconf";
+
+declare var require: any;
+
+export default defineComponent({
+  name: "User",
+  setup() {
+    const store = useStore(key);
+    const profilePicture = "";
+    const mylogin = computed(() => store.state.login);
+
+    return {
+      profilePicture,
+      mylogin
+    };
+  },
+
+  data() {
+    return {
+      uuid: "",
+      username: "",
+      email: ""
+    };
+  },
+
+  mounted() {
+    if (this.$route.query.uuid !== undefined) {
+      this.uuid = this.$route.query.uuid as string;
+      console.log("UUID: " + this.uuid)
+      this.getUserInfo(this.uuid);
+    }
+  },
+
+  methods: {
+    getImgURL(profilePicture: string) {
+      if (profilePicture === "") {
+        return require(`@/assets/noPictureProfile.png`);
+      }
+      return profilePicture;
+    },
+
+    getUserInfo(uuid: string){
+        axios({
+      method: "get",
+        url: "http://localhost:3000/users/" + uuid,
+        data: {},
+      })
+        .then((response) => {
+          console.log("USUARIO:" + response.data.username)
+          this.username = response.data.username
+          this.email = response.data.email
+        })
+        .catch((error) => {
+          alert("usuario o contraseña incorrectos");
+        });
+    },
+
+    openChat(){
+        this.$router.push("/chats?to=" + this.uuid);
+    },
+
+    onUpload() {
+      //const storageRef= storage.ref(`${this.imageData.name}`).put(this.imageData);
+    },
+  },
+});
+</script>
+  
+  <!-- Add "scoped" attribute to limit CSS to this component only -->
+  <style scoped>
+.gradient-custom {
+  /* fallback for old browsers */
+  background: #3609da;
+
+  /* Chrome 10-25, Safari 5.1-6 */
+  background: -webkit-linear-gradient(
+    to right,
+    rgba(4, 8, 22, 0.804),
+    rgb(193, 209, 237)
+  );
+
+  /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: linear-gradient(
+    to right,
+    rgba(4, 8, 22, 0.804),
+    rgb(193, 209, 237)
+  );
+}
+</style>

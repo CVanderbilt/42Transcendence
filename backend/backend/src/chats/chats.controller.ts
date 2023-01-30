@@ -17,8 +17,6 @@ export class chatsController {
         return await this.chatsService.getchatById(id);
     }
 
-    
-
     @Post()
     async newchat(@Body() chat: ChatDTO): Promise<ChatDTO> {
         return await this.chatsService.newchat(chat);
@@ -42,7 +40,7 @@ export class chatnameController {
     constructor(private chatsService: chatsService){}
     
     @Get(':chatname')
-    async getchatBychatname(@Param('chatname') chatname: string): Promise<ChatDTO> {
-        return await this.chatsService.getchatBychatname(chatname);
+    async getchatBychatname(@Param('chatname') chatname: string): Promise<String> {
+        return await (await this.chatsService.getchatBychatname(chatname)).id;
     }
 }

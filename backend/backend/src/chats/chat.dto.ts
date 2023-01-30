@@ -12,6 +12,7 @@ export class ChatDTO {
 
     @ApiProperty()
     readonly messages: string[];
+    
 
 
 

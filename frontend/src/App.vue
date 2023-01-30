@@ -1,23 +1,25 @@
 
 
 <template>
-  <div id="nav">
+  <div id="nav" class="gradient-custom">
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark" v-if=login>
       <div class="container-fluid">
-        <img src="./assets/logo.png" height="30" style="margin-right: 20px ; border-radius: 10%" href="/home"/>
+        <a href="/"><img src="./assets/logo.png" height="30" style="margin-right: 20px ; border-radius: 10%" href="/"/></a>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <form class="me-3">
-            <div class="form-white input-group" style="width: 250px">
+         
+            <div style="width: 250px">
               <input
                 type="search"
                 class="form-control rounded"
                 placeholder="Search friends..."
                 aria-label="Search"
-                aria-describedby="search-addon"
+        
+                v-model="searchUsername"
+                v-on:keyup.enter="searchFriend(searchUsername)"
               />
             </div>
-          </form>
+        
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
               <a class="nav-link" href="/chats">Chats</a>
@@ -74,6 +76,7 @@ import Home from "./components/Home.vue";
 import Login from "./components/Login.vue";
 import { useStore } from "vuex";
 import { key, store } from "./store/store";
+import axios from "axios";
 declare var require: any;
 
 export default defineComponent({
@@ -88,18 +91,30 @@ export default defineComponent({
   profilePicture };
   },
   data() {
-    return {};
+    return {searchUsername: ""};
   },
   components: {
     Home,
     Login,
   },
   methods: {
+    searchFriend(username: string){
+      axios({
+      method: "get",
+        url: "http://localhost:3000/username/" + username,
+        data: {},
+      })
+        .then((response) => {
+          this.$router.push("/user?uuid=" + response.data.id);
+        })
+        .catch((error) => {
+          alert("usuario o contraseña incorrectos");
+        });
+    },
     modifyProfileRoute() {
       this.$router.push("/settings");
     },
     getImgURL(profilePicture: string) {
-      console.log("IMG: " + profilePicture);
       if (profilePicture === "") {
         return require(`@/assets/noPictureProfile.png`);
       }
@@ -107,10 +122,8 @@ export default defineComponent({
     },
     logOut() {
       store.commit("changeLogin");
-
       store.commit("changeUsername");
       store.commit("changePicture", "");
-      
       this.$router.push("/login");
     }
   }

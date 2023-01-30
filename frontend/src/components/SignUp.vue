@@ -83,7 +83,7 @@ export default defineComponent({
   setup() {
     const store = useStore(key);
     const login = computed(() => store.state.login);
-    
+    const userUUID = computed(() => store.state.user_uuid);
 
     return {
       login,
@@ -107,27 +107,27 @@ export default defineComponent({
       //this.login = true
     },
     signUpNewUser() {
-      if(this.email=== this.repeatedemail){
+      if (this.email === this.repeatedemail) {
         axios({
-        method: "post",
-        url: "http://localhost:3000/users",
-        data: {
-          username: this.username,
-          password: this.password,
-          email: this.email,
-        },
-      }).then((response) => {
-        console.log(response.data);
-      });
-      store.commit("changeLogin");
-      store.commit("changeUsername", this.username);
-      this.$router.push("/");
-
+          method: "post",
+          url: "http://localhost:3000/users",
+          data: {
+            username: this.username,
+            password: this.password,
+            email: this.email,
+            chats: ""
+          },
+        }).then((response) => {
+          console.log(response.data);
+        store.commit("changeUserUUID",response.data.id)
+        store.commit("changeLogin");
+        store.commit("changeUsername", this.username);
+        this.$router.push("/");
+        }).catch(error => alert("username already in use"));
+        
+      } else {
+        alert("email and repeated email are not the same");
       }
-      else{
-        alert("email and repeated email are not the same")
-      }
-      
     },
     ...mapActions(["mockLogin"]),
   },

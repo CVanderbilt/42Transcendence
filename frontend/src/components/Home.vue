@@ -134,6 +134,7 @@ import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
 import { key, store } from "../store/store";
 import "../style/styles.css";
+import { onUnmounted } from 'vue'
 
 import { useSocketIO } from "../main";
 declare var require: any;
@@ -145,13 +146,7 @@ export default defineComponent({
     const login = computed(() => store.state.login);
     const username = computed(() => store.state.username);
     const profilePicture = computed(() => store.state.pictureURL);
-    const io = useSocketIO();
-    if (io.socket.hasListeners("new_message") === false) {
-        console.log("nos suscribimos al socket pa escuchar")
-      io.socket.on("new_message", (message) => {
-        console.log(`got ${message}`);
-      });
-    }
+    
     return {
       login,
       username,
@@ -164,7 +159,6 @@ export default defineComponent({
       this.$router.push("/settings");
     },
     getImgURL(profilePicture: string) {
-      console.log("IMG: " + profilePicture);
       if (profilePicture === "") {
         return require(`@/assets/noPictureProfile.png`);
       }
@@ -172,6 +166,7 @@ export default defineComponent({
     },
     ...mapActions(["mockLogin"]),
   },
+  
 });
 </script>
 

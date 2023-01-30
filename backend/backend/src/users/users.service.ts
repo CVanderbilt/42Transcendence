@@ -37,6 +37,11 @@ export class UsersService {
         return this.mapper.entityToDto(updateUser);
     }
 
+    async updateUserChats(id: string,  chats: string[]): Promise<UserDTO> {
+        const updateUser = await this.usersRepository.updateUserChats(id, chats);
+        return this.mapper.entityToDto(updateUser);
+    }
+
     async deleteUser(id: string): Promise<void> {
         await this.usersRepository.deleteUser(id);
     }
