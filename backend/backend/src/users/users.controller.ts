@@ -54,8 +54,8 @@ export class AddChatController {
     constructor(private usersService: UsersService){}
     
     @Put(':id')
-    async updateUserChats(@Param('id') id: string, @Body() chats: string[]): Promise<UserDTO> {
+    async updateUserChats(@Param('id') id: string, @Body() chat: {name: string}): Promise<UserDTO> {
         console.log("id:" + id)
-        return await this.usersService.updateUserChats(id, chats);
+        return await this.usersService.updateUserChats(id, chat);
     }
 }

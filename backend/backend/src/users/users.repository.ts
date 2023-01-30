@@ -5,7 +5,6 @@ import { DeleteResult, Repository } from 'typeorm';
 import { UserDTO } from './user.dto';
 import { UserEntity } from './user.entity';
 import { UserMapper } from './user.mapper';
-import{ Chat} from "../chats/chat.interface"
 
 @Injectable()
 export class UsersRepository {
@@ -39,10 +38,12 @@ export class UsersRepository {
 
     }
 
-    async updateUserChats(id: string, chats: string[]): Promise<UserEntity> {
+    async updateUserChats(id: string, chat: {name: string}): Promise<UserEntity> {
         
         const updateUser = await this.usersRepository.findOneBy({userId : id});
-        updateUser.chats = chats
+
+        console.log("QUE AÑADO ESTO: " + chat.name)
+        updateUser.chats.push(chat)
         await this.usersRepository.update(id, updateUser);
         return this.usersRepository.findOneBy({userId : id});
 

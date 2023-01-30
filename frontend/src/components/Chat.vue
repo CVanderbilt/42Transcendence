@@ -58,6 +58,9 @@
               </div>
             </div>
           </div>
+          <div v-for="item in chatsFromUser" v-bind:key="item.name">
+            <button v-on:click="searchChat(item.name)">{{ item.name }}</button>
+          </div>
         </main>
       </div>
     </div>
@@ -79,15 +82,13 @@ export default defineComponent({
     const login = computed(() => store.state.login);
     const username = computed(() => store.state.username);
     const userUUID = computed(() => store.state.user_uuid);
-    const chats = computed(() => store.state.chats);
+
     let chatUUID = "";
-    console.log("Mi uuid: " + userUUID.value);
     return {
       login,
       username,
       chatUUID,
       userUUID,
-      chats
     };
   },
 
@@ -104,7 +105,20 @@ export default defineComponent({
     let chatname = "general";
     let message = "";
     let messages = [{ message: "", username: "" }];
+    let chatsFromUser = [{ name: "" }];
     messages.pop();
+    chatsFromUser.pop();
+
+    axios({
+      method: "get",
+      url: "http://localhost:3000/users/" + this.userUUID,
+      data: {},
+    }).then((response) => {
+      for (var i in response.data.chats) {
+        console.log(response.data.chats[i]);
+        chatsFromUser.push(response.data.chats[i]);
+      }
+    });
 
     axios({
       method: "get",
@@ -138,6 +152,7 @@ export default defineComponent({
       chatname,
       searchedChat,
       messages,
+      chatsFromUser,
     };
   },
 
@@ -180,7 +195,18 @@ export default defineComponent({
             url: "http://localhost:3000/chats/" + response.data,
             data: {},
           }).then((response) => {
-            this.changeChat(this.chatUUID, searchedChat)
+            this.changeChat(this.chatUUID, searchedChat);
+            if (
+              this.chatsFromUser.find((str) => str.name === searchedChat) ===
+              undefined
+            ) {
+              axios({
+                method: "put",
+                url: "http://localhost:3000/addChat/" + this.userUUID,
+                data: { name: searchedChat },
+              }).then(response => this.$forceUpdate());
+              this.chatsFromUser.push({ name: searchedChat});
+            }
             for (var i in response.data.messages) {
               this.messages.push(response.data.messages[i]);
             }
@@ -206,7 +232,7 @@ export default defineComponent({
     },
 
     createChat(chatName: string) {
-        console.log("UUID que llega"+  this.chatUUID)
+      //console.log("UUID que llega"+  this.chatUUID)
       axios({
         method: "post",
         url: "http://localhost:3000/chats",
@@ -216,15 +242,14 @@ export default defineComponent({
           messages: "",
         },
       })
-
         .then((response) => {
           this.changeChat(response.data.id, chatName);
-          
-        this.chats.push({name: chatName})
+          this.chatsFromUser.push({ name: chatName });
+          console.log(this.chatsFromUser);
           axios({
             method: "put",
             url: "http://localhost:3000/addChat/" + this.userUUID,
-            data: this.chats,
+            data: { name: chatName },
           });
         })
         .catch((err) => {

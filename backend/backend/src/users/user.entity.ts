@@ -1,5 +1,4 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
-import{ Chat} from "../chats/chat.interface"
 
 @Entity('users')
 export class UserEntity {
@@ -19,9 +18,9 @@ export class UserEntity {
     readonly email: string;
 
     @Column({ type: "jsonb" })
-     chats:  string[];
+     chats:  [{name: string}];
 
-    constructor(userId: string, name: string, password: string, email: string, chat:  string[]) {
+    constructor(userId: string, name: string, password: string, email: string, chat:  [{name: string}] ){
         this.userId = userId;
         this.username = name;
         this.password = password;

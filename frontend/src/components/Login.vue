@@ -138,7 +138,6 @@ export default defineComponent({
         store.commit("changePicture", response.data.image.link);
         store.commit("changeEmail", response.data.email);
         store.commit("setupChats", response.data.chats)
-        console.log("los chats de este user son: " + response.data.chats)
         this.$router.push("/");
         })
         .catch((error) => {
@@ -163,6 +162,8 @@ export default defineComponent({
           if (response.data.password === this.password) {
             store.commit("changeLogin");
             store.commit("changeUsername", this.username);
+            store.commit("setupChats", response.data.chats)
+            store.commit("changeUserUUID", response.data.id)
             this.$router.push("/");
           }
           else{

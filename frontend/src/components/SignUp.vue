@@ -115,7 +115,7 @@ export default defineComponent({
             username: this.username,
             password: this.password,
             email: this.email,
-            chats: ""
+            chats: [{name: "general"}]
           },
         }).then((response) => {
           console.log(response.data);

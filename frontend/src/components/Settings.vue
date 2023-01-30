@@ -79,7 +79,6 @@
   import { useStore, mapActions } from "vuex";
   import { key, store } from "../store/store";
   import axios from "axios";
-  import storage from "../firebase/firebaseconf"
   
   declare var require: any;
   

@@ -36,6 +36,8 @@ export const store = createStore<State>({
       state.login = !state.login
       if (!state.login) {
         state.username = ""
+        state.user_uuid = ""
+        state.chats = [{ name: "general"}]
       }
     },
     changeUsername(state, username) {
@@ -46,6 +48,9 @@ export const store = createStore<State>({
     },
     addChat(state, name: string){
       state.chats.push({name: name})
+    },
+    removeChats(state){
+      state.chats = [{ name: "general"}]
     },
     setupChats(state, chats: [{ name: string}]){
       state.chats = chats;
