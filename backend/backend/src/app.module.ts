@@ -12,13 +12,13 @@ import { ChatGateway } from './chatSocket/chat.gateway';
     ConfigModule.forRoot(), 
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'admin',
-      password: 'admin',
-      database: 'ft_transcendence',
+      host: process.env.POSTGRES_HOST,
+      port: parseInt(<string>process.env.POSTGRES_PORT),
+      username: process.env.POSTGRES_USER,
+      password: process.env.POSTGRES_PASSWORD,
+      database: process.env.POSTGRES_DATABASE,
       autoLoadEntities: true,
-      synchronize: !!true
+      synchronize: true,
     }),
     UsersModule,
     ChatsModule
