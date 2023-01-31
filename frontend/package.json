@@ -20,6 +20,7 @@
     "v-upload-image": "^1.0.0",
     "vue": "^3.2.13",
     "vue-axios": "^3.5.2",
+    "vue-cli": "^2.9.6",
     "vue-router": "^4.1.6",
     "vue-socket.io": "^3.0.10",
     "vuex": "^4.0.2",
