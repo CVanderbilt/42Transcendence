@@ -143,6 +143,7 @@ export default defineComponent({
           })
           .catch((error) => {
             store.commit("changeUser", undefined)
+            getUser(response.data.login)
             this.$router.push("/");});
         });
       
