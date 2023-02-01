@@ -75,9 +75,9 @@
 <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
-import { hashPassword } from "@/utils/utils";
-import { IUser, key, store } from "@/store/store";
-import { createUser, IUserAPI } from "@/api/user";
+//import { hashPassword } from "@/utils/utils";
+import { IUser, key, store } from "../../store/store";
+import { createUser, } from "../..//api/user";
 
 export default defineComponent({
   name: "SignUp",

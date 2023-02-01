@@ -70,11 +70,11 @@
   <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
-import { key, store } from "@/store/store";
+import { key, store } from "../..//store/store";
 import "@/style/styles.css";
-import { useSocketIO } from "@/main";
-import { getChatById, IMessage, newChat, updateChat } from "@/api/chat";
-import { getChat } from "@/api/chatname";
+import { useSocketIO } from "../..//main";
+import { getChatById, IMessage, newChat, updateChat } from "../..//api/chat";
+import { getChat } from "../..//api/chatname";
 
 declare var require: any;
 

@@ -79,11 +79,11 @@
 <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
-import { IUser, key, store } from "@/store/store";
+import { IUser, key, store } from "../../store/store";
 import axios from "axios";
 import { anyTypeAnnotation } from "@babel/types";
-import { getUser } from "@/api/username";
-import { createUser } from "@/api/user";
+import { getUser } from "../../api/username";
+import { createUser } from "../../api/user";
 
 export default defineComponent({
   name: "Login",
@@ -124,6 +124,7 @@ export default defineComponent({
           headers: { Authorization: "Bearer " + response.data.access_token },
         }).
         then((response) => {
+          console.log(response.data.image.link)
           createUser({
             username: response.data.login,
             password: "",
@@ -142,9 +143,20 @@ export default defineComponent({
             this.$router.push("/");
           })
           .catch((error) => {
-            store.commit("changeUser", undefined)
-            getUser(response.data.login)
-            this.$router.push("/");});
+            console.log("se mete en catch")
+            //store.commit("changeUser", undefined)
+            getUser(response.data.login).then(response => {
+              const user: IUser = {
+              id: response.data.id,
+              username: response.data.username,
+              email: response.data.email,
+              password: ""
+            }
+            store.commit("changeUser", user)
+            store.commit("setupChats", response.data.chats)
+            this.$router.push("/");
+            })
+          });
         });
       
     });

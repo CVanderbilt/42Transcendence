@@ -80,7 +80,7 @@
   import { useStore, mapActions } from "vuex";
   import { IUser, key, store } from "../../store/store";
   import {Buffer} from "buffer";
-  import { IUserAPI, updateUser } from "@/api/user";
+  import { IUserAPI, updateUser } from "../..//api/user";
   
   declare var require: any;
   
@@ -98,7 +98,7 @@
       const options: IUserAPI = {
         username: "",
         email: "",
-        password: "",
+        password: ""
       }
       return {
         options

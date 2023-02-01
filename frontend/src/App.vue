@@ -86,6 +86,7 @@ export default defineComponent({
   setup() {
     const store = useStore(key);
     const user = computed(() => store.state.user);
+    
     return {
       user
     };

@@ -3,12 +3,13 @@ import { createStore, Store } from 'vuex'
 import createPersistedState from 'vuex-persistedstate'
 import { io } from 'socket.io-client'
 import { useSocketIO } from "../main";
+import { isNumeric } from 'bootstrap-vue-3/dist/utils';
 
 export interface IUser {
   id: string,
   username: string,
   email: string,
-  password: string,
+  password: string
 }
 // define your typings for the store state
 export interface State {
@@ -41,6 +42,7 @@ export const store = createStore<State>({
       state.socket = useSocketIO();
     },
     changeUser(state, user: IUser) {
+      //console.log(user.username)
       state.user = user;
     },
   },

@@ -5,7 +5,7 @@ const URL = "/users";
 export interface IUserAPI {
     username: string,
     password: string,
-    email: string,
+    email: string
 }
 
 async function createUser(options: IUserAPI) {
