@@ -6,6 +6,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { ChatsModule } from './chats/chats.module';
 import { ChatGateway } from './chatSocket/chat.gateway';
+import { UserStatsModule } from './user-stats/user-stats.module';
+import { FriendshipsModule } from './friendships/friendships.module';
+import { GamesModule } from './games/games.module';
+import { MatchesModule } from './matches/matches.module';
 
 @Module({
   imports: [
@@ -21,7 +25,11 @@ import { ChatGateway } from './chatSocket/chat.gateway';
       synchronize: true,
     }),
     UsersModule,
-    ChatsModule
+    ChatsModule,
+    UserStatsModule,
+    FriendshipsModule,
+    GamesModule,
+    MatchesModule
   ],
   controllers: [],
   providers: [ChatGateway],

@@ -4,7 +4,7 @@ import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 export class UserEntity {
 
     @PrimaryGeneratedColumn("uuid")
-    readonly userId: string;
+    readonly id: string;
 
     @Column({
         unique: true
@@ -21,7 +21,7 @@ export class UserEntity {
      chats:  [{name: string}];
 
     constructor(userId: string, name: string, password: string, email: string, chat:  [{name: string}] ){
-        this.userId = userId;
+        this.id = userId;
         this.username = name;
         this.password = password;
         this.email = email;

@@ -18,7 +18,7 @@ export class UsersRepository {
     }
 
     getUserById(id: string): Promise<UserEntity> {
-        return this.usersRepository.findOneBy({userId : id});
+        return this.usersRepository.findOneBy({id : id});
     }
 
     getUserByUsername(username: string): Promise<UserEntity> {
@@ -34,18 +34,18 @@ export class UsersRepository {
         const updateUserDTO: UserDTO = new UserDTO(id, userDTO.username, userDTO.password, userDTO.email, userDTO.chats);
         const updateUser = this.mapper.dtoToEntity(updateUserDTO);
         await this.usersRepository.update(id, updateUser);
-        return this.usersRepository.findOneBy({userId : id});
+        return this.usersRepository.findOneBy({id : id});
 
     }
 
     async updateUserChats(id: string, chat: {name: string}): Promise<UserEntity> {
         
-        const updateUser = await this.usersRepository.findOneBy({userId : id});
+        const updateUser = await this.usersRepository.findOneBy({id : id});
 
         console.log("QUE AÑADO ESTO: " + chat.name)
         updateUser.chats.push(chat)
         await this.usersRepository.update(id, updateUser);
-        return this.usersRepository.findOneBy({userId : id});
+        return this.usersRepository.findOneBy({id : id});
 
     }
 

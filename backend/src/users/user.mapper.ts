@@ -10,7 +10,7 @@ export class UserMapper {
     }
 
     entityToDto(userEntity: UserEntity): UserDTO {
-        return new UserDTO(userEntity.userId, userEntity.username, userEntity.password, userEntity.email, userEntity.chats);
+        return new UserDTO(userEntity.id, userEntity.username, userEntity.password, userEntity.email, userEntity.chats);
     }
 
 }
