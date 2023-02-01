@@ -31,13 +31,13 @@
                   >
                     <div v-for="item in messages" v-bind:key="item.message">
                       <p
-                        v-if="item.username === username"
+                        v-if="item.username === user?.username"
                         style="text-align: right"
                       >
                         {{ "Me: " + item.message }}
                       </p>
                       <p
-                        v-if="item.username !== username"
+                        v-if="item.username !== user?.username"
                         style="text-align: left"
                       >
                         {{ item.username + ": " + item.message }}
@@ -70,25 +70,24 @@
   <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
-import { key, store } from "../store/store";
-import "../style/styles.css";
-import { useSocketIO } from "../main";
-import axios from "axios";
+import { key, store } from "@/store/store";
+import "@/style/styles.css";
+import { useSocketIO } from "@/main";
+import { getChatById, IMessage, newChat, updateChat } from "@/api/chat";
+import { getChat } from "@/api/chatname";
+
+declare var require: any;
 
 export default defineComponent({
   name: "Chat",
   setup() {
     const store = useStore(key);
-    const login = computed(() => store.state.login);
-    const username = computed(() => store.state.username);
-    const userUUID = computed(() => store.state.user_uuid);
+    const user = store.state.user;
 
     let chatUUID = "";
     return {
-      login,
-      username,
       chatUUID,
-      userUUID,
+      user,
     };
   },
 
@@ -104,33 +103,23 @@ export default defineComponent({
     let searchedChat = "";
     let chatname = "general";
     let message = "";
-    let messages = [{ message: "", username: "" }];
+    let messages: IMessage[] = [{ message: "hola", username: "holi" }];
     let chatsFromUser = [{ name: "" }];
     messages.pop();
     chatsFromUser.pop();
-
-    axios({
-      method: "get",
-      url: "http://localhost:3000/users/" + this.userUUID,
-      data: {},
-    }).then((response) => {
+    getChatById("7621715b-cda3-4a43-a880-d2f7de84caba")
+    .then((response) => {
       for (var i in response.data.chats) {
         console.log(response.data.chats[i]);
         chatsFromUser.push(response.data.chats[i]);
       }
     });
 
-    axios({
-      method: "get",
-      url: "http://localhost:3000/chatname/" + chatname,
-      data: {},
-    }).then((response) => {
+    getChat(chatname)
+    .then((response) => {
       this.chatUUID = response.data;
-      axios({
-        method: "get",
-        url: "http://localhost:3000/chats/" + response.data,
-        data: {},
-      }).then((response) => {
+      getChatById(response.data)
+      .then((response) => {
         for (var i in response.data.messages) {
           messages.push(response.data.messages[i]);
         }
@@ -158,65 +147,64 @@ export default defineComponent({
 
   methods: {
     sendMessage() {
+      if (!this.user) {
+        console.error("user not defined, esto no deberia pasar");
+        return;
+      }
       this.io.socket.emit("event_message", {
         room: this.chatname,
         message: this.message,
-        username: this.username,
+        username: this.user.username
       });
-      this.messages.push({ message: this.message, username: this.username });
-      axios({
-        method: "put",
-        url: "http://localhost:3000/chats/" + this.chatUUID,
-        data: {
-          chatname: this.chatname,
-          password: "",
-          messages: this.messages,
-        },
+      this.messages.push({ message: this.message, username: this.user.username });
+      updateChat(this.chatUUID, {
+        chatname: this.chatname,
+        password: "",
+        messages: this.messages
       })
-        .then((response) => {
-          this.$forceUpdate();
-        })
-        .catch((err) => {
-          alert("Error sending the message. Try again later");
-        });
+      .then((response) => {
+        this.$forceUpdate();
+      })
+      .catch((err) => {
+        alert("Error sending the message. Try again later");
+      });
       this.message = "";
     },
 
+    //todo: move to api, tambien move estos methods a un fichero aparte en este directorio
     searchChat(searchedChat: string) {
-      axios({
-        method: "get",
-        url: "http://localhost:3000/chatname/" + searchedChat,
-        data: {},
-      })
+      if (!this.user) return;
+      const UUID = this.user.id;
+      getChat(searchedChat)
+      .then((response) => {
+        this.chatUUID = response.data;
+        getChatById(this.chatUUID)
         .then((response) => {
-          this.chatUUID = response.data;
-          axios({
-            method: "get",
-            url: "http://localhost:3000/chats/" + response.data,
-            data: {},
-          }).then((response) => {
-            this.changeChat(this.chatUUID, searchedChat);
-            if (
-              this.chatsFromUser.find((str) => str.name === searchedChat) ===
-              undefined
-            ) {
-              axios({
-                method: "put",
-                url: "http://localhost:3000/addChat/" + this.userUUID,
-                data: { name: searchedChat },
-              }).then(response => this.$forceUpdate());
-              this.chatsFromUser.push({ name: searchedChat});
-            }
-            for (var i in response.data.messages) {
-              this.messages.push(response.data.messages[i]);
-            }
-            this.$forceUpdate();
-          });
-        })
+          this.changeChat(this.chatUUID, searchedChat);
+          if (
+            this.chatsFromUser.find((str) => str.name === searchedChat) ===
+            undefined
+          ) {
+            updateChat(UUID, {
+              chatname: searchedChat,
+              password: "",
+              messages: []
+            })
+            .then(response => this.$forceUpdate());
+            this.chatsFromUser.push({ name: searchedChat});
+          }
+          for (var i in response.data.messages) {
+            this.messages.push(response.data.messages[i]);
+          }
+          this.$forceUpdate();
+        });
+      })
         .catch((error) => alert("No chats found with that name"));
     },
 
     changeChat(chatUUID: string, chatname: string) {
+      if (!this.user) return;
+      const username = this.user.username;
       this.chatUUID = chatUUID;
       this.io.socket.emit("event_leave", this.chatname);
       this.messages = [];
@@ -224,7 +212,7 @@ export default defineComponent({
       this.chatname = chatname;
       this.io.socket.offAny();
       this.io.socket.on("new_message", (message, username) => {
-        if (username !== this.username) {
+        if (username !== username) {
           this.messages.push({ message: message, username: username });
         }
         this.$forceUpdate();
@@ -233,25 +221,23 @@ export default defineComponent({
 
     createChat(chatName: string) {
       //console.log("UUID que llega"+  this.chatUUID)
-      axios({
-        method: "post",
-        url: "http://localhost:3000/chats",
-        data: {
+      if (!this.user) return;
+      const UUID = this.user.id
+      newChat({
+        chatname: chatName,
+        password: "",
+        messages: []
+      })
+      .then((response) => {
+        this.changeChat(response.data.id, chatName);
+        this.chatsFromUser.push({ name: chatName });
+        console.log(this.chatsFromUser);
+        updateChat(UUID, {
           chatname: chatName,
           password: "",
-          messages: "",
-        },
-      })
-        .then((response) => {
-          this.changeChat(response.data.id, chatName);
-          this.chatsFromUser.push({ name: chatName });
-          console.log(this.chatsFromUser);
-          axios({
-            method: "put",
-            url: "http://localhost:3000/addChat/" + this.userUUID,
-            data: { name: chatName },
-          });
+          messages: []
         })
+      })
         .catch((err) => {
           alert("Name already in use");
         });

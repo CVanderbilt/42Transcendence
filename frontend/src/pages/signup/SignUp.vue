@@ -9,7 +9,7 @@
                 <div
                   class="d-flex justify-content-center text-center mt-4 pt-1"
                 >
-                  <img src="../assets/logo.png" height="90" />
+                  <img src="@/assets/logo.png" height="90" />
                 </div>
                 <h2 class="fw-bold mt-5 mb-2 text-uppercase">Sign Up</h2>
                 <p class="text-white-50 mb-5">
@@ -75,18 +75,18 @@
 <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
-import { key, store } from "../store/store";
-import axios from "axios";
+import { hashPassword } from "@/utils/utils";
+import { IUser, key, store } from "@/store/store";
+import { createUser, IUserAPI } from "@/api/user";
 
 export default defineComponent({
   name: "SignUp",
   setup() {
     const store = useStore(key);
-    const login = computed(() => store.state.login);
-    const userUUID = computed(() => store.state.user_uuid);
+    const user = computed(() => store.state.user);
 
     return {
-      login,
+      user,
     };
   },
   data() {
@@ -100,29 +100,23 @@ export default defineComponent({
   },
 
   methods: {
-    reviewFields() {
-      console.log(this.email, this.password);
-      store.commit("changeLogin");
-      this.$router.push("/");
-      //this.login = true
-    },
     signUpNewUser() {
       if (this.email === this.repeatedemail) {
-        axios({
-          method: "post",
-          url: "http://localhost:3000/users",
-          data: {
-            username: this.username,
-            password: this.password,
-            email: this.email,
-            chats: [{name: "general"}]
-          },
-        }).then((response) => {
+        createUser({
+          username: this.username,
+          password: this.password,
+          email: this.email
+        })
+        .then((response) => {
           console.log(response.data);
-        store.commit("changeUserUUID",response.data.id)
-        store.commit("changeLogin");
-        store.commit("changeUsername", this.username);
-        this.$router.push("/");
+          const user: IUser = {
+            id: response.data.id,
+            username: response.data.username,
+            email: response.data.email,
+            password: this.password
+          }
+          store.commit("changeUser", user);
+          this.$router.push("/");
         }).catch(error => alert("username already in use"));
         
       } else {

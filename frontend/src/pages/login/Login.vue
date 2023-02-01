@@ -16,7 +16,7 @@
                     pt-1
                   "
                 >
-                  <img src="../assets/logo.png" height="90" />
+                  <img src="@/assets/logo.png" height="90" />
                 </div>
                 <h2 class="fw-bold mb-2 text-uppercase">FT_TRANSCENDENCE</h2>
                 <p class="text-white-50 mb-5">
@@ -79,8 +79,11 @@
 <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
-import { key, store } from "../store/store";
+import { IUser, key, store } from "@/store/store";
 import axios from "axios";
+import { anyTypeAnnotation } from "@babel/types";
+import { getUser } from "@/api/username";
+import { createUser } from "@/api/user";
 
 export default defineComponent({
   name: "Login",
@@ -121,58 +124,53 @@ export default defineComponent({
           headers: { Authorization: "Bearer " + response.data.access_token },
         }).
         then((response) => {
-          axios({
-          method: "post",
-          url: "http://localhost:3000/users",
-          data: {
+          createUser({
             username: response.data.login,
             password: "",
             email: response.data.email,
-            chats: ""
-          },
-        })
-        .then((response) => {
-          console.log(response.data);
-        store.commit("changeUserUUID",response.data.id)
-        store.commit("changeUsername", response.data.username);
-        store.commit("changePicture", response.data.image.link);
-        store.commit("changeEmail", response.data.email);
-        store.commit("setupChats", response.data.chats)
-        this.$router.push("/");
-        })
-        .catch((error) => {
-          store.commit("changeLogin");
-          store.commit("changeUserUUID",response.data.id)
-          store.commit("changeUsername", response.data.login);
-          store.commit("changePicture", response.data.image.link);
-          store.commit("changeEmail", response.data.email);
-          this.$router.push("/");});
+          })
+          .then((response) => {
+            console.log(response.data);
+            const user: IUser = {
+              id: response.data.id,
+              username: response.data.username,
+              email: response.data.email,
+              password: ""
+            }
+            store.commit("changeUser", user)
+            store.commit("setupChats", response.data.chats)
+            this.$router.push("/");
+          })
+          .catch((error) => {
+            store.commit("changeUser", undefined)
+            this.$router.push("/");});
         });
       
     });
     },
     validateLogin() {
-      axios({
-        method: "get",
-        url: "http://localhost:3000/username/" + this.username,
-        data: {},
+      getUser(this.username)
+      .then((response) => {
+        console.log(response.data.id);
+        if (response.data.password === this.password) {
+          const user: IUser = {
+            id: response.data.id,
+            username: response.data.username,
+            email: response.data.email,
+            password: response.data.password
+          }
+          store.commit("changeUser", user)
+          store.commit("setupChats", response.data.chats)
+
+          this.$router.push("/");
+        }
+        else{
+          throw("ERROR contraseña incorrecta")
+        }
       })
-        .then((response) => {
-          console.log(response.data.id);
-          if (response.data.password === this.password) {
-            store.commit("changeLogin");
-            store.commit("changeUsername", this.username);
-            store.commit("setupChats", response.data.chats)
-            store.commit("changeUserUUID", response.data.id)
-            this.$router.push("/");
-          }
-          else{
-            throw("ERROR contraseña incorrecta")
-          }
-        })
-        .catch((error) => {
-          alert("usuario o contraseña incorrectos");
-        });
+      .catch((error) => {
+        alert("usuario o contraseña incorrectos");
+      });
     },
     ...mapActions(["mockLogin"]),
   },

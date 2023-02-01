@@ -17,7 +17,7 @@
                     pt-1
                   "
                 >
-                  <img :src="getImgURL(profilePicture)" height="200" 
+                  <img :src="getImgURL()" height="200" 
                   style="border-radius: 50%"/>
                 </div>
                   <h2 class="fw-bold mt-1 mb-5 text-uppercase">Modify Profile</h2>
@@ -27,8 +27,8 @@
                       type="username"
                       id="typeUsername"
                       class="form-control form-control-lg"
-                      :placeholder="username"
-                      v-model="newusername"
+                      :placeholder="user?.username"
+                      v-model="options.username"
                     />
                     <label class="form-label" for="typeUsername">Username</label>
                   </div>
@@ -37,8 +37,8 @@
                       type="email"
                       id="typeEmailX"
                       class="form-control form-control-lg"
-                      :placeholder="email"
-                      v-model="newemail"
+                      :placeholder="user?.email"
+                      v-model="options.email"
                     />
                     <label class="form-label" for="typeEmailX">Email</label>
                   </div>
@@ -49,12 +49,12 @@
                       id="typePasswordX"
                       class="form-control form-control-lg"
                       placeholder="Type your new password"
-                      v-model="password"
+                      v-model="options.password"
                     />
                     <label class="form-label" for="typePasswordX">New Password</label>
                   </div>
                   <div class="form-outline form-white mb-2">
-                  <input type="file" accept="image/jpeg"/>
+                  <input type="file" ref="fileInput" accept="image/jpeg" />
                   <progress id="progress"  value="0" max="100" ></progress>
                 </div>
                 
@@ -62,6 +62,7 @@
                   <button
                     class="btn btn-outline-light mt-3 btn-lg px-5"
                     type="submit"
+                    v-on:click="submit()"
                   >
                     Change
                   </button>
@@ -77,8 +78,9 @@
   <script lang="ts">
   import { computed, defineComponent } from "vue";
   import { useStore, mapActions } from "vuex";
-  import { key, store } from "../store/store";
-  import axios from "axios";
+  import { IUser, key, store } from "../../store/store";
+  import {Buffer} from "buffer";
+  import { IUserAPI, updateUser } from "@/api/user";
   
   declare var require: any;
   
@@ -86,39 +88,63 @@
     name: "Settings",
     setup() {
       const store = useStore(key);
-      const login = computed(() => store.state.login);
-      const username = computed(() => store.state.username);
-      const profilePicture = computed(() => store.state.pictureURL);
-      const email = computed(() => store.state.email);
+      const user = computed(() => store.state.user);
 
-  
       return {
-        login,
-        username,
-        profilePicture,
-        email
+        user
       };
     },
     data() {
-      return {
-        newusername: "",
-        newemail: "",
-        repeatedemail: "",
+      const options: IUserAPI = {
+        username: "",
+        email: "",
         password: "",
-        apiData: null,
+      }
+      return {
+        options
       };
     },
 
     methods: {
-        getImgURL(profilePicture: string) {
-      if (profilePicture === "") {
+      submit() {
+        alert("submitted!!")
+        if (!store.state.user) {
+          console.error("no hay id y esta intentando modificar, no debería ni pasar");
+          return;
+        }
+        alert("update user info: " + this.options.username);
+
+        const input = this.$refs.fileInput as HTMLInputElement;
+
+        if (input.files) { // todo: extraer a funcion a parte
+          const file:Blob = input.files[0];
+          
+          const fileReader = new FileReader();
+
+          try {
+            fileReader.readAsArrayBuffer(file);
+          } catch (error) {
+            alert(error);
+          }
+
+          
+          fileReader.onload = () => {
+            if (!store.state.user) {
+              console.error("no hay id y esta intentando modificar, no debería ni pasar");
+              return;
+            }
+            const buffer = Buffer.from(fileReader.result as ArrayBuffer);
+            
+            // addImage call would be here
+          };
+        }
+
+        updateUser(store.state.user.id, this.options);
+
+      },
+      getImgURL(): string {
         return require(`@/assets/noPictureProfile.png`);
       }
-      return profilePicture;
-    },
-    onUpload(){
-        //const storageRef= storage.ref(`${this.imageData.name}`).put(this.imageData);
-    }
     },
   });
   </script>

@@ -132,25 +132,20 @@
 <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
-import { key, store } from "../store/store";
-import "../style/styles.css";
+import { key, store } from "@/store/store";
+import "@/style/styles.css";
 import { onUnmounted } from 'vue'
 
-import { useSocketIO } from "../main";
+import { useSocketIO } from "@/main";
 declare var require: any;
 
 export default defineComponent({
   name: "Home",
   setup() {
     const store = useStore(key);
-    const login = computed(() => store.state.login);
-    const username = computed(() => store.state.username);
-    const profilePicture = computed(() => store.state.pictureURL);
-    
+    const user = computed(() => store.state.user)
     return {
-      login,
-      username,
-      profilePicture,
+      user,
     };
   },
 
@@ -159,12 +154,8 @@ export default defineComponent({
       this.$router.push("/settings");
     },
     getImgURL(profilePicture: string) {
-      if (profilePicture === "") {
-        return require(`@/assets/noPictureProfile.png`);
-      }
-      return profilePicture;
+      return require(`@/assets/noPictureProfile.png`);
     },
-    ...mapActions(["mockLogin"]),
   },
   
 });

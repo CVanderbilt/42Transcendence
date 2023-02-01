@@ -4,48 +4,30 @@ import createPersistedState from 'vuex-persistedstate'
 import { io } from 'socket.io-client'
 import { useSocketIO } from "../main";
 
+export interface IUser {
+  id: string,
+  username: string,
+  email: string,
+  password: string,
+}
 // define your typings for the store state
 export interface State {
-  login: boolean
-  username: string
-  email: string
   apiCode: string
-  pictureURL: string,
-  user_uuid: string,
   chats:  [{ name: string}]
   socket: any
+  user?: IUser
 }
 
 // define injection key
 export const key: InjectionKey<Store<State>> = Symbol()
-
 export const store = createStore<State>({
   state: {
-    login: false,
-    username: "",
-    email: "",
     apiCode: "",
-    pictureURL: "",
-    socket: "",
-    user_uuid: "",
-    chats: [{ name: "general"}]
+    chats: [{ name: "general"}],
+    socket: null,
   },
-  mutations: {
-    changeLogin(state) {
 
-      state.login = !state.login
-      if (!state.login) {
-        state.username = ""
-        state.user_uuid = ""
-        state.chats = [{ name: "general"}]
-      }
-    },
-    changeUsername(state, username) {
-      state.username = username
-    },
-    changeUserUUID(state, userUUID) {
-      state.user_uuid = userUUID
-    },
+  mutations: {
     addChat(state, name: string){
       state.chats.push({name: name})
     },
@@ -55,31 +37,14 @@ export const store = createStore<State>({
     setupChats(state, chats: [{ name: string}]){
       state.chats = chats;
     },
-
-    changePicture(state, url) {
-      if (url === "") {
-        state.pictureURL = ""
-      }
-      else {
-
-        state.pictureURL = url
-      }
-    },
-    changeEmail(state, email) {
-      state.email = email
-    },
     connectSocket(state) {
       state.socket = useSocketIO();
-    }
+    },
+    changeUser(state, user: IUser) {
+      state.user = user;
+    },
   },
   actions: {
-    mockLogin(context, user) {
-
-      this.state.username = user
-      setTimeout(function () {
-        context.commit('changeLogin')
-      }, 1000)
-    },
     connectSocket() {
       this.state.socket = useSocketIO();
     }

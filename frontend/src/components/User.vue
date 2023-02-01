@@ -45,7 +45,7 @@
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
 import { key, store } from "../store/store";
-import axios from "axios";
+import { getUserById } from "@/api/user";
 
 declare var require: any;
 
@@ -54,11 +54,11 @@ export default defineComponent({
   setup() {
     const store = useStore(key);
     const profilePicture = "";
-    const mylogin = computed(() => store.state.login);
+    const _user = computed(() => store.state.user);
 
     return {
       profilePicture,
-      mylogin
+      _user
     };
   },
 
@@ -80,18 +80,11 @@ export default defineComponent({
 
   methods: {
     getImgURL(profilePicture: string) {
-      if (profilePicture === "") {
         return require(`@/assets/noPictureProfile.png`);
-      }
-      return profilePicture;
     },
 
     getUserInfo(uuid: string){
-        axios({
-      method: "get",
-        url: "http://localhost:3000/users/" + uuid,
-        data: {},
-      })
+      getUserById(uuid)
         .then((response) => {
           console.log("USUARIO:" + response.data.username)
           this.username = response.data.username

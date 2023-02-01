@@ -3,7 +3,7 @@
 <template>
   <div id="nav" class="gradient-custom">
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" v-if=login>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" v-if=user>
       <div class="container-fluid">
         <a href="/"><img src="./assets/logo.png" height="30" style="margin-right: 20px ; border-radius: 10%" href="/"/></a>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -36,10 +36,10 @@
           </ul>
           <ul class="navbar-nav">
             <li class="nav-item">
-              <a class="nav-link" >{{ username }}</a>
+              <a class="nav-link" >{{ user.username }}</a>
             </li>
             <img
-              :src="getImgURL(profilePicture)"
+              :src="getImgURL()"
               class="rounded-circle"
               height="40
                 "
@@ -72,23 +72,23 @@
 
 <script lang="ts">
 import { computed, defineComponent } from "vue";
-import Home from "./components/Home.vue";
-import Login from "./components/Login.vue";
+import Home from "./pages/home/Home.vue";
+import Login from "./pages/login/Login.vue";
 import { useStore } from "vuex";
 import { key, store } from "./store/store";
-import axios from "axios";
+import { BDropdown, BDropdownItem, BDropdownDivider } from "bootstrap-vue-3";
+import { RouterView } from "vue-router";
+import { getUser } from "./api/username";
 declare var require: any;
 
 export default defineComponent({
   name: "App",
   setup() {
     const store = useStore(key);
-    const login = computed(() => store.state.login);
-    const username = computed(() => store.state.username);
-    const profilePicture = computed(() => store.state.pictureURL);
-    return { login,
-    username,
-  profilePicture };
+    const user = computed(() => store.state.user);
+    return {
+      user
+    };
   },
   data() {
     return {searchUsername: ""};
@@ -98,12 +98,8 @@ export default defineComponent({
     Login,
   },
   methods: {
-    searchFriend(username: string){
-      axios({
-      method: "get",
-        url: "http://localhost:3000/username/" + username,
-        data: {},
-      })
+    searchFriend(username: string){ //todo: update para usar apis
+      getUser(username)
         .then((response) => {
           this.$router.push("/user?uuid=" + response.data.id);
         })
@@ -114,18 +110,15 @@ export default defineComponent({
     modifyProfileRoute() {
       this.$router.push("/settings");
     },
-    getImgURL(profilePicture: string) {
-      if (profilePicture === "") {
-        return require(`@/assets/noPictureProfile.png`);
-      }
-      return profilePicture;
+    getImgURL() {
+      return require(`@/assets/noPictureProfile.png`);
     },
     logOut() {
-      store.commit("changeLogin");
-      store.commit("changeUsername");
-      store.commit("changePicture", "");
+
+      store.commit("changeUser", undefined)
+      
       this.$router.push("/login");
-    }
+    },
   }
 });
 </script>

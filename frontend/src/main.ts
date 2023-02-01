@@ -1,12 +1,11 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import { createRouter, createWebHistory, useRoute } from 'vue-router'
-import Login from './components/Login.vue'
-import SignUp from './components/SignUp.vue'
-import Settings from './components/Settings.vue'
-import Home from './components/Home.vue'
-import Chat from './components/Chat.vue'
-import User from './components/User.vue'
+import Login from './pages/login/Login.vue'
+import SignUp from './pages/signup/SignUp.vue'
+import Settings from './pages/settings/Settings.vue'
+import Home from './pages/home/Home.vue'
+import Chat from './pages/chats/Chat.vue'
 import BootstrapVue3 from 'bootstrap-vue-3'
 import VueAxios from 'vue-axios'
 import axios from 'axios'
@@ -15,6 +14,7 @@ import 'bootstrap-vue-3/dist/bootstrap-vue-3.css'
 import { store, key } from './store/store'
 import io from 'socket.io-client';
 import VueSocketIO from 'vue-socket.io'
+import User from './components/User.vue'
 
 
 
@@ -38,7 +38,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     console.log("enruta");
     if (to.matched.some(route => route.meta.requiresAuth)) {
-        if (!store.state.login && to.matched.some(route => route.meta.requiresAuth)) {
+        if (!store.state.user && to.matched.some(route => route.meta.requiresAuth)) {
             next('/login')
 
         }
@@ -47,7 +47,7 @@ router.beforeEach((to, from, next) => {
         }
     }
     else if (to.matched.some(route => route.meta.onlyWithoutAuth)) {
-        if (store.state.login) {
+        if (store.state.user) {
             next('/')
         }
         else {

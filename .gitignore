@@ -1,0 +1,45 @@
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/public/
+frontend/src/assets/
+frontend/src/plugins/
+frontend/src/types/
+frontend/.env.*
+frontend/.idea/
+frontend/.vscode/
+
+# Backend
+backend/node_modules/
+backend/dist/
+backend/.env.*
+backend/.idea/
+backend/.vscode/
+
+# General
+.DS_Store
+.env.*
+.idea/
+.vscode/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System files
+*.log
+*.log.*
+*.pid
+*.pid.*
+*.swp
+*.swx
+
+# Visual Studio Code
+.vscode-server/
+.history/
+
+# IDEs
+.idea/
+*.iml
+
+# Test output
+*.log
