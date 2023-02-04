@@ -38,10 +38,10 @@ export class UsersRepository {
 
     }
 
-    async updateUserChats(id: string, chat: {name: string, role: string}): Promise<UserEntity> {
+    async updateUserChats(id: string, chat: {name: string}): Promise<UserEntity> {
         
         const updateUser = await this.usersRepository.findOneBy({userId : id});
-        console.log(updateUser.chats)
+
         console.log("QUE AÑADO ESTO: " + chat.name)
         updateUser.chats.push(chat)
         await this.usersRepository.update(id, updateUser);

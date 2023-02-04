@@ -31,11 +31,10 @@ export class chatsRepository {
     }
 
     async updatechat(id: string, chatDTO: ChatDTO): Promise<chatEntity> {
-        const updateChatDTO: ChatDTO = new ChatDTO(id, chatDTO.chatname, chatDTO.password, chatDTO.messages);
+        const updateChatDTO: ChatDTO = new ChatDTO(id, chatDTO.chatname, chatDTO.password, chatDTO.messages, chatDTO.users);
         const updateChat = this.mapper.dtoToEntity(updateChatDTO);
         await this.chatsRepository.update(id, updateChat);
         return this.chatsRepository.findOneBy({chatId : id});
-
     }
 
     deletechat(id: string): Promise<DeleteResult> {

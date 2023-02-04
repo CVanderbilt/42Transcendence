@@ -18,9 +18,9 @@ export class UserEntity {
     readonly email: string;
 
     @Column({ type: "jsonb" })
-     chats:  [{name: string, role: string}];
+     chats:  [{name: string}];
 
-    constructor(userId: string, name: string, password: string, email: string, chat:  [{name: string, role: string}] ){
+    constructor(userId: string, name: string, password: string, email: string, chat:  [{name: string}] ){
         this.userId = userId;
         this.username = name;
         this.password = password;

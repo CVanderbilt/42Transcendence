@@ -8,7 +8,7 @@ export class UserStatsService {
     ) { }
 
     async findOne(userId: string): Promise<UserStats> {
-        return UserStatsEntity.findOneBy({ user: { id: userId } })
+        return UserStatsEntity.findOneBy({ user: { userId: userId } })
     }
     async find(): Promise<UserStats[]> {
         const latests = await UserStatsEntity

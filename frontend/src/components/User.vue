@@ -22,13 +22,12 @@
                     style="border-radius: 50%"
                   />
                 </div>
-                <h2 class="fw-bold mt-1 mb-5 text-uppercase">{{username}}</h2>
-                <h4 class="fw-bold mt-1 mb-5 ">Email: {{email}}</h4>
+                <h2 class="fw-bold mt-1 mb-5 text-uppercase">{{ username }}</h2>
+                <h4 class="fw-bold mt-1 mb-5">Email: {{ email }}</h4>
                 <button
                   class="btn btn-outline-light mt-3 btn-lg px-5"
                   type="submit"
-                  v-on:click="openChat()"
-
+                  v-on:click="createChat()"
                 >
                   Chat
                 </button>
@@ -45,7 +44,10 @@
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
 import { key, store } from "../store/store";
-import { getUserById } from "@/api/user";
+import { getUserById } from "../api/user";
+import { newChat } from "../api/chat";
+import { getChat } from "../api/chatname";
+import axios from "axios";
 
 declare var require: any;
 
@@ -58,7 +60,7 @@ export default defineComponent({
 
     return {
       profilePicture,
-      _user
+      _user,
     };
   },
 
@@ -66,37 +68,72 @@ export default defineComponent({
     return {
       uuid: "",
       username: "",
-      email: ""
+      email: "",
     };
   },
 
   mounted() {
     if (this.$route.query.uuid !== undefined) {
       this.uuid = this.$route.query.uuid as string;
-      console.log("UUID: " + this.uuid)
+      console.log("UUID: " + this.uuid);
       this.getUserInfo(this.uuid);
     }
   },
 
   methods: {
     getImgURL(profilePicture: string) {
-        return require(`@/assets/noPictureProfile.png`);
+      return require(`@/assets/noPictureProfile.png`);
     },
 
-    getUserInfo(uuid: string){
+    getUserInfo(uuid: string) {
       getUserById(uuid)
         .then((response) => {
-          console.log("USUARIO:" + response.data.username)
-          this.username = response.data.username
-          this.email = response.data.email
+          console.log("USUARIO:" + response.data.username);
+          this.username = response.data.username;
+          this.email = response.data.email;
         })
         .catch((error) => {
           alert("usuario o contraseña incorrectos");
         });
     },
 
-    openChat(){
-        this.$router.push("/chats?to=" + this.uuid);
+    createChat() {
+      //console.log("UUID que llega"+  this.chatUUID)
+      const chatName =
+        "directMessage¿" + this._user?.username + "¿" + this.username;
+      const oppositeName =
+        "directMessage¿" + this.username + "¿" + this._user?.username;
+
+      const UUID = this._user?.id;
+      newChat({
+        chatname: chatName,
+        password: "",
+        messages: [],
+      })
+        .then((response) => {
+          axios({
+            method: "put",
+            url: "http://localhost:3000/addChat/" + UUID,
+            data: { name: chatName, role: "direct" },
+          }).then((resp) =>
+            this.$router.push("/chats?name=" + response.data.chatname)
+          );
+          axios({
+            method: "put",
+            url: "http://localhost:3000/addChat/" + this.uuid,
+            data: { name: chatName, role: "direct" },
+          }).then((resp) =>
+            this.$router.push("/chats?name=" + response.data.chatname)
+          );
+        })
+        .catch((err) => {
+          alert("Direct chat already created");
+          this.$router.push("/chats?name=" + chatName);
+        });
+    },
+
+    openChat() {
+      this.$router.push("/chats?id=" + this.uuid);
     },
 
     onUpload() {

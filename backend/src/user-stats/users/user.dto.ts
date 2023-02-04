@@ -14,9 +14,9 @@ export class UserDTO {
     readonly email: string;
 
     @ApiProperty()
-    chats:  [{name: string, role: string}];
+    chats:  [{name: string}];
 
-    constructor(id: string, username: string, password: string, email: string, chats: [{name: string, role: string}]) {
+    constructor(id: string, username: string, password: string, email: string, chats: [{name: string}]) {
         this.id = id;
         this.username = username;
         this.password = password;

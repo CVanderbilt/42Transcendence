@@ -124,14 +124,12 @@ export default defineComponent({
           headers: { Authorization: "Bearer " + response.data.access_token },
         }).
         then((response) => {
-          console.log(response.data.image.link)
           createUser({
             username: response.data.login,
             password: "",
             email: response.data.email,
           })
           .then((response) => {
-            console.log(response.data);
             const user: IUser = {
               id: response.data.id,
               username: response.data.username,
@@ -143,8 +141,6 @@ export default defineComponent({
             this.$router.push("/");
           })
           .catch((error) => {
-            console.log("se mete en catch")
-            //store.commit("changeUser", undefined)
             getUser(response.data.login).then(response => {
               const user: IUser = {
               id: response.data.id,
@@ -164,7 +160,6 @@ export default defineComponent({
     validateLogin() {
       getUser(this.username)
       .then((response) => {
-        console.log(response.data.id);
         if (response.data.password === this.password) {
           const user: IUser = {
             id: response.data.id,

@@ -43,7 +43,7 @@ export class UsernameController {
 
     @Get(':username')
     async getUserByUsername(@Param('username') username: string): Promise<UserDTO> {
-
+        console.log
         return await this.usersService.getUserByUsername(username);
     }
 }
@@ -54,7 +54,8 @@ export class AddChatController {
     constructor(private usersService: UsersService){}
     
     @Put(':id')
-    async updateUserChats(@Param('id') id: string, @Body() chat: {name: string, role: string}): Promise<UserDTO> {
+    async updateUserChats(@Param('id') id: string, @Body() chat: {name: string}): Promise<UserDTO> {
+        console.log("id:" + id)
         return await this.usersService.updateUserChats(id, chat);
     }
 }

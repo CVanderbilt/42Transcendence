@@ -60,7 +60,7 @@
               <b-dropdown-item v-on:click="modifyProfileRoute()">Modify Profile</b-dropdown-item>
               <b-dropdown-item>Another Action</b-dropdown-item>
               <b-dropdown-divider></b-dropdown-divider>
-              <b-dropdown-item v-on:click="logOut()">Logout</b-dropdown-item>
+              <b-dropdown-item href="/login" v-on:click="logOut()">Logout</b-dropdown-item>
             </b-dropdown>
           </ul>
         </div>
@@ -115,10 +115,10 @@ export default defineComponent({
       return require(`@/assets/noPictureProfile.png`);
     },
     logOut() {
-
+      this.$router.push("/login");
       store.commit("changeUser", undefined)
       
-      this.$router.push("/login");
+      
     },
   }
 });

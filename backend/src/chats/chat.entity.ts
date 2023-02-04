@@ -17,11 +17,15 @@ export class chatEntity {
     @Column({ type: "jsonb" })
     readonly messages: string[];
 
-    constructor(chatId: string, name: string, password: string, messages: string[]) {
+    @Column({ type: "jsonb", nullable: true, })
+    readonly users: string[];
+
+    constructor(chatId: string, name: string, password: string, messages: string[], users: string[]) {
         this.chatId = chatId;
         this.chatname = name;
         this.password = password;
         this.messages = messages;
+        this.users = users
     }
 
 }

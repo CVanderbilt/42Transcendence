@@ -6,11 +6,11 @@ import { chatEntity } from "./chat.entity";
 export class chatMapper {
 
     dtoToEntity(chatDTO: ChatDTO): chatEntity {
-        return new chatEntity(chatDTO.id, chatDTO.chatname, chatDTO.password, chatDTO.messages);
+        return new chatEntity(chatDTO.id, chatDTO.chatname, chatDTO.password, chatDTO.messages, chatDTO.users);
     }
 
     entityToDto(chatEntity: chatEntity): ChatDTO {
-        return new ChatDTO(chatEntity.chatId, chatEntity.chatname, chatEntity.password, chatEntity.messages);
+        return new ChatDTO(chatEntity.chatId, chatEntity.chatname, chatEntity.password, chatEntity.messages, chatEntity.users);
     }
 
 }
