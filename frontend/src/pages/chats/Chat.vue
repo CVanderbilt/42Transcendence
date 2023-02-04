@@ -168,16 +168,6 @@
 
           <div class="form-outline form-white mb-2">
             <input
-              type="chatname"
-              id="typeChatname"
-              class="form-control form-control-lg"
-              placeholder="Type chat name"
-              v-model="createdChatName"
-            />
-            <label class="form-label" for="typeUsername">Chat name</label>
-          </div>
-          <div class="form-outline form-white mb-2">
-            <input
               type="password"
               id="typePasswordX"
               class="form-control form-control-lg"
@@ -284,7 +274,7 @@ export default defineComponent({
     let chatname = "general";
     let message = "";
     let messages: IMessage[] = [{ message: "hola", username: "holi" }];
-    let chatsFromUser = [{ name: "" }];
+    let chatsFromUser = [{ name: "", role: ""}];
     var createdChatParticipants: string[] = ["holi"];
     const user = store.state.user;
     //let chatArea = this.$refs.chatArea as any
@@ -324,7 +314,7 @@ export default defineComponent({
       message,
       io,
       chatname,
-      role: "",
+      role: "user",
       searchedChat,
       messages,
       chatsFromUser,
@@ -420,11 +410,11 @@ export default defineComponent({
                 axios({
                   method: "put",
                   url: "http://localhost:3000/addChat/" + this.user?.id,
-                  data: { name: searchedChat },
+                  data: { name: searchedChat, role: "user" },
                 });
-                this.chatsFromUser.push({ name: searchedChat });
+                this.chatsFromUser.push({ name: searchedChat, role: "user" });
               }
-              //this.role = this.chatsFromUser.find((str) => str.name === searchedChat)
+              this.role = this.chatsFromUser.find((str) => str.name === searchedChat)?.role as string
               for (var i in response.data.messages) {
                 this.messages.push(response.data.messages[i]);
               }
@@ -474,7 +464,7 @@ export default defineComponent({
         },
       })
         .then((response) => {
-          this.chatsFromUser.push({ name: chatName });
+          this.chatsFromUser.push({ name: chatName, role: "owner" });
           this.addUsersToChat(users, chatName);
         })
         .catch((err) => {
@@ -549,11 +539,11 @@ export default defineComponent({
 }
 .chat-input{
   width: 73%;
-  height: 3vh;
+  height: 4vh;
   background: #d1d1d1;
 }
 .chat-header {
-  height: 2vh;
+  height: 3vh;
   color:#f4f4f4
 
 }
@@ -569,6 +559,7 @@ export default defineComponent({
 }
 .chats-list {
   background: #5b5b5b;
+  height: 61vh;
   overflow-y: scroll;
   overflow-x: hidden;
   width: 100%;
@@ -577,7 +568,7 @@ export default defineComponent({
 .chat-area {
   /*   border: 1px solid #ccc; */
   background: #343434;
-  height: 55vh;
+  height: 54vh;
   overflow-y: scroll;
   overflow-x: hidden;
   width: 100%;
