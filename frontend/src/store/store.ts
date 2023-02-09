@@ -14,7 +14,7 @@ export interface IUser {
 // define your typings for the store state
 export interface State {
   apiCode: string
-  chats:  [{ name: string}]
+  chats:  [{ name: string, role: string, isBanned: boolean, isMuted: boolean}]
   socket: any
   user?: IUser
 }
@@ -24,18 +24,16 @@ export const key: InjectionKey<Store<State>> = Symbol()
 export const store = createStore<State>({
   state: {
     apiCode: "",
-    chats: [{ name: "general"}],
+    chats: [{ name: "general", role: "user", isBanned: false, isMuted: false}],
     socket: null,
   },
 
   mutations: {
-    addChat(state, name: string){
-      state.chats.push({name: name})
-    },
+    
     removeChats(state){
-      state.chats = [{ name: "general"}]
+      state.chats = [{ name: "general", role: "user", isBanned: false, isMuted: false}]
     },
-    setupChats(state, chats: [{ name: string}]){
+    setupChats(state, chats: [{ name: string, role: string, isBanned: boolean, isMuted: boolean}]){
       state.chats = chats;
     },
     connectSocket(state) {

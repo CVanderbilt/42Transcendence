@@ -37,8 +37,24 @@ export class UsersService {
         return this.mapper.entityToDto(updateUser);
     }
 
-    async updateUserChats(id: string,  chat: {name: string, role: string}): Promise<UserDTO> {
+    async updateUserChats(id: string,  chat: {name: string, role: string, isBanned: boolean, isMuted: boolean}): Promise<UserDTO> {
         const updateUser = await this.usersRepository.updateUserChats(id, chat);
+        return this.mapper.entityToDto(updateUser);
+    }
+
+    async getParticipants( chat: string): Promise<UserDTO[]> {
+        const Users = await this.usersRepository.getParticipants(chat);
+        let usersDTO: UserDTO[] = [];
+        
+        for(let i = 0; i < Users.length; i++){
+            const userDTO = await this.mapper.entityToDto(Users[i]);
+            usersDTO.push(userDTO);
+        }
+        return usersDTO;
+    }
+
+    async muteUser(id: string,  chat: {name: string}): Promise<UserDTO> {
+        const updateUser = await this.usersRepository.muteUser(id, chat);
         return this.mapper.entityToDto(updateUser);
     }
 

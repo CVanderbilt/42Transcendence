@@ -220,15 +220,6 @@ import axios from "axios";
 
 declare var require: any;
 
-const InputUI = {
-  template: "#input-ui",
-  data() {
-    return {
-      value: "",
-    };
-  },
-};
-
 export default defineComponent({
   name: "Chat",
   setup() {
@@ -274,7 +265,7 @@ export default defineComponent({
     let chatname = "general";
     let message = "";
     let messages: IMessage[] = [{ message: "hola", username: "holi" }];
-    let chatsFromUser = [{ name: "", role: ""}];
+    let chatsFromUser = [{ name: "", role: "", isBanned: false, isMuted:false}];
     var createdChatParticipants: string[] = ["holi"];
     const user = store.state.user;
     //let chatArea = this.$refs.chatArea as any
@@ -326,8 +317,9 @@ export default defineComponent({
       createdChatParticipants,
       searchedChatPassword: "",
       searchedChatRequiresPassword: false,
-      modalChatAdmin: false
-      //chatArea
+      modalChatAdmin: false,
+      banned: false,
+      muted: false
     };
   },
 
@@ -410,11 +402,14 @@ export default defineComponent({
                 axios({
                   method: "put",
                   url: "http://localhost:3000/addChat/" + this.user?.id,
-                  data: { name: searchedChat, role: "user" },
+                  data: { name: searchedChat, role: "user", isBanned: false, isMuted: false },
                 });
-                this.chatsFromUser.push({ name: searchedChat, role: "user" });
+                this.chatsFromUser.push({ name: searchedChat, role: "user", isBanned:false , isMuted:false});
               }
-              this.role = this.chatsFromUser.find((str) => str.name === searchedChat)?.role as string
+              let chat = this.chatsFromUser.find((str) => str.name === searchedChat)
+              this.role = chat?.role as string
+              this.banned = chat?.isBanned as boolean;
+              this.muted = chat?.isMuted as boolean
               for (var i in response.data.messages) {
                 this.messages.push(response.data.messages[i]);
               }
@@ -439,7 +434,7 @@ export default defineComponent({
             axios({
               method: "put",
               url: "http://localhost:3000/addChat/" + response.data.id,
-              data: { name: chatName, role: "user" },
+              data: { name: chatName, role: "user", isBanned: false, isMuted: false },
             });
           })
           .catch((error) =>
@@ -449,7 +444,7 @@ export default defineComponent({
       axios({
         method: "put",
         url: "http://localhost:3000/addChat/" + this.user?.id,
-        data: { name: chatName, role: "owner" },
+        data: { name: chatName, role: "owner", isBanned: false, isMuted: false },
       });
     },
 
@@ -464,7 +459,7 @@ export default defineComponent({
         },
       })
         .then((response) => {
-          this.chatsFromUser.push({ name: chatName, role: "owner" });
+          this.chatsFromUser.push({ name: chatName, role: "owner", isBanned: false, isMuted: false });
           this.addUsersToChat(users, chatName);
         })
         .catch((err) => {
@@ -582,6 +577,7 @@ export default defineComponent({
   margin-bottom: 0.1em;
   font-size: 0.9em;
   text-overflow: ellipsis;
+  
 }
 .message-out {
   background: #407fff;

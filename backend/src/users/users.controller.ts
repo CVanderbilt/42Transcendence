@@ -54,7 +54,29 @@ export class AddChatController {
     constructor(private usersService: UsersService){}
     
     @Put(':id')
-    async updateUserChats(@Param('id') id: string, @Body() chat: {name: string, role: string}): Promise<UserDTO> {
+    async updateUserChats(@Param('id') id: string, @Body() chat: {name: string, role: string, isBanned: boolean, isMuted: boolean}): Promise<UserDTO> {
         return await this.usersService.updateUserChats(id, chat);
+    }
+}
+
+@Controller('chatParticipants')
+export class ChatParticipantsController {
+
+    constructor(private usersService: UsersService){}
+    
+    @Get(':chat')
+    async getParticipants(@Param('chat') chat: string): Promise<UserDTO[]> {
+        return await this.usersService.getParticipants(chat);
+    }
+}
+
+@Controller('muteUser')
+export class MuteUserController {
+
+    constructor(private usersService: UsersService){}
+    
+    @Put(':id')
+    async updateUserChats(@Param('id') id: string, @Body() chat: {name: string}): Promise<UserDTO> {
+        return await this.usersService.muteUser(id, chat);
     }
 }

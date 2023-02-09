@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, ManyToMany } from "typeorm";
+import { UserEntity } from "../users/user.entity"
 
 @Entity('chats')
 export class chatEntity {
@@ -17,8 +18,12 @@ export class chatEntity {
     @Column({ type: "jsonb" })
     readonly messages: string[];
 
-    @Column({ type: "jsonb", nullable: true, })
+    @Column({ type: "jsonb", nullable: true })
     readonly users: string[];
+
+
+
+
 
     constructor(chatId: string, name: string, password: string, messages: string[], users: string[]) {
         this.chatId = chatId;

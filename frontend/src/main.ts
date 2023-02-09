@@ -6,6 +6,7 @@ import SignUp from './pages/signup/SignUp.vue'
 import Settings from './pages/settings/Settings.vue'
 import Home from './pages/home/Home.vue'
 import Chat from './pages/chats/Chat.vue'
+import Game from './pages/game/Game.vue'
 import BootstrapVue3 from 'bootstrap-vue-3'
 import VueAxios from 'vue-axios'
 import axios from 'axios'
@@ -25,7 +26,8 @@ const routes = [
     { path: '/signUp', name: "signUp", component: SignUp, meta: { onlyWithoutAuth: true } },
     { path: '/settings', name: "settings", component: Settings, meta: { requiresAuth: true } },
     { path: '/chats', name: "chats", component: Chat, meta: { requiresAuth: true } },
-    { path: '/user', name: "user", component: User, meta: { requiresAuth: true } }
+    { path: '/user', name: "user", component: User, meta: { requiresAuth: true } },
+    { path: '/game', name: "game", component: Game, meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({

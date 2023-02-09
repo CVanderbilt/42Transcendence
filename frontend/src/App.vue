@@ -25,7 +25,7 @@
               <a class="nav-link" href="/chats">Chats</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Game</a>
+              <a class="nav-link" href="/game">Game</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#">Friends</a>

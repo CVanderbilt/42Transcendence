@@ -15,6 +15,7 @@ export class ChatDTO {
 
     @ApiProperty()
     readonly users: string[];
+
     
 
 
@@ -24,6 +25,6 @@ export class ChatDTO {
         this.chatname = chatname;
         this.password = password;
         this.messages = messages;
-        this.users = users
+        this.users = users;
     }
 }
