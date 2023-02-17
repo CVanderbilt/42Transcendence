@@ -1,10 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { chatEntity } from "src/chats/chat.entity";
 
 
 export class UserDTO {
     @ApiProperty()
-    readonly id?: string;
+    readonly userId?: string;
 
     @ApiProperty()
     username: string;
@@ -16,17 +15,39 @@ export class UserDTO {
     readonly email: string;
 
     @ApiProperty()
-    chats:  [{name: string, role: string, isBanned: boolean, isMuted: boolean}];
-
-    @ApiProperty()
     state:  string;
 
-    constructor(id: string, username: string, password: string, email: string, chats: [{name: string, role: string, isBanned: boolean, isMuted: boolean}], state:  string) {
-        this.id = id;
-        this.username = username;
-        this.password = password;
-        this.email = email;
-        this.chats = chats;
+    victories: number
+    defeats: number
+    achievements: string
+    createdAt?: Date
+    isTwofaEnabled?: boolean
+    twofaSecret?: string
+
+    constructor(
+        id: string, 
+        username: string, 
+        password: string, 
+        email: string, 
+        state:  string,
+        victories: number,
+        defeats: number,
+        achievements: string,
+        createdAt: Date,
+        isTwofaEnabled: boolean,
+        twofaSecret: string
+        ) 
+        {
+        this.userId = id
+        this.username = username
+        this.password = password
+        this.email = email
         this.state = state
+        this.achievements = achievements
+        this.createdAt = createdAt
+        this.defeats = defeats
+        this.victories = victories
+        this.isTwofaEnabled = isTwofaEnabled
+        this.twofaSecret = twofaSecret
     }
 }

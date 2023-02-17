@@ -28,7 +28,7 @@ export class UsersService {
     }
 
     async newUser(userDTO: UserDTO): Promise<UserDTO> {
-        const newUser: UserEntity = await this.usersRepository.newUser(userDTO);
+        const newUser: UserEntity = await this.usersRepository.newUser(userDTO);        
         return this.mapper.entityToDto(newUser);
     }
 
@@ -40,17 +40,6 @@ export class UsersService {
     async updateUserChats(id: string,  chat: {name: string, role: string, isBanned: boolean, isMuted: boolean}): Promise<UserDTO> {
         const updateUser = await this.usersRepository.updateUserChats(id, chat);
         return this.mapper.entityToDto(updateUser);
-    }
-
-    async getParticipants( chat: string): Promise<UserDTO[]> {
-        const Users = await this.usersRepository.getParticipants(chat);
-        let usersDTO: UserDTO[] = [];
-        
-        for(let i = 0; i < Users.length; i++){
-            const userDTO = await this.mapper.entityToDto(Users[i]);
-            usersDTO.push(userDTO);
-        }
-        return usersDTO;
     }
 
     async muteUser(id: string,  chat: {name: string}): Promise<UserDTO> {

@@ -1,6 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, JoinTable } from "typeorm";
-import { UserStats } from "src/user-stats/user-stats.interface";
-import { UserStatsEntity } from "src/user-stats/user-stats.entity";
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('users')
 export class UserEntity {
@@ -14,31 +12,48 @@ export class UserEntity {
     username: string;
 
     @Column()
-    readonly password: string;
+    password: string;
 
     @Column()
-    readonly email: string;
+    email: string;
 
-    @Column({ type: "jsonb" })
-     chats:  [{name: string, role: string, isBanned: boolean, isMuted: boolean}];
- 
-     @Column({nullable: true})
-     state:  string;
+    @Column({ nullable: true })
+    state: string;
 
-     @OneToOne(() => UserStatsEntity, userStats => userStats.user)
-     @JoinColumn()
-     userStats: UserStatsEntity;
+    @Column({ default: 0})
+    victories: number;
 
-     @ManyToMany(() => UserEntity, (friend) => friend.userId)
-     friends: UserEntity;
+    @Column({ default: 0})
+    defeats: number;
 
-    constructor(userId: string, name: string, password: string, email: string, chat: [{name: string, role: string, isBanned: boolean, isMuted: boolean}], state: string){
+    @Column({ default: ""})
+    achievements: string;
+
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    createdAt: Date
+
+    @Column({ default: false })
+    isTwofaEnabled: boolean;
+
+    @Column(
+        {
+            // select: false, // no se selecciona en las queries a sql, por lo que no se muestra cuando devuelves el dto
+            default: "",
+        }) // si añado nullable: true después no TS me deja darle un valor
+    twofaSecret: string    
+
+    constructor(userId: string, name: string, password: string, email: string, state: string, victories: number, defeats: number, achievements: string, createdAt: Date, isTwofaEnabled: boolean, twofaSecret: string) {
         this.userId = userId;
         this.username = name;
         this.password = password;
         this.email = email;
-        this.chats = chat;
         this.state = state;
+        this.victories = victories;
+        this.defeats = defeats;
+        this.achievements = achievements;
+        this.createdAt = createdAt;
+        this.isTwofaEnabled = isTwofaEnabled;
+        this.twofaSecret = twofaSecret;   
     }
 
 }

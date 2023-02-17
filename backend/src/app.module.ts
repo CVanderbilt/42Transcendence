@@ -7,10 +7,10 @@ import { UsersModule } from './users/users.module';
 import { ChatsModule } from './chats/chats.module';
 import { ChatGateway } from './chatSocket/chat.gateway';
 import {GameGateway} from './gameSocket/game.gateway'
-import { UserStatsModule } from './user-stats/user-stats.module';
 import { FriendshipsModule } from './friendships/friendships.module';
 import { GamesModule } from './games/games.module';
 import { MatchesModule } from './matches/matches.module';
+import { Chats2Module } from './chats2/chats2.module';
 
 @Module({
   imports: [
@@ -27,10 +27,10 @@ import { MatchesModule } from './matches/matches.module';
     }),
     UsersModule,
     ChatsModule,
-    UserStatsModule,
     FriendshipsModule,
     GamesModule,
-    MatchesModule
+    MatchesModule,
+    Chats2Module,
   ],
   controllers: [],
   providers: [ChatGateway, GameGateway],

@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
 import { ChatDTO } from './chat.dto';
 import { chatsService } from './chats.service';
 
-@Controller('chats')
+@Controller('chatsOld')
 export class chatsController {
 
     constructor(private chatsService: chatsService){}

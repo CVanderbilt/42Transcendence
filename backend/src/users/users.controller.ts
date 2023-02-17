@@ -59,17 +59,6 @@ export class AddChatController {
     }
 }
 
-@Controller('chatParticipants')
-export class ChatParticipantsController {
-
-    constructor(private usersService: UsersService){}
-    
-    @Get(':chat')
-    async getParticipants(@Param('chat') chat: string): Promise<UserDTO[]> {
-        return await this.usersService.getParticipants(chat);
-    }
-}
-
 @Controller('muteUser')
 export class MuteUserController {
 
