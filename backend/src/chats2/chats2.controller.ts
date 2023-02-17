@@ -6,11 +6,7 @@ import { Chats2Service } from './chats2.service';
 @Controller('chats')
 export class Chats2Controller {
     constructor(private chatsService: Chats2Service) { }
-    // say hi
-    @Get()
-    async sayHi(): Promise<string> {
-        return "Hi 5!"
-    }
+
     // get chats rooms
     @Get('rooms')
     async findAllRooms(): Promise<ChatRoom[]> {
@@ -79,19 +75,24 @@ export class Chats2Controller {
         return this.chatsService.createChatRoomMessage(id, msg)
     }
 
-    // creat duologue
+    // Direct Messages ------------------------------------------------------------------
+
+    // get duologue
+    // finds or creates duologue
     @Post('duologues')
-    async createDuologue(@Body() data: DuologueDto) {
-        return await (this.chatsService.createDuologue(data))
+    async getDuologue(@Body() data: DuologueDto) {
+        return await (this.chatsService.getDuologue(data))
     }
     // get duologue
+    // takes two user ids and returns duologue id
     @Get('duologues')
     async findDuologue(@Body() data: DuologueDto) {
         return await (this.chatsService.findDuologue(data))
     }
+
     // post direct message
     @Post('duologues/:id')
-    async postDirectMessage(@Param('id') id: number, @Body() msg: DirectMsgDto) {
-        return this.chatsService.createDirectMessage(id, msg)
+    async postDirectMessage(@Param('id') duologueId: number, @Body() msg: DirectMsgDto) {
+        return this.chatsService.createDirectMessage(duologueId, msg)
     }
 }

@@ -126,7 +126,7 @@ export class Chats2Service {
 
     // Duologues -------------------------------------------------------------------------------
 
-    async createDuologue(data: DuologueDto) : Promise<Duologue> {
+    async getDuologue(data: DuologueDto) : Promise<Duologue> {
         var duologue = await this.findDuologue(data)
         if (!duologue) {
             const user1 = await this.usersRepo.findOne({ where: { userId: data.user1Id } });

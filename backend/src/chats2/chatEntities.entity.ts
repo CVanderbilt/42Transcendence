@@ -74,6 +74,7 @@ export class ChatMsgEntity extends BaseEntity {
     createdAt: Date
 }
 
+// Direct Messages ------------------------------------------------------------------
 @Entity('duologue')
 export class DuologueEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
