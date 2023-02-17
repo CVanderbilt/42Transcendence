@@ -21,11 +21,11 @@ import {
     }
   
     handleConnection(client: any, ...args: any[]) {
-      console.log(client + 'Hola alguien se conecto al socket 👌👌👌');
+      console.log('Hola alguien se conecto al socket 👌👌👌');
     }
   
     handleDisconnect(client: any) {
-      console.log('ALguien se fue! chao chao')
+      console.log('Alguien se fue del chat')
     }
   
   

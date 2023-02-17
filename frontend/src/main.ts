@@ -72,6 +72,13 @@ export const useSocketIO = () => {
     }
 }
 
+export const gameSocketIO = () => {
+    const socket = io('http://localhost:82')
+    return {
+        socket,
+    }
+}
+
 app.use(store, key)
 app.use(router)
 app.use(BootstrapVue3)

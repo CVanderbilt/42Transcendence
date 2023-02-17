@@ -31,6 +31,13 @@
                 >
                   Chat
                 </button>
+                <button
+                  class="btn btn-outline-light mt-3 btn-lg px-5"
+                  type="submit"
+                  v-on:click="createGame()"
+                >
+                  Game
+                </button>
               </div>
             </div>
           </div>
@@ -130,6 +137,11 @@ export default defineComponent({
           alert("Direct chat already created");
           this.$router.push("/chats?name=" + chatName);
         });
+    },
+
+    createGame(){
+      const gameId = "skdlfjhgsdkjfh"
+      this.$router.push("/game?id=" + this.uuid);
     },
 
     openChat() {

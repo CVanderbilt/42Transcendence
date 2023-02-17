@@ -268,9 +268,6 @@ export default defineComponent({
     let chatsFromUser = [{ name: "", role: "", isBanned: false, isMuted:false}];
     var createdChatParticipants: string[] = ["holi"];
     const user = store.state.user;
-    //let chatArea = this.$refs.chatArea as any
-    //console.log(chatArea.scrollTop)
-    //chatArea.scrollTop = chatArea.scrollHeight
     messages.pop();
     chatsFromUser.pop();
     createdChatParticipants.pop();

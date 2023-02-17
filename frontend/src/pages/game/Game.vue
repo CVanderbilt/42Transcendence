@@ -1,22 +1,30 @@
 <template class="gradient-custom">
   <div class="game-board">
     <div>
-      <h1>{{ "User1 " + leftUserScore + "/" + rightUserScore + " User2" }}</h1>
+      <h1>{{ leftUserName + " " + leftUserScore + "/" + rightUserScore + " " + rightUserName }}</h1>
     </div>
-    <canvas ref="canvas" width="500" height="300"></canvas>
+    <canvas ref="canvas" width="500" height="300">
+      <line x1="250" y1="0" x2="250" y2="300" style="stroke: #FFFFFF; stroke-width: 3" />
+      <text x="20" y="20" style="fill: #FFFFFF; font-size: 15px;">{{leftUserName}}</text>
+      <text x="450" y="20" style="fill: #FFFFFF; font-size: 15px;">{{rightUserName}}</text>
+    </canvas>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, computed } from "vue";
-import { useSocketIO } from "../..//main";
+import { gameSocketIO } from "../..//main";
+
+import { key, store } from "../..//store/store";
 
 export default defineComponent({
   name: "Game",
   data(): any {
-    const io = useSocketIO();
+    const io = gameSocketIO();
+    const user = store.state.user;
     return {
       io,
+      user,
       canvas: null,
       ctx: null,
       ball: null,
@@ -24,205 +32,101 @@ export default defineComponent({
       y: 280,
       dx: 2,
       dy: 2,
-      leftPaddleY: null,
+      leftPaddleY: 0,
       leftPaddleH: 75,
       leftPaddleW: 10,
       leftUserUpPressed: false,
       leftUserDownPressed: false,
       rightUserDownPressed: false,
       rightUserUpPressed: false,
-      rightPaddleY: null,
+      rightPaddleY: 0,
       rightPaddleH: 75,
       rightPaddleW: 10,
       leftUserScore: 0,
-      rightUserScore: 0
+      rightUserScore: 0,
+      leftUserName: "",
+      rightUserName: ""
     };
   },
   mounted(): void {
-    this.io.socket.emit("event_join", "sala1");
-    this.io.socket.on(("event_movement"), (message: string) => {
-    if (
-        message == "leftPaddleDown") {
-          this.leftUserDownPressed = true
-          console.log("leftDown press!")
-      } else if (message == "leftPaddleUp") {
-        this.leftUserUpPressed = true
-        console.log("leftUp press!")
-      }
-      if (message == "rightPaddleDown") {
-        this.rightUserDownPressed = true
-        console.log("rightDown press!")
-      } else if (message == "rightPaddleUp") {
-        this.rightUserUpPressed = true
-        console.log("rightUp press!")
-      }
-    });
-    this.io.socket.on(("user_release"), (message: string) => {
-      console.log(message);
-      if (
-        message == "leftPaddleDown") {
-          this.leftUserUpPressed = false
-          console.log("leftDown release!")
-
-      } else if (message == "leftPaddleUp") {
-        this.leftUserDownPressed = false
-        console.log("leftUp release!")
-      }
-      if (message == "rightPaddleDown") {
-        this.rightUserDownPressed = false
-        console.log("rightDown release!")
-      } else if (message == "rightPaddleUp") { 
-        this.rightUserUpPressed = false
-        console.log("rightUp release!")
-      }
-    });
+    this.io.socket.emit("event_join_game", {room: "sala1", username: this.user.username});
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
     this.leftPaddleY = (this.canvas.height - this.leftPaddleH) / 2;
     this.rightPaddleY = (this.canvas.height - this.rightPaddleH) / 2;
     document.addEventListener("keydown", this.keyDownHandler, false);
     document.addEventListener("keyup", this.keyUpHandler, false);
-    this.draw();
-  },
-  methods: {
-    draw(): void {
-      requestAnimationFrame(this.draw);
+    //this.draw();
+    this.io.socket.on(("draw"), (
+      ballX: number,
+      ballY: number,
+      player1pos: number,
+      player1Height: number,
+      player2pos: number,
+      player2Height: number,
+      player1score: number,
+      player2score: number,
+      player1name: string,
+      player2name: string,
+
+    ) => {
+      this.rightUserName = player2name;
+      this.leftUserName = player1name;
+      this.leftUserScore = player1score;
+      this.rightUserScore = player2score;
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.beginPath();
-      this.ctx.arc(this.x, this.y, 10, 0, Math.PI * 2);
+      this.ctx.arc(ballX, ballY, 10, 0, Math.PI * 2);
       this.ctx.fillStyle = "#FFFFFF";
       this.ctx.fill();
       this.ctx.closePath();
       this.ctx.beginPath();
-      this.ctx.rect(0, this.leftPaddleY, this.leftPaddleW, this.leftPaddleH);
+      this.ctx.rect(0, player1pos, 10, player1Height);
       this.ctx.fillStyle = "#0095DD";
       this.ctx.fill();
       this.ctx.closePath();
       this.ctx.beginPath();
       this.ctx.rect(
-        this.canvas.width - this.rightPaddleW,
-        this.rightPaddleY,
-        this.rightPaddleW,
-        this.rightPaddleH
+        this.canvas.width - 10,
+        player2pos,
+        10,
+        player2Height
       );
       this.ctx.fillStyle = "#009500";
       this.ctx.fill();
       this.ctx.closePath();
-      
-      this.x += this.dx;
-      this.y += this.dy;
-      if (this.y + this.dy > this.canvas.height - 10 || this.y + this.dy < 10) {
-        this.dy = -this.dy;
-      }
-      if (this.x + this.dx < 20) {
-        {
-          if (this.y > this.leftPaddleY && this.y < this.leftPaddleY + this.leftPaddleH) {
-            this.dx = -this.dx;
-          } else if (this.x + this.dx < 0) {
-            this.rightUserScore++;
-            this.x = 250;
-          }
-        }
-      } else if (this.x + this.dx > this.canvas.width - 20) {
-        if (this.y > this.rightPaddleY && this.y < this.rightPaddleY + this.rightPaddleH) {
-          this.dx = -this.dx;
-        } else if (this.x + this.dx > this.canvas.width - 0){
-          this.x = 250
-          this.leftUserScore++;
-          //alert("GAME OVER");
-          //document.location.reload();
-        }
-      }
-      if (
-        this.leftUserDownPressed &&
-        this.leftPaddleY < this.canvas.height - this.leftPaddleH
-      ) {
-        this.leftPaddleY += 7;
-      } else if (this.leftUserUpPressed && this.leftPaddleY > 0) {
-        this.leftPaddleY -= 7;
-      }
-      if (this.rightUserDownPressed && this.rightPaddleY < this.canvas.height - this.rightPaddleH) {
-        this.rightPaddleY += 7;
-      } else if (this.rightUserUpPressed && this.rightPaddleY > 0) {
-        this.rightPaddleY -= 7;
-      }
-    },
+    })
+  },
+  methods: {
+    
     keyDownHandler(e: KeyboardEvent): void {
       if (e.key == "Down" || e.key == "ArrowDown") {
         if (this.leftUserDownPressed == false){
-        this.io.socket.emit("rightPaddleDown", {
-          room: "sala1"
+        this.io.socket.emit("move", {
+          room: "sala1", username: this.user.username, movement: "down", type: "press"
         });
       }
       } else if (e.key == "Up" || e.key == "ArrowUp") {
         if (this.leftUserUpPressed == false){
-        this.io.socket.emit("rightPaddleUp", {
-          room: "sala1"
+        this.io.socket.emit("move", {
+          room: "sala1", username: this.user.username, movement: "up", type: "press"
         });
       }
-      } else if (e.key == "w" || e.key == "W") {
-        if (this.rightUserUpPressed == false){
-        this.io.socket.emit("leftPaddleUp", {
-          room: "sala1"
-        });
-      }
-      } else if (e.key == "s" || e.key == "S") {
-        if (this.rightUserDownPressed == false){
-        this.io.socket.emit("leftPaddleDown", {
-          room: "sala1"
-        });
-      } 
       }
     },
     keyUpHandler(e: KeyboardEvent): void {
       if (e.key == "Up" || e.key == "ArrowUp") {
-        this.io.socket.emit("key_release", {
-          room: "sala1",
-         movement: "rightPaddleUp"
+        this.io.socket.emit("move", {
+          room: "sala1", username: this.user.username, movement: "up", type: "release"
         });
       } else if (e.key == "Down" || e.key == "ArrowDown") {
-        this.io.socket.emit("key_release", {
-          room: "sala1",
-         movement: "rightPaddleDown"
-        });
-      } else if (e.key == "w" || e.key == "W") {
-        this.io.socket.emit("key_release", {
-          room: "sala1",
-          movement: "leftPaddleDown"
-        });
-      } else if (e.key == "s" || e.key == "S") {
-       this.io.socket.emit("key_release", {
-          room: "sala1",
-          movement: "leftPaddleUp"
+        this.io.socket.emit("move", {
+          room: "sala1", username: this.user.username, movement: "down", type: "release"
         });
       }
     }
   },
 });
-
-/*
-if (e.key == "Up" || e.key == "ArrowUp") {
-        this.io.socket.emit("key_release", {
-          room: "sala1",
-         movement: "rightPaddleUp"
-        });
-      } else if (e.key == "Down" || e.key == "ArrowDown") {
-        this.io.socket.emit("key_release", {
-          room: "sala1",
-         movement: "rightPaddleDown"
-        });
-      } else if (e.key == "w" || e.key == "W") {
-        this.io.socket.emit("key_release", {
-          room: "sala1",
-          movement: "leftPaddleDown"
-        });
-      } else if (e.key == "s" || e.key == "S") {
-       this.io.socket.emit("key_release", {
-          room: "sala1",
-          movement: "leftPaddleUp"
-        });
-      }
-*/
 
 
 
@@ -236,7 +140,7 @@ if (e.key == "Up" || e.key == "ArrowUp") {
 canvas {
   background: rgb(0, 0, 0);
   border: 1px solid #333;
-  width: 50%;
+  width: 70%;
   margin-top: 2em;
   height: auto;
 }
