@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { IsEmail } from "class-validator";
 
 
 export class UserDTO {
@@ -12,6 +13,7 @@ export class UserDTO {
     readonly password: string;
 
     @ApiProperty()
+    @IsEmail()
     readonly email: string;
 
     @ApiProperty()
