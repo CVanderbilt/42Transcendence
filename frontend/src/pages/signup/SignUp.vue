@@ -113,7 +113,9 @@ export default defineComponent({
             id: response.data.id,
             username: response.data.username,
             email: response.data.email,
-            password: this.password
+            password: this.password,
+
+            pic:"",
           }
           store.commit("changeUser", user);
           this.$router.push("/");

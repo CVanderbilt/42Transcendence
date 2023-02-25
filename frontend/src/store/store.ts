@@ -9,7 +9,10 @@ export interface IUser {
   id: string,
   username: string,
   email: string,
-  password: string
+  password: string,
+
+  pic: string,
+
 }
 // define your typings for the store state
 export interface State {

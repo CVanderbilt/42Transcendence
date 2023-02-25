@@ -1,13 +1,12 @@
 import { HttpException, HttpStatus, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 import { authenticator } from 'otplib';
-// import { User } from 'src/users/user.interface';
 import { UsersService } from 'src/users/users.service';
 import { toFileStream } from 'qrcode';
-import { Signin2faDto } from './signin2fa.dto';
-import { Login42dto } from './login42.dto';
+import { MeDto, Signin2faDto } from './auth.dto';
 import axios from 'axios';
+import { User } from 'src/users/user.interface';
+import { Console } from 'console';
 
 @Injectable()
 export class AuthService {
@@ -16,175 +15,154 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
-    // EMAIL AND PASSWORD ----------------------------------------
-    // async registerWithEmail(user: SignupDto) {
-    //     const saltOrRounds = 10;
-    //     const hashed = await bcrypt.hash(user.pass, saltOrRounds);
-
-    //     var userDTO: UserDTO = {
-    //         email: user.email,
-    //         name: user.name,
-    //         pass: hashed,
-    //     }
-
-    //     return this.usersService.createUser(userDTO)
-    // }
-
-
-    // async signinWithEmail(login: SigninDto) {
-    //     if (login === undefined)
-    //         throw new HttpException("USER_NOT_FOUND", HttpStatus.BAD_REQUEST)
-
-    //     const foundUser = await this.usersService.findByCredentials(login.email)
-    //     if (!foundUser) {
-    //         throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
-    //     }
-
-    //     const passCheck = await bcrypt.compare(login.pass, foundUser.pass)
-    //     if (!passCheck) {
-    //         throw new HttpException("INCORRECT_PASSWORD", HttpStatus.FORBIDDEN)
-    //     }
-
-    //     const payload = {
-    //         email: foundUser.email,
-    //     }
-
-    //     const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
-
-    //     return {
-    //         email: foundUser.email,
-    //         token: token,
-    //     }
-    // }
-
     // LOGIN WITH 42 -------------------------------------------------------------------
 
-    async exchangeCodeForToken(code: string): Promise<string> {
+    async exchangeCodeForAccessData(code: string): Promise<any> {
+        Logger.log("usando code: " + code)
+
         var bodyFormData = new FormData();
         bodyFormData.append("grant_type", "authorization_code");
-        bodyFormData.append("client_id", "u-s4t2ud-8b7831bc16e1b149ccb268da713c3705b61d3f9728492946634a9ba532d731fe");
-        bodyFormData.append("client_secret", "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");
+        bodyFormData.append("client_id", process.env.ID_42);
+        bodyFormData.append("client_secret", process.env.SECRET_42);
         bodyFormData.append("code", code);
-        bodyFormData.append("redirect_uri", "http://localhost:8080/login");
+        bodyFormData.append("redirect_uri", process.env.REDIRECT_URI);
 
-        var res = await axios({
-            method: "post",
-            url: "https://api.intra.42.fr/oauth/token",
-            data: bodyFormData,
-            headers: { "content-type": "application/x-www-form-urlencoded" },
-        })
-
-        return res.data.access_token
+        try {
+            const res = axios({
+                method: "post",
+                url: "https://api.intra.42.fr/oauth/token",
+                data: bodyFormData,
+                headers: { "content-type": "application/json" },
+            })
+    
+            const data = (await res).data
+    
+            Logger.log("respuesta de 42 oauth token:")
+            Logger.log({data})
+            return data
+        } catch (error) {
+            Logger.error("Failed getting token from 42: " + error)            
+        }
+        
     }
 
-    exchangeTokenForUserData(token: string) {
-        return axios({
+    async exchangeTokenForUserData(token: string): Promise<any> {
+        const res = axios({
             method: "get",
             url: "https://api.intra.42.fr/v2/me",
             headers: { Authorization: "Bearer " + token },
         })
+
+        return (await res).data
     }
 
-    async signIn42(code: string): Promise<string> {
-        Logger.log("code received = " + code)
-        const token = await this.exchangeCodeForToken(code)
-        const userData = await this.exchangeTokenForUserData(token)
-        // guardar datos de usuarios 
+    async signIn42(code: string): Promise<any> {
+        const accessData = await this.exchangeCodeForAccessData(code)
+
+        Logger.log({accessData})
+        const me42 = await this.exchangeTokenForUserData(accessData.access_token)
+        const name = me42.first_name + " " + me42.last_name
+        const login42 = me42.login
+        const pic = me42.image.link
+
+        // get user
+        var user: User = await this.usersService.findByCredentials(me42.login)
+        if (!user) {
+            // create user
+            Logger.log("creating user")
+            const newUserData: User = {
+                login42: login42,
+                username: name,
+            }
+            user = await this.usersService.createUser(newUserData)
+        }
+        Logger.log({ user })
 
         const payload = {
-            userName: userData.data.login,
+            userId: user.userId,
+            accessData42: accessData,
         }
 
-        return this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
 
+        const res = {
+            "login42": login42,
+            "name": name,
+            "pic": pic,
+            "token": token,
+        }
+        return res
     }
 
-//     async login42(dto: Login42dto) {
-//     Logger.log("code received = " + dto.code)
+    // 2FA ----------------------------------------
+    public async generateTwoFactorAuthenticationSecret(user: User) {
+        const secret = authenticator.generateSecret();
+        const otpauthUrl = authenticator.keyuri(user.login42, process.env.TFA_APP_NAME, secret);
+        await this.usersService.setTwofaSecret(user.userId, secret);
 
-//     const bodyFormData = new FormData();
-//     bodyFormData.append("grant_type", "authorization_code");
-//     bodyFormData.append("client_id", process.env.ID_42);
-//     bodyFormData.append("client_secret", process.env.SECRET_42);
-//     bodyFormData.append("code", dto.code);
-//     bodyFormData.append("redirect_uri", process.env.REDIRECT_URI);
-//     const res = await axios.post('https://api.intra.42.fr/oauth/token', bodyFormData, {
-//         headers: { "content-type": "application/x-www-form-urlencoded" }
-//     });
+        return { secret, otpauthUrl }
+    }
 
-//     Logger.log(res.status)
+    public async pipeQrCodeStream(stream: Response, otpauthUrl: string) {
+        return toFileStream(stream, otpauthUrl)
+    }
 
-//     // var bodyFormData = new FormData();
-//     // var response = axios({
-//     //     method: "post",
-//     //     url: "https://api.intra.42.fr/oauth/token",
-//     //     data: bodyFormData,
-//     //     headers: { "content-type": "application/x-www-form-urlencoded" },
-//     // });
+    public async isTwoFactorAuthenticationCodeValid(dto: Signin2faDto) {
+        const user = await this.usersService.findByCredentials(dto.login42)
+        const isCodeValid = authenticator.verify({
+            token: dto.twoFactorCode,
+            secret: user.twofaSecret,
+        })
+        return isCodeValid
+    }
 
+    async loginWith2fa(dto: Signin2faDto) {
+        if (dto === undefined)
+            throw new HttpException("USER_NOT_FOUND", HttpStatus.BAD_REQUEST)
 
-//     // // si no devuelve el token -> fallo
-//     // if ((await response).data.access_token === undefined)
-//     // {
-//     // }
-//     // // si hay token registra o actualiza al usuario
+        const foundUser = await this.usersService.findByCredentials(dto.login42)
+        if (!foundUser) {
+            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+        }
 
+        const isCodeValid = await this.isTwoFactorAuthenticationCodeValid(dto)
+        if (!isCodeValid) {
+            throw new UnauthorizedException('Wrong authentication code');
+        }
 
-//     return "Procesado"
-// }
+        const payload = {
+            login42: dto.login42,
+            name: foundUser.username,
+            isTwoFactorAuthenticationEnabled: !!foundUser.isTwofaEnabled,
+            isTwoFactorAuthenticated: true,
+        };
 
+        const data = {
+            login42: dto.login42,
+            token: this.jwtService.sign(payload, { secret: process.env.JWT_KEY }),
+        }
 
-//     // 2FA ----------------------------------------
-//     public async generateTwoFactorAuthenticationSecret(user: User) {
-//     const secret = authenticator.generateSecret();
-//     const otpauthUrl = authenticator.keyuri(user.email, process.env.TFA_APP_NAME, secret);
-//     await this.usersService.setTwofaSecret(user.userId, secret);
+        return data
+    }
 
-//     return { secret, otpauthUrl }
-// }
+    // --------------------------------------------
 
-//     public async pipeQrCodeStream(stream: Response, otpauthUrl: string) {
-//     return toFileStream(stream, otpauthUrl)
-// }
+    async me(req : any) : Promise<any>{
+        Logger.log("me")
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (token) {
+            try {
+                const payload = await this.jwtService.verifyAsync(token, {
+                    secret: process.env.JWT_KEY,
+                });
+                Logger.log("Token payload:")
+                Logger.log({ payload })
+                return payload
 
-//     public async isTwoFactorAuthenticationCodeValid(dto: Signin2faDto) {
-//     const user = await this.usersService.findByCredentials(dto.email)
-//     const isCodeValid = authenticator.verify({
-//         token: dto.twoFactorCode,
-//         secret: user.twofaSecret,
-//     })
-//     return isCodeValid
-// }
-
-//     async loginWith2fa(dto: Signin2faDto) {
-//     if (dto === undefined)
-//         throw new HttpException("USER_NOT_FOUND", HttpStatus.BAD_REQUEST)
-
-//     const foundUser = await this.usersService.findByCredentials(dto.email)
-//     if (!foundUser) {
-//         throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
-//     }
-
-//     const isCodeValid = await this.isTwoFactorAuthenticationCodeValid(dto)
-//     if (!isCodeValid) {
-//         throw new UnauthorizedException('Wrong authentication code');
-//     }
-
-//     const payload = {
-//         email: dto.email,
-//         name: foundUser.username,
-//         isTwoFactorAuthenticationEnabled: !!foundUser.isTwofaEnabled,
-//         isTwoFactorAuthenticated: true,
-//     };
-
-//     const data = {
-//         email: dto.email,
-//         token: this.jwtService.sign(payload, { secret: process.env.JWT_KEY }),
-//     }
-
-//     return data
-// }
-
-
+            } catch (err) {
+                console.log(err);
+            }
+        }
+    }
 }
 

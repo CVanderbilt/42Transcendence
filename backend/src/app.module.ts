@@ -12,7 +12,6 @@ import { GamesModule } from './games/games.module';
 import { MatchesModule } from './matches/matches.module';
 import { Chats2Module } from './chats2/chats2.module';
 import { AuthModule } from './auth/auth.module';
-import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -35,7 +34,7 @@ import { AppController } from './app.controller';
     Chats2Module,
     AuthModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [ChatGateway, GameGateway],
 })
 export class AppModule {}

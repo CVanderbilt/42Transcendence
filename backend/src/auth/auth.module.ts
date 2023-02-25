@@ -6,14 +6,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
-// import { Jwt2faStrategy } from './jwt-2fa-strategy';
+import { Jwt2faStrategy } from './jwt-2fa-strategy';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserEntity]),
     JwtModule.register({
       secret: process.env.JWT_KEY,
-      signOptions: { expiresIn: "1h"},
+      signOptions: { expiresIn: "24h"},
     }),
   ],
   controllers: [AuthController],
@@ -22,7 +22,7 @@ import { JwtStrategy } from './jwt.strategy';
     UsersService,
     JwtService,
     JwtStrategy,
-    // Jwt2faStrategy,
+    Jwt2faStrategy,
   ]
 })
 export class AuthModule {}
