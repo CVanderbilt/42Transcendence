@@ -7,6 +7,9 @@ import { UserEntity } from 'src/users/user.entity';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import { Jwt2faStrategy } from './jwt-2fa-strategy';
+import { Chats2Service } from 'src/chats2/chats2.service';
+import { ChatRoomEntity } from 'src/chats2/chatEntities.entity';
+import { Chats2Module } from 'src/chats2/chats2.module';
 
 @Module({
   imports: [
@@ -15,11 +18,13 @@ import { Jwt2faStrategy } from './jwt-2fa-strategy';
       secret: process.env.JWT_KEY,
       signOptions: { expiresIn: "24h"},
     }),
+    Chats2Module,
   ],
   controllers: [AuthController],
   providers: [
     AuthService, 
     UsersService,
+    Chats2Service,
     JwtService,
     JwtStrategy,
     Jwt2faStrategy,

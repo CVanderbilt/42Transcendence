@@ -1,3 +1,4 @@
+import { Exclude } from "class-transformer";
 import { UserEntity } from "src/users/user.entity";
 import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
@@ -32,6 +33,7 @@ export class ChatMembershipEntity extends BaseEntity{
 
     @ManyToOne(type => UserEntity)
     @JoinColumn()
+    @Exclude() //TODO esto no funciona pero debería. 
     user: UserEntity
 
     @ManyToOne(type => ChatRoomEntity)

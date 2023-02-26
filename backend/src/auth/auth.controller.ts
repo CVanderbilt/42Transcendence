@@ -3,7 +3,7 @@ import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
 import { Jwt2faAuthGuard } from './jwt-2fa-auth.guard';
 import { User } from 'src/users/user.interface';
-import { MeDto, Signin2faDto } from './auth.dto';
+import { Signin2faDto } from './auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')

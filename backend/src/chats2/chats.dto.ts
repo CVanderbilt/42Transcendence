@@ -1,18 +1,18 @@
 export interface ChatRoomDto {    
     name: string
     ownerId: string
-    password: string
-    isPrivate: boolean
+    password?: string
+    isPrivate?: boolean
 }
 
 export interface ChatMembershipDto {
     userId: string
     chatRoomId: number
-    isAdmin: boolean
-    isBanned: boolean
-    bannedUntil: Date
-    isMuted: boolean
-    mutedUntil: Date
+    isAdmin?: boolean
+    isBanned?: boolean
+    bannedUntil?: Date
+    isMuted?: boolean
+    mutedUntil?: Date
 }
 
 export interface ChatMsgDto {

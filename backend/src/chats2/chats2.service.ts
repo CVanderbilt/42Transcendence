@@ -43,13 +43,17 @@ export class Chats2Service {
         return this.chatRoomsRepo.findOne({ where: { id: id } })
     }
 
+    findChatRoomByName(name: string): Promise<ChatRoom> {
+        return this.chatRoomsRepo.findOne({ where: { name: name } })
+    }
+
     async findUserChatRooms(userId: string): Promise<ChatRoom[]> {
         const res = await this.chatMembershipsRepo.createQueryBuilder('membership')
             .leftJoinAndSelect('membership.chatRoom', 'chatRoom')
             .leftJoinAndSelect('membership.user', 'user')
             .where('user.id = :userId', { userId: userId })
             .getMany()
-        
+
         var rooms = []
         res.forEach(element => {
             rooms.push(element.chatRoom)
@@ -62,10 +66,26 @@ export class Chats2Service {
         const user = await this.usersRepo.findOne({ where: { userId: data.userId } });
         const room = await this.chatRoomsRepo.findOne({ where: { id: id } });
 
-        //if there is no other membership for this room set isAdmin to true
+        //if there is no other membership for this room set isAdmin to true unless specified in DTO
         const memberships = await this.chatMembershipsRepo.find({ where: { chatRoom: { id: id } } })
-        if (memberships.length == 0) {
+        Logger.log({ data })
+        if (memberships.length == 0 && data.isAdmin === undefined) {
+            Logger.log("No memberships, making this admin")
             data.isAdmin = true
+        }
+
+        // find a membership for this user in this room
+        const membership = await this.chatMembershipsRepo.find({
+            where: {
+                user: { userId: data.userId },
+                chatRoom: { id: id }
+            }
+        })
+
+        // if there is a membership, update it and return it
+        if (membership.length > 0) {
+            this.updateMembership(membership[0].id, data)
+            return this.chatMembershipsRepo.findOne({ where: { id: membership[0].id } })
         }
 
         return this.chatMembershipsRepo.save({
@@ -77,6 +97,7 @@ export class Chats2Service {
             isMuted: data.isMuted,
             mutedUntil: data.mutedUntil
         })
+
     }
 
     findChatRoomMembers(id: number): Promise<ChatMembership[]> {
@@ -94,13 +115,7 @@ export class Chats2Service {
     }
 
     async updateMembership(id: number, data: ChatMembershipDto) {
-        const membership = await this.chatMembershipsRepo.findOne({ where: { id: id } });        
-        membership.bannedUntil = data.bannedUntil
-        membership.isBanned = data.isBanned
-        membership.isAdmin = data.isAdmin
-        membership.isMuted = data.isMuted
-        membership.mutedUntil = data.mutedUntil
-        return await this.chatMembershipsRepo.save(membership)        
+        return this.chatMembershipsRepo.update({ id: id }, data)
     }
 
     deleteMembership(id: number, userId: string) {
@@ -126,7 +141,7 @@ export class Chats2Service {
 
     // Duologues -------------------------------------------------------------------------------
 
-    async getDuologue(data: DuologueDto) : Promise<Duologue> {
+    async getDuologue(data: DuologueDto): Promise<Duologue> {
         var duologue = await this.findDuologue(data)
         if (!duologue) {
             const user1 = await this.usersRepo.findOne({ where: { userId: data.user1Id } });
@@ -140,7 +155,7 @@ export class Chats2Service {
         return duologue
     }
 
-    findDuologue(data: DuologueDto) : Promise<Duologue> {
+    findDuologue(data: DuologueDto): Promise<Duologue> {
         var duologue = this.duologuesRepo.findOne({
             where: [
                 { user1: { userId: data.user1Id }, user2: { userId: data.user2Id } },
@@ -152,10 +167,10 @@ export class Chats2Service {
         return duologue
     }
 
-    async createDirectMessage(id: number, dmsg: DirectMsgDto) : Promise<DirectMsg> {
+    async createDirectMessage(id: number, dmsg: DirectMsgDto): Promise<DirectMsg> {
         const duologue = await this.duologuesRepo.findOne({ where: { id: id } });
         const user = await this.usersRepo.findOne({ where: { userId: dmsg.senderId } });
-        Logger.log({user})
+        Logger.log({ user })
         return this.directMsgsRepo.save({
             duologue: duologue,
             sender: user,

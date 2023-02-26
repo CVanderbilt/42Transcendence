@@ -17,7 +17,7 @@ export class Jwt2faStrategy extends PassportStrategy(Strategy, 'jwt-2fa') {
 
   async validate(payload: any) {
     Logger.log("inside validate sfa strategy")
-    const user = await this.userService.findByCredentials(payload.email);
+    const user = await this.userService.findByCredentials(payload.login42);
     if (user === null)
       throw new NotFoundException()
 

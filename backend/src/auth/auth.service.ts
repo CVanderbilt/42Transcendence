@@ -3,15 +3,19 @@ import { JwtService } from '@nestjs/jwt';
 import { authenticator } from 'otplib';
 import { UsersService } from 'src/users/users.service';
 import { toFileStream } from 'qrcode';
-import { MeDto, Signin2faDto } from './auth.dto';
+import { LoginResDto, Signin2faDto } from './auth.dto';
 import axios from 'axios';
 import { User } from 'src/users/user.interface';
-import { Console } from 'console';
+import { ChatMembership, ChatRoom } from 'src/chats2/chats.interface';
+import { ChatMembershipDto, ChatRoomDto } from 'src/chats2/chats.dto';
+import { Chats2Service } from 'src/chats2/chats2.service';
+import { ChatMembershipEntity } from 'src/chats2/chatEntities.entity';
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly usersService: UsersService,
+        private readonly chats2Service: Chats2Service,
         private jwtService: JwtService,
     ) { }
 
@@ -55,8 +59,32 @@ export class AuthService {
 
         return (await res).data
     }
+    
+    async joinUser2GeneralChat(userId : string)
+    {
+        Logger.log("Finding general")
+        var generalChat : ChatRoom = await this.chats2Service.findChatRoomByName(process.env.GENERAL_CHAT_NAME)
+        if (generalChat === undefined)
+        {
+            Logger.log("Not found")
+            const generalChatRoomDto : ChatRoomDto = {
+                name: process.env.GENERAL_CHAT_NAME,
+                ownerId: userId,
+                isPrivate: false,
+                password: "",
+            }
+            generalChat = await this.chats2Service.createChatRoom(generalChatRoomDto)            
+        }
+        const membership : ChatMembershipDto = {
+            userId: userId,
+            chatRoomId: generalChat.id,
+            isAdmin: false,
+        }            
+        Logger.log("joining")
+        this.chats2Service.joinChatRoom(generalChat.id, membership)
+    }
 
-    async signIn42(code: string): Promise<any> {
+    async signIn42(code: string): Promise<LoginResDto> {
         const accessData = await this.exchangeCodeForAccessData(code)
 
         Logger.log({accessData})
@@ -76,7 +104,10 @@ export class AuthService {
             }
             user = await this.usersService.createUser(newUserData)
         }
-        Logger.log({ user })
+        Logger.log("User logging in: " + user.username )
+
+        this.joinUser2GeneralChat(user.userId)
+        const chats : ChatMembership[] = await this.chats2Service.findUserMemberships(user.userId)
 
         const payload = {
             userId: user.userId,
@@ -84,12 +115,13 @@ export class AuthService {
         }
 
         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
-
-        const res = {
+        const res : LoginResDto = {
             "login42": login42,
             "name": name,
             "pic": pic,
             "token": token,
+            "is2fa": user.isTwofaEnabled,
+            "chats": chats
         }
         return res
     }
