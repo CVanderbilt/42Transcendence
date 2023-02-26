@@ -18,7 +18,7 @@ export class UsersService {
     }
 
     async findOneById(id: string): Promise<User> {
-        return this.usersRepo.findOne( { where: { userId: id } } )
+        return this.usersRepo.findOne( { where: { id: id } } )
     }
 
     async findByCredentials(login42: string): Promise<User> {

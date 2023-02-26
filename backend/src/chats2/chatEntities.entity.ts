@@ -33,7 +33,6 @@ export class ChatMembershipEntity extends BaseEntity{
 
     @ManyToOne(type => UserEntity)
     @JoinColumn()
-    @Exclude() //TODO esto no funciona pero debería. 
     user: UserEntity
 
     @ManyToOne(type => ChatRoomEntity)

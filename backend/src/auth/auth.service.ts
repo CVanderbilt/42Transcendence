@@ -64,7 +64,7 @@ export class AuthService {
     {
         Logger.log("Finding general")
         var generalChat : ChatRoom = await this.chats2Service.findChatRoomByName(process.env.GENERAL_CHAT_NAME)
-        if (generalChat === undefined)
+        if (!generalChat)
         {
             Logger.log("Not found")
             const generalChatRoomDto : ChatRoomDto = {
@@ -75,6 +75,7 @@ export class AuthService {
             }
             generalChat = await this.chats2Service.createChatRoom(generalChatRoomDto)            
         }
+        Logger.log({generalChat})
         const membership : ChatMembershipDto = {
             userId: userId,
             chatRoomId: generalChat.id,
