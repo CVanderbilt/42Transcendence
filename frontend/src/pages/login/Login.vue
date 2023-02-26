@@ -17,11 +17,11 @@
                   <img src="@/assets/logo.png" height="90" />
                 </div>
                 <h2 class="fw-bold mb-2 text-uppercase">FT_TRANSCENDENCE</h2>
-                <p class="text-white-50 mb-5">
+                <!-- <p class="text-white-50 mb-5">
                   Please enter your login and password!
-                </p>
+                </p> -->
 
-                <div class="form-outline form-white mb-4">
+                <!-- <div class="form-outline form-white mb-4">
                   <input type="username" id="typeusernameX" class="form-control form-control-lg"
                     v-on:keyup.enter="validateLogin()" v-model="username" />
                   <label class="form-label" for="typeusernameX">Username</label>
@@ -31,23 +31,23 @@
                   <input type="password" id="typePasswordX" class="form-control form-control-lg"
                     v-on:keyup.enter="validateLogin()" v-model="password" />
                   <label class="form-label" for="typePasswordX">Password</label>
-                </div>
+                </div> -->
 
                 <p class="small mb-5 pb-lg-2">
                   <a class="text-white-50" v-bind:href="login42page">Login with 42 user</a>
                 </p>
 
-                <button class="btn btn-outline-light btn-lg px-5" type="submit" v-on:click="validateLogin()">
+                <!-- <button class="btn btn-outline-light btn-lg px-5" type="submit" v-on:click="validateLogin()">
                   Login
-                </button>
+                </button> -->
               </div>
-
+<!-- 
               <div>
                 <p class="mb-0">
                   Don't have an account?
                   <a href="/signUp" class="text-white-50 fw-bold">Sign Up</a>
                 </p>
-              </div>
+              </div> -->
             </div>
           </div>
         </div>
@@ -64,7 +64,7 @@ import axios from "axios";
 import { anyTypeAnnotation } from "@babel/types";
 import { getUser } from "../../api/username";
 import { createUser } from "../../api/user";
-import { client_id, client_secret, login42url, redirect_uri } from "@/config";
+import { login42url } from "@/config";
 import { apiClient } from "@/api/baseApi";
 import { ConstantTypes } from "@vue/compiler-core";
 
