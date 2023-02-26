@@ -8,10 +8,8 @@ import { isNumeric } from 'bootstrap-vue-3/dist/utils';
 export interface IUser {
   id: string,
   username: string,
-  email: string,
-  password: string,
-
   pic: string,
+  is2fa: boolean,
 
 }
 // define your typings for the store state

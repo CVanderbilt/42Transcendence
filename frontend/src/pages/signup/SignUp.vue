@@ -105,17 +105,16 @@ export default defineComponent({
         createUser({
           username: this.username,
           password: this.password,
-          email: this.email
+          email: this.email,
+          is2fa: false,
         })
         .then((response) => {
           console.log(response.data);
           const user: IUser = {
             id: response.data.id,
             username: response.data.username,
-            email: response.data.email,
-            password: this.password,
-
             pic:"",
+            is2fa: response.data.is2fa,
           }
           store.commit("changeUser", user);
           this.$router.push("/");

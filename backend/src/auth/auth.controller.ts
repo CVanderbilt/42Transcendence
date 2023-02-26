@@ -5,6 +5,7 @@ import { Jwt2faAuthGuard } from './jwt-2fa-auth.guard';
 import { User } from 'src/users/user.interface';
 import { Signin2faDto } from './auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { request } from 'http';
 
 @Controller('auth')
 export class AuthController {
@@ -25,34 +26,35 @@ export class AuthController {
     }
   }
 
-  @Post('2fa/qr')
+  @Get('2fa/qr')
   @UseGuards(Jwt2faAuthGuard)
-  async generateQr(@Body() dto: User, @Res() response: Response) {
+  async generateQr(@Req() req, @Res() response: Response) {    
+    const dto : User = req.user    
     const secret = await this.authService.generateTwoFactorAuthenticationSecret(dto)
     // update user secret
-    this.usersService.setTwofaSecret(dto.login42, secret.secret)
+    this.usersService.setTwofaSecret(dto.userId, secret.secret)
     // return qr
     this.authService.pipeQrCodeStream(response, secret.otpauthUrl)
   }
 
-  @Post('2fa/turn-on')
+  @Post('2fa/turn-on/:code')
   @HttpCode(200) // cambia el código por defecto que en post es 201
   @UseGuards(Jwt2faAuthGuard)
-  async turnOnTwoFactorAuthentication(@Body() signin2faDto: Signin2faDto) {
-    const isCodeValid = await this.authService.isTwoFactorAuthenticationCodeValid(signin2faDto)
-
+  async turnOnTwoFactorAuthentication(@Req() request, @Param('code') twoFactorCode: string) {
+    const isCodeValid = await this.authService.isTwoFactorAuthenticationCodeValid(request.user.id, twoFactorCode)
     if (!isCodeValid) {
       throw new UnauthorizedException('Wrong authentication code');
     }
 
-    return await this.usersService.EnableTwofa(signin2faDto.login42, true);
+    return await this.usersService.EnableTwofa(request.user.login42, true);
   }
 
-  @Post('2fa/authenticate')
+  @Post('2fa/authenticate/:code')
   @HttpCode(200) // cambia el código por defecto que en post es 201
   @UseGuards(JwtAuthGuard)
-  async authenticate(@Body() signin2faDto: Signin2faDto) {
-    return this.authService.loginWith2fa(signin2faDto);
+  async authenticate(@Req() request, @Param('code') twoFactorCode: string) {
+    Logger.log("authenticate with 2fa code : " + twoFactorCode + " for user " + request.user.login42)
+    return this.authService.loginWith2fa(request.user.id, twoFactorCode);
   }
 
   @Get('/me')

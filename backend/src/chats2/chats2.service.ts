@@ -68,13 +68,10 @@ export class Chats2Service {
 
         //if there is no other membership for this room set isAdmin to true unless specified in DTO
         const memberships = await this.chatMembershipsRepo.find({ where: { chatRoom: { id: id } } })
-        Logger.log({ data })
         if (memberships.length == 0 && data.isAdmin === undefined) {
-            Logger.log("No memberships, making this admin")
             data.isAdmin = true
         }
 
-        Logger.log("before ")
         // find a membership for this user in this room
         const membership = await this.chatMembershipsRepo.find({
             where: {
@@ -83,7 +80,6 @@ export class Chats2Service {
             }
         })
         
-        Logger.log("after ")
         // if there is a membership, update it and return it
         if (membership.length > 0) {
             this.updateMembership(membership[0].id, data)
@@ -173,7 +169,6 @@ export class Chats2Service {
     async createDirectMessage(id: number, dmsg: DirectMsgDto): Promise<DirectMsg> {
         const duologue = await this.duologuesRepo.findOne({ where: { id: id } });
         const user = await this.usersRepo.findOne({ where: { id: dmsg.senderId } });
-        Logger.log({ user })
         return this.directMsgsRepo.save({
             duologue: duologue,
             sender: user,

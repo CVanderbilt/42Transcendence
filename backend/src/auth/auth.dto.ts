@@ -16,6 +16,5 @@ export class LoginResDto {
 }
 
 export class Signin2faDto {
-    login42: string
     twoFactorCode: string
 }

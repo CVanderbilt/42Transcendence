@@ -7,13 +7,13 @@
             <div class="card-body p-5 text-center">
               <div class="mb-md-5 mt-md-4 pb-9">
                 <div class="
-                                  d-flex
-                                  justify-content-center
-                                  text-center
-                                  mt-4
-                                  mb-5
-                                  pt-1
-                                ">
+                                                    d-flex
+                                                    justify-content-center
+                                                    text-center
+                                                    mt-4
+                                                    mb-5
+                                                    pt-1
+                                                  ">
                   <img src="@/assets/logo.png" height="90" />
                 </div>
                 <h2 class="fw-bold mb-2 text-uppercase">FT_TRANSCENDENCE</h2>
@@ -33,15 +33,26 @@
                   <label class="form-label" for="typePasswordX">Password</label>
                 </div> -->
 
-                <p class="small mb-5 pb-lg-2">
-                  <a class="text-white-50" v-bind:href="login42page">Login with 42 user</a>
-                </p>
+                <div v-if="is2faCodeRequired.status === false">
+                  <p class="small mb-5 pb-lg-2">
+                    <a class="text-white-50" v-bind:href="login42page">Login with 42 user</a>
+                  </p>
+                </div>
+                <div v-if="is2faCodeRequired.status === true">
+                  <form @submit.prevent="submitCode">
+                    <div class="form-group">
+                      <label for="code">Enter the code from your app:</label>
+                      <input type="text" class="form-control" id="code" v-model="twoFactorCode" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                  </form>
+                </div>
 
                 <!-- <button class="btn btn-outline-light btn-lg px-5" type="submit" v-on:click="validateLogin()">
                   Login
                 </button> -->
               </div>
-<!-- 
+              <!-- 
               <div>
                 <p class="mb-0">
                   Don't have an account?
@@ -57,14 +68,14 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent } from "vue";
+import { computed, defineComponent, reactive } from "vue";
 import { useStore, mapActions } from "vuex";
 import { IUser, key, store } from "../../store/store";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { anyTypeAnnotation } from "@babel/types";
 import { getUser } from "../../api/username";
 import { createUser } from "../../api/user";
-import { login42url } from "@/config";
+import { AUTHENTICATE_2FA_ENDPOINT, ENABLE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";
 import { apiClient } from "@/api/baseApi";
 import { ConstantTypes } from "@vue/compiler-core";
 
@@ -75,75 +86,129 @@ export default defineComponent({
       username: "",
       password: "",
       code: "",
-      login42page: login42url,
+      login42page: LOGIN_42_URL,
+      is2faEnabled: false,
+      twoFactorCode: ""
     };
   },
   async mounted() {
-    console.log("login mounted")
-
+    // comprueba si ya hay un token válido
+    try {
+      await this.checkToken()
+      this.$router.push("/");
+    }
+    catch (error) {
+      console.log("Token no válido o no existe")
+    }
 
     // comprueba si hay un codigo en la url
     if (this.$route.query.code) {
       console.log("existe code: " + this.$route.query.code)
       this.code = this.$route.query.code as string;
-      this.loginWithServer(this.code)
-        .then(() => this.checkToken())
-        .then(() => {
-          this.$router.push("/");
-        });
+      try {
+        await this.getToken(this.code)
+        await this.checkToken()
+        this.$router.push("/")
+      } catch (error) {
+        console.log("Error al obtener el token")
+      }
+    }
+  },
+
+  setup() {
+    const reactiveIs2fa = reactive({
+      status: false
+    })
+
+    return {
+      is2faCodeRequired: reactiveIs2fa,
     }
   },
 
   methods: {
-
     // Cambia el codigo de 42 por el JWT token y los datos de usuario
-    async loginWithServer(code: string) {
+    async getToken(code: string) {
       try {
-        // adquiere el token
-        console.log("Adquiriendo token")
+        console.log("Adquiriendo token con login de 42")
         var bodyFormData = new FormData();
         bodyFormData.append("code", code);
-        await axios({
+        const response = await axios({
           method: "post",
           url: "http://localhost:3000/auth/login",
           data: bodyFormData,
           headers: { "content-type": "application/json" }, // Al mandarlo como JSON lo podemos recibir directamente en el backend
-        }).then((response) => {
-          console.log({ response })
-          localStorage.setItem("token", response.data.token)
-  
-          const user: IUser = {
-            id: response.data.id,
-            username: response.data.username,
-            email: response.data.email,
-            password: "",
-  
-            pic: response.data.pic,
-          }
-          store.commit("changeUser", user)
         })
-      } catch (error) {
+
+        if (response.status !== 201) {
+          throw new Error("Failed logging in with server")
+        }
+
+        console.log({ response })
+        localStorage.setItem("token", response.data.token)
+        console.log("regular token: " + localStorage.getItem("token"))
+
+        const user: IUser = {
+          id: response.data.id,
+          username: response.data.username,
+          pic: response.data.pic,
+          is2fa: response.data.is2fa,
+        }
+        store.commit("changeUser", user)
+
+        this.is2faCodeRequired.status = response.data.is2fa
+        console.log("is2faCodeRequired.status: " + this.is2faCodeRequired.status)
+      }
+      catch (error) {
         console.log("Failed logging in with server: " + error)
+        throw (error)
       }
     },
 
     // Si existe token pedimos los datos de usuario al servidor y los guardamos
-    checkToken() {
+    async checkToken() {
       // comprueba si ya hay un token en el local storage y si es valido
       console.log(localStorage.getItem("token"))
       if (localStorage.getItem("token") === null) {
-        alert("Token not found. Log in again")
-        return
+        throw new Error("No token found")
       }
-
-      console.log("existe token: " + localStorage.getItem("token"))
-      console.log("Validando token")
+      
       try {
-        apiClient.get("/auth/me")
+        await apiClient.get("/auth/me").then((response) => {
+          if (response.status !== 200) {            
+            throw new Error("Token is invalid")
+          }
+          console.log({ response })
+          const user: IUser = {
+            id: response.data.id,
+            username: response.data.username,
+            pic: response.data.pic,
+            is2fa: response.data.is2fa,
+          }
+          store.commit("changeUser", user)
+        })
       }
-      catch(error)
-      {
+      catch (error) {
         console.log("Token is invalid :" + error)
+        throw (error)
+      }
+    },
+
+    async submitCode() {
+      console.log("submitCode: " + this.twoFactorCode + "")
+      try {
+        //Validate the user's code and redirect them to the appropriate page
+        const response = await apiClient.post(AUTHENTICATE_2FA_ENDPOINT + "/" + this.twoFactorCode);
+        if (response.status === 200) {
+          this.$router.push('/');
+          return
+        }
+  
+      } catch (error : any) {
+        if (error.response.status === 401) {
+          alert('Invalid code, please try again.');
+        }
+        else
+          console.log(error);
       }
     },
   }

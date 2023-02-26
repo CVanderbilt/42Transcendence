@@ -48,9 +48,9 @@ export class UsersService {
         return u.isTwofaEnabled
     }
 
-    async setTwofaSecret(login42: string, secret: string) {
-        const u = await this.usersRepo.findOneBy({ login42 : login42 })
-        u.twofaSecret = secret
-        u.save()
+    async setTwofaSecret(userId: string, secret: string) {
+        const user = await this.usersRepo.findOneBy({ id : userId })
+        user.twofaSecret = secret
+        user.save()
     }
 }

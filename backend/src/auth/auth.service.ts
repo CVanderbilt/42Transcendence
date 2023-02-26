@@ -22,8 +22,6 @@ export class AuthService {
     // LOGIN WITH 42 -------------------------------------------------------------------
 
     async exchangeCodeForAccessData(code: string): Promise<any> {
-        Logger.log("usando code: " + code)
-
         var bodyFormData = new FormData();
         bodyFormData.append("grant_type", "authorization_code");
         bodyFormData.append("client_id", process.env.ID_42);
@@ -41,8 +39,6 @@ export class AuthService {
     
             const data = (await res).data
     
-            Logger.log("respuesta de 42 oauth token:")
-            Logger.log({data})
             return data
         } catch (error) {
             Logger.error("Failed getting token from 42: " + error)            
@@ -62,11 +58,9 @@ export class AuthService {
     
     async joinUser2GeneralChat(userId : string)
     {
-        Logger.log("Finding general")
         var generalChat : ChatRoom = await this.chats2Service.findChatRoomByName(process.env.GENERAL_CHAT_NAME)
         if (!generalChat)
         {
-            Logger.log("Not found")
             const generalChatRoomDto : ChatRoomDto = {
                 name: process.env.GENERAL_CHAT_NAME,
                 ownerId: userId,
@@ -81,7 +75,6 @@ export class AuthService {
             chatRoomId: generalChat.id,
             isAdmin: false,
         }            
-        Logger.log("joining")
         this.chats2Service.joinChatRoom(generalChat.id, membership)
     }
 
@@ -105,7 +98,6 @@ export class AuthService {
             }
             user = await this.usersService.createUser(newUserData)
         }
-        Logger.log("User logging in: " + user.username )
 
         this.joinUser2GeneralChat(user.userId)
         const chats : ChatMembership[] = await this.chats2Service.findUserMemberships(user.userId)
@@ -140,38 +132,39 @@ export class AuthService {
         return toFileStream(stream, otpauthUrl)
     }
 
-    public async isTwoFactorAuthenticationCodeValid(dto: Signin2faDto) {
-        const user = await this.usersService.findByCredentials(dto.login42)
+    public async isTwoFactorAuthenticationCodeValid(userId: string, code: string) {
+        const user = await this.usersService.findOneById(userId);
+        Logger.log(user.login42 + " " + user.twofaSecret)
         const isCodeValid = authenticator.verify({
-            token: dto.twoFactorCode,
+            token: code,
             secret: user.twofaSecret,
         })
         return isCodeValid
     }
 
-    async loginWith2fa(dto: Signin2faDto) {
-        if (dto === undefined)
+    async loginWith2fa(userId: string, code: string) {
+        if (userId === undefined)
             throw new HttpException("USER_NOT_FOUND", HttpStatus.BAD_REQUEST)
 
-        const foundUser = await this.usersService.findByCredentials(dto.login42)
+        const foundUser = await this.usersService.findOneById(userId)
         if (!foundUser) {
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
         }
 
-        const isCodeValid = await this.isTwoFactorAuthenticationCodeValid(dto)
+        const isCodeValid = await this.isTwoFactorAuthenticationCodeValid(userId, code)
         if (!isCodeValid) {
             throw new UnauthorizedException('Wrong authentication code');
         }
 
         const payload = {
-            login42: dto.login42,
+            login42: foundUser.login42,
             name: foundUser.username,
             isTwoFactorAuthenticationEnabled: !!foundUser.isTwofaEnabled,
             isTwoFactorAuthenticated: true,
         };
 
         const data = {
-            login42: dto.login42,
+            login42: foundUser.login42,
             token: this.jwtService.sign(payload, { secret: process.env.JWT_KEY }),
         }
 
