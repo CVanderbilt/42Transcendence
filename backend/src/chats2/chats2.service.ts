@@ -115,6 +115,7 @@ export class Chats2Service {
     }
 
     async updateMembership(id: number, data: ChatMembershipDto) {
+        delete data.chatRoomId
         return this.chatMembershipsRepo.update({ id: id }, data)
     }
 
