@@ -41,8 +41,12 @@ export const store = createStore<State>({
       state.socket = useSocketIO();
     },
     changeUser(state, user: IUser) {
-      //console.log(user.username)
       state.user = user;
+      console.log("changing user");
+      console.log(user);
+      
+      console.log(state.user);
+      
     },
   },
   actions: {

@@ -69,7 +69,6 @@ export class AuthService {
             }
             generalChat = await this.chats2Service.createChatRoom(generalChatRoomDto)            
         }
-        Logger.log({generalChat})
         const membership : ChatMembershipDto = {
             userId: userId,
             chatRoomId: generalChat.id,
@@ -81,7 +80,6 @@ export class AuthService {
     async signIn42(code: string): Promise<LoginResDto> {
         const accessData = await this.exchangeCodeForAccessData(code)
 
-        Logger.log({accessData})
         const me42 = await this.exchangeTokenForUserData(accessData.access_token)
         const name = me42.first_name + " " + me42.last_name
         const login42 = me42.login
@@ -91,31 +89,33 @@ export class AuthService {
         var user: User = await this.usersService.findByCredentials(me42.login)
         if (!user) {
             // create user
-            Logger.log("creating user")
             const newUserData: User = {
                 login42: login42,
                 username: name,
             }
             user = await this.usersService.createUser(newUserData)
         }
+        Logger.log("User: " + user.id + " logged in")
 
-        this.joinUser2GeneralChat(user.userId)
-        const chats : ChatMembership[] = await this.chats2Service.findUserMemberships(user.userId)
+        this.joinUser2GeneralChat(user.id)
+        const chats : ChatMembership[] = await this.chats2Service.findUserMemberships(user.id)
 
         const payload = {
-            userId: user.userId,
+            userId: user.id,
             accessData42: accessData,
         }
 
         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
         const res : LoginResDto = {
+            "userId": user.id,
             "login42": login42,
             "name": name,
             "pic": pic,
             "token": token,
-            "is2fa": user.isTwofaEnabled,
+            "is2fa": user.is2fa,
             "chats": chats
         }
+
         return res
     }
 
@@ -123,7 +123,7 @@ export class AuthService {
     public async generateTwoFactorAuthenticationSecret(user: User) {
         const secret = authenticator.generateSecret();
         const otpauthUrl = authenticator.keyuri(user.login42, process.env.TFA_APP_NAME, secret);
-        await this.usersService.setTwofaSecret(user.userId, secret);
+        await this.usersService.setTwofaSecret(user.id, secret);
 
         return { secret, otpauthUrl }
     }
@@ -134,7 +134,6 @@ export class AuthService {
 
     public async isTwoFactorAuthenticationCodeValid(userId: string, code: string) {
         const user = await this.usersService.findOneById(userId);
-        Logger.log(user.login42 + " " + user.twofaSecret)
         const isCodeValid = authenticator.verify({
             token: code,
             secret: user.twofaSecret,
@@ -159,7 +158,7 @@ export class AuthService {
         const payload = {
             login42: foundUser.login42,
             name: foundUser.username,
-            isTwoFactorAuthenticationEnabled: !!foundUser.isTwofaEnabled,
+            isTwoFactorAuthenticationEnabled: !!foundUser.is2fa,
             isTwoFactorAuthenticated: true,
         };
 
@@ -174,15 +173,12 @@ export class AuthService {
     // --------------------------------------------
 
     async me(req : any) : Promise<any>{
-        Logger.log("me")
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (token) {
             try {
                 const payload = await this.jwtService.verifyAsync(token, {
                     secret: process.env.JWT_KEY,
                 });
-                Logger.log("Token payload:")
-                Logger.log({ payload })
                 return payload
 
             } catch (err) {

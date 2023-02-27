@@ -12,7 +12,7 @@ export class UserEntity extends BaseEntity {
     username: string
 
     @Column({ default: false })
-    isTwofaEnabled: boolean;
+    is2fa: boolean;
 
     @Column(
         {

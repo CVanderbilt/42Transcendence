@@ -66,14 +66,14 @@ export class Chats2Service {
         const user = await this.usersRepo.findOne({ where: { id: data.userId } });
         const room = await this.chatRoomsRepo.findOne({ where: { id: id } });
 
-        //if there is no other membership for this room set isAdmin to true unless specified in DTO
-        const memberships = await this.chatMembershipsRepo.find({ where: { chatRoom: { id: id } } })
-        if (memberships.length == 0 && data.isAdmin === undefined) {
+        // //if there is no other membership for this room set isAdmin to true unless specified in DTO
+        const roomMemberships = await this.chatMembershipsRepo.find({ where: { chatRoom: { id: id } } })
+        if (roomMemberships.length == 0 && data.isAdmin === undefined) {
             data.isAdmin = true
         }
 
         // find a membership for this user in this room
-        const membership = await this.chatMembershipsRepo.find({
+        const userMembership = await this.chatMembershipsRepo.find({
             where: {
                 user: { id: data.userId },
                 chatRoom: { id: id }
@@ -81,9 +81,11 @@ export class Chats2Service {
         })
         
         // if there is a membership, update it and return it
-        if (membership.length > 0) {
-            this.updateMembership(membership[0].id, data)
-            return this.chatMembershipsRepo.findOne({ where: { id: membership[0].id } })
+        if (userMembership.length > 0) {
+            delete data.userId
+            delete data.chatRoomId
+            this.updateMembership(userMembership[0].id, data)
+            return this.chatMembershipsRepo.findOne({ where: { id: userMembership[0].id } })
         }
 
         return this.chatMembershipsRepo.save({
@@ -95,7 +97,6 @@ export class Chats2Service {
             isMuted: data.isMuted,
             mutedUntil: data.mutedUntil
         })
-
     }
 
     findChatRoomMembers(id: number): Promise<ChatMembership[]> {

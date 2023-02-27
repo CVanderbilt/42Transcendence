@@ -17,13 +17,10 @@ import { store, key } from './store/store'
 import io from 'socket.io-client';
 import User from './components/User.vue'
 
-
-
-
 const routes = [
     { path: '/', name: "home", component: Home, meta: { requiresAuth: true } },
     { path: '/login', name: "login", component: Login, meta: { onlyWithoutAuth: true } },
-    { path: '/signUp', name: "signUp", component: SignUp, meta: { onlyWithoutAuth: true } },
+    // { path: '/signUp', name: "signUp", component: SignUp, meta: { onlyWithoutAuth: true } },
     { path: '/settings', name: "settings", component: Settings, meta: { requiresAuth: true } },
     { path: '/chats', name: "chats", component: Chat, meta: { requiresAuth: true } },
     { path: '/user', name: "user", component: User, meta: { requiresAuth: true } },
@@ -43,7 +40,6 @@ router.beforeEach((to, from, next) => {
     if (to.matched.some(route => route.meta.requiresAuth)) {
         if (!store.state.user && to.matched.some(route => route.meta.requiresAuth)) {
             next('/login')
-
         }
         else {
             next()
@@ -61,8 +57,6 @@ router.beforeEach((to, from, next) => {
         next()
     }
 })
-
-
 
 export const app = createApp(App);
 

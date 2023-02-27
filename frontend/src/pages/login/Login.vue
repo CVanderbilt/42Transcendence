@@ -7,13 +7,13 @@
             <div class="card-body p-5 text-center">
               <div class="mb-md-5 mt-md-4 pb-9">
                 <div class="
-                                                    d-flex
-                                                    justify-content-center
-                                                    text-center
-                                                    mt-4
-                                                    mb-5
-                                                    pt-1
-                                                  ">
+                                                            d-flex
+                                                            justify-content-center
+                                                            text-center
+                                                            mt-4
+                                                            mb-5
+                                                            pt-1
+                                                          ">
                   <img src="@/assets/logo.png" height="90" />
                 </div>
                 <h2 class="fw-bold mb-2 text-uppercase">FT_TRANSCENDENCE</h2>
@@ -93,25 +93,14 @@ export default defineComponent({
   },
   async mounted() {
     // comprueba si ya hay un token válido
-    try {
-      await this.checkToken()
-      this.$router.push("/");
-    }
-    catch (error) {
-      console.log("Token no válido o no existe")
-    }
+    await this.tokenLogin()
 
     // comprueba si hay un codigo en la url
     if (this.$route.query.code) {
       console.log("existe code: " + this.$route.query.code)
-      this.code = this.$route.query.code as string;
-      try {
-        await this.getToken(this.code)
-        await this.checkToken()
-        this.$router.push("/")
-      } catch (error) {
-        console.log("Error al obtener el token")
-      }
+      this.code = this.$route.query.code as string
+      await this.getToken(this.code)
+      await this.tokenLogin()
     }
   },
 
@@ -128,10 +117,10 @@ export default defineComponent({
   methods: {
     // Cambia el codigo de 42 por el JWT token y los datos de usuario
     async getToken(code: string) {
+      console.log("Adquiriendo token con login de 42")
+      var bodyFormData = new FormData();
+      bodyFormData.append("code", code);
       try {
-        console.log("Adquiriendo token con login de 42")
-        var bodyFormData = new FormData();
-        bodyFormData.append("code", code);
         const response = await axios({
           method: "post",
           url: "http://localhost:3000/auth/login",
@@ -140,75 +129,78 @@ export default defineComponent({
         })
 
         if (response.status !== 201) {
-          throw new Error("Failed logging in with server")
+          console.log("Failed logging in with server: " + response.status)
+          return
         }
 
-        console.log({ response })
         localStorage.setItem("token", response.data.token)
         console.log("regular token: " + localStorage.getItem("token"))
 
+        this.is2faCodeRequired.status = response.data.is2fa
+        console.log("is2faCodeRequired.status: " + this.is2faCodeRequired.status)
+
+        console.log("userId: " + response.data.userId);
+        
         const user: IUser = {
-          id: response.data.id,
-          username: response.data.username,
+          id: response.data.userId,
+          username: response.data.name,
           pic: response.data.pic,
           is2fa: response.data.is2fa,
         }
         store.commit("changeUser", user)
-
-        this.is2faCodeRequired.status = response.data.is2fa
-        console.log("is2faCodeRequired.status: " + this.is2faCodeRequired.status)
+        //store.commit("setupChats", response.data.chats)
       }
       catch (error) {
-        console.log("Failed logging in with server: " + error)
-        throw (error)
+        console.log("Get token: " + error)
       }
     },
 
     // Si existe token pedimos los datos de usuario al servidor y los guardamos
-    async checkToken() {
+    async tokenLogin() {
       // comprueba si ya hay un token en el local storage y si es valido
       console.log(localStorage.getItem("token"))
       if (localStorage.getItem("token") === null) {
-        throw new Error("No token found")
+        console.log("Token login: No token found")
+        return
       }
-      
+
       try {
         await apiClient.get("/auth/me").then((response) => {
-          if (response.status !== 200) {            
-            throw new Error("Token is invalid")
+          if (response.status === 401) {
+            console.log("Token login: Invalid token")
+            return
           }
-          console.log({ response })
-          const user: IUser = {
-            id: response.data.id,
-            username: response.data.username,
-            pic: response.data.pic,
-            is2fa: response.data.is2fa,
+          if (response.status !== 200) {
+            console.log("Token login: Error getting user data")
+            return
           }
-          store.commit("changeUser", user)
+          console.log("You are in")
+          this.$router.push("/")
         })
       }
       catch (error) {
-        console.log("Token is invalid :" + error)
-        throw (error)
+        console.log("Token login: " + error)
       }
     },
 
     async submitCode() {
       console.log("submitCode: " + this.twoFactorCode + "")
       try {
+
         //Validate the user's code and redirect them to the appropriate page
-        const response = await apiClient.post(AUTHENTICATE_2FA_ENDPOINT + "/" + this.twoFactorCode);
+        const response = await apiClient.post(AUTHENTICATE_2FA_ENDPOINT + "/" + this.twoFactorCode)
         if (response.status === 200) {
-          this.$router.push('/');
-          return
+          localStorage.setItem("token", response.data.token)
+          this.tokenLogin()
         }
-  
-      } catch (error : any) {
+      } catch (error: any) {
         if (error.response.status === 401) {
-          alert('Invalid code, please try again.');
+          alert('Invalid code, please try again.')
         }
-        else
-          console.log(error);
+        else {
+          alert('Something went wrong, please try again.')
+        }
+        console.log(error.name + ": " + error.message)
       }
     },
   }

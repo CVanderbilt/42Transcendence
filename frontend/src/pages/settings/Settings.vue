@@ -48,7 +48,7 @@
 </template>
   
 <script lang="ts">
-import { computed, defineComponent } from "vue";
+import { computed, defineComponent, reactive } from "vue";
 import { useStore, mapActions } from "vuex";
 import { IUser, key, store } from "../../store/store";
 import { Buffer } from "buffer";
@@ -66,16 +66,24 @@ export default defineComponent({
       user
     };
   },
+
   data() {
     const options: IUserAPI = {
       username: "",
-      email: "",
-      password: "",
       is2fa: false,
     }
     return {
       options
     };
+  },
+
+  mounted() {
+    if (!store.state.user) {
+      console.error("no hay id y esta intentando modificar, no debería ni pasar");
+      return;
+    }
+    this.options.username = store.state.user.username;
+    this.options.is2fa = store.state.user.is2fa;
   },
 
   methods: {
@@ -89,7 +97,8 @@ export default defineComponent({
         console.error("no hay id y esta intentando modificar, no debería ni pasar");
         return;
       }
-      // alert("update user info: " + this.options.username);
+
+      alert("update user info: " + this.options.username);
 
       // const input = this.$refs.fileInput as HTMLInputElement;
 
@@ -116,8 +125,13 @@ export default defineComponent({
       //   };
       // }
 
-      // updateUser(store.state.user.id, this.options);
-
+      console.log("update user info: " + store.state.user.id);
+      
+      updateUser(store.state.user.id, this.options);
+      // si el usuario quiere activar 2fa llevarlo a la pagina de 2fa
+      if (this.options.is2fa && !store.state.user.is2fa) {
+          this.$router.push("/qr");
+      }
     },
 
     getImgURL(): string {

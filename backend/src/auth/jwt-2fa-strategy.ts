@@ -16,12 +16,13 @@ export class Jwt2faStrategy extends PassportStrategy(Strategy, 'jwt-2fa') {
   }
 
   async validate(payload: any) {
-    Logger.log("inside validate sfa strategy")
-    const user = await this.userService.findByCredentials(payload.login42);
+    Logger.log("inside validate 2fa strategy")
+    const user = await this.userService.findOneById(payload.userId);
+    Logger.log({user})
     if (user === null)
       throw new NotFoundException()
 
-    if (!user.isTwofaEnabled) {
+    if (!user.is2fa) {
       return user;
     }
 

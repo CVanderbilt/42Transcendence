@@ -21,7 +21,7 @@ export class AuthController {
       const res = await this.authService.signIn42(data.code)
       return res
     } catch (cause) {
-      Logger.error(cause)
+        Logger.error(cause)
       throw new HttpException("Unauthorized user", 401, { cause })
     }
   }
@@ -32,7 +32,7 @@ export class AuthController {
     const dto : User = req.user    
     const secret = await this.authService.generateTwoFactorAuthenticationSecret(dto)
     // update user secret
-    this.usersService.setTwofaSecret(dto.userId, secret.secret)
+    this.usersService.setTwofaSecret(dto.id, secret.secret)
     // return qr
     this.authService.pipeQrCodeStream(response, secret.otpauthUrl)
   }
@@ -60,6 +60,7 @@ export class AuthController {
   @Get('/me')
   @UseGuards(Jwt2faAuthGuard)
   async me(@Req() req) : Promise<any>{
+    Logger.log("me called")
     const me = await this.authService.me(req);
     Logger.log("me ok!")
     return me;

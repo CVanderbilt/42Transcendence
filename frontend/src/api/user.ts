@@ -4,9 +4,6 @@ const URL = "/users";
 
 export interface IUserAPI {
     username: string,
-    password: string,
-    email: string,
-
     is2fa: boolean,
 }
 
@@ -14,8 +11,8 @@ async function createUser(options: IUserAPI) {
     return apiClient.post(URL, {...options, chats: [{name: "general", role: "user"}]});
 }
 
-async function updateUser(id: string, options: IUserAPI) {
-    alert("will update user!!!")
+async function updateUser(id: string, options: IUserAPI) {    
+    alert(`will update user ${id} !!!`)
     return apiClient.put(`${URL}/${id}`, options);
 }
 

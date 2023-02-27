@@ -25,12 +25,12 @@ export class UsersController {
     }
 
     @Put(':id')
-    update(@Body() user: User, @Param('id') id: number): Promise<UpdateResult> {
+    update(@Body() user: User, @Param('id') id: string): Promise<UpdateResult> {
         return this.usersService.updateUser(id, user)
     }
 
     @Delete(':id')
-    delete(@Param('id') id: number): Promise<DeleteResult> {
+    delete(@Param('id') id: string): Promise<DeleteResult> {
         return this.usersService.deleteUser(id)
     }
 
@@ -38,4 +38,5 @@ export class UsersController {
     getTokenUser() {
         return "hola"
     }
+    
 }

@@ -7,6 +7,7 @@ export class Login42dto {
 }
 
 export class LoginResDto {
+    userId: string
     login42: string
     name: string
     pic: string

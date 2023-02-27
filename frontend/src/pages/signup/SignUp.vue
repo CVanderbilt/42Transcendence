@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <section class="vh-100 gradient-custom">
     <div class="container py-5 h-100">
       <div class="row d-flex justify-content-center align-items-center h-100">
@@ -70,9 +70,9 @@
       </div>
     </div>
   </section>
-</template>
+</template> -->
 
-<script lang="ts">
+<!-- <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
 //import { hashPassword } from "@/utils/utils";
@@ -127,10 +127,10 @@ export default defineComponent({
     ...mapActions(["mockLogin"]),
   },
 });
-</script>
+</script> -->
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<!-- <style scoped>
 .gradient-custom {
   /* fallback for old browsers */
   background: #3609da;
@@ -149,4 +149,4 @@ export default defineComponent({
     rgb(193, 209, 237)
   );
 }
-</style>
+</style> -->

@@ -2,10 +2,10 @@ import { IsUUID } from "class-validator"
 
 export class User {
     @IsUUID()
-    userId?: string
+    id?: string
     login42: string
     username: string
-    isTwofaEnabled?: boolean
+    is2fa?: boolean
     twofaSecret?: string
 
     victories?: number

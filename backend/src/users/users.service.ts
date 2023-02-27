@@ -22,6 +22,8 @@ export class UsersService {
     }
 
     async findByCredentials(login42: string): Promise<User> {
+        Logger.log("inside findByCredentials")
+        Logger.log(login42)
         return this.usersRepo.findOne( { where: { login42: login42 } } )
     }
 
@@ -33,19 +35,22 @@ export class UsersService {
         return this.usersRepo.find();
     }
 
-    updateUser(id: number, user: User): Promise<UpdateResult> {
+    updateUser(id: string, user: User): Promise<UpdateResult> {
+        // No se puede activar 2FA sin validar el codigo de google authenticator
+        if (user.is2fa === true)
+            delete user.is2fa
         return this.usersRepo.update(id, user)
     }
 
-    deleteUser(id: number): Promise<DeleteResult> {
+    deleteUser(id: string): Promise<DeleteResult> {
         return this.usersRepo.delete(id);
     }
 
     async EnableTwofa(login42: string, value: boolean) {
         const u = await this.usersRepo.findOneBy({ login42 : login42 })
-        u.isTwofaEnabled = value
+        u.is2fa = value
         u.save()
-        return u.isTwofaEnabled
+        return u.is2fa
     }
 
     async setTwofaSecret(userId: string, secret: string) {

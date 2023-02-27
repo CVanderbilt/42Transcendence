@@ -4,7 +4,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
-import { ChatsModule } from './chats/chats.module';
+// import { ChatsModule } from './chats/chats.module';
 import { ChatGateway } from './chatSocket/chat.gateway';
 import {GameGateway} from './gameSocket/game.gateway'
 import { FriendshipsModule } from './friendships/friendships.module';
@@ -27,7 +27,7 @@ import { AuthModule } from './auth/auth.module';
       synchronize: true,
     }),    
     UsersModule,
-    ChatsModule,
+    // ChatsModule,
     FriendshipsModule,
     GamesModule,
     MatchesModule,
