@@ -74,7 +74,7 @@ export default defineComponent({
     }
     return {
       options
-    };
+    }
   },
 
   mounted() {
@@ -82,48 +82,40 @@ export default defineComponent({
       console.error("no hay id y esta intentando modificar, no debería ni pasar");
       return;
     }
+
     this.options.username = store.state.user.username;
     this.options.is2fa = store.state.user.is2fa;
   },
 
   methods: {
     submit() {
-      // alert("submitted!!")
-      console.log("options:")
-      console.log(this.options)
-      console.log(store.state.user)
-
       if (!store.state.user) {
         console.error("no hay id y esta intentando modificar, no debería ni pasar");
         return;
       }
 
-      alert("update user info: " + this.options.username);
+      const input = this.$refs.fileInput as HTMLInputElement;
 
-      // const input = this.$refs.fileInput as HTMLInputElement;
+      if (input.files) { // todo: extraer a funcion a parte
+        const file: Blob = input.files[0];
+        const fileReader = new FileReader();
 
-      // if (input.files) { // todo: extraer a funcion a parte
-      //   const file: Blob = input.files[0];
+        try {
+          fileReader.readAsArrayBuffer(file);
+        } catch (error) {
+          alert(error);
+        }
 
-      //   const fileReader = new FileReader();
+        fileReader.onload = () => {
+          if (!store.state.user) {
+            console.error("no hay id y esta intentando modificar, no debería ni pasar");
+            return;
+          }
+          const buffer = Buffer.from(fileReader.result as ArrayBuffer);
 
-      //   try {
-      //     fileReader.readAsArrayBuffer(file);
-      //   } catch (error) {
-      //     alert(error);
-      //   }
-
-
-      //   fileReader.onload = () => {
-      //     if (!store.state.user) {
-      //       console.error("no hay id y esta intentando modificar, no debería ni pasar");
-      //       return;
-      //     }
-      //     const buffer = Buffer.from(fileReader.result as ArrayBuffer);
-
-      //     // addImage call would be here
-      //   };
-      // }
+          // addImage call would be here
+        };
+      }
 
       console.log("update user info: " + store.state.user.id);
       

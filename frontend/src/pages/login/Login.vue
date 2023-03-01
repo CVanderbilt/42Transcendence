@@ -74,7 +74,6 @@ import { IUser, key, store } from "../../store/store";
 import axios, { AxiosError } from "axios";
 import { anyTypeAnnotation } from "@babel/types";
 import { getUser } from "../../api/username";
-import { createUser } from "../../api/user";
 import { AUTHENTICATE_2FA_ENDPOINT, ENABLE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";
 import { apiClient } from "@/api/baseApi";
 import { ConstantTypes } from "@vue/compiler-core";
