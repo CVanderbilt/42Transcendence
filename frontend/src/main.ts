@@ -7,6 +7,7 @@ import Settings from './pages/settings/Settings.vue'
 import Home from './pages/home/Home.vue'
 import Chat from './pages/chats/Chat.vue'
 import Game from './pages/game/Game.vue'
+import QrValidation from './pages/2fa/Qr.vue'
 import BootstrapVue3 from 'bootstrap-vue-3'
 import VueAxios from 'vue-axios'
 import axios from 'axios'
@@ -14,11 +15,7 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue-3/dist/bootstrap-vue-3.css'
 import { store, key } from './store/store'
 import io from 'socket.io-client';
-import VueSocketIO from 'vue-socket.io'
 import User from './components/User.vue'
-
-
-
 
 const routes = [
     { path: '/', name: "home", component: Home, meta: { requiresAuth: true } },
@@ -27,7 +24,8 @@ const routes = [
     { path: '/settings', name: "settings", component: Settings, meta: { requiresAuth: true } },
     { path: '/chats', name: "chats", component: Chat, meta: { requiresAuth: true } },
     { path: '/user', name: "user", component: User, meta: { requiresAuth: true } },
-    { path: '/game', name: "game", component: Game, meta: { requiresAuth: true } }
+    { path: '/game', name: "game", component: Game, meta: { requiresAuth: true } },
+    { path: '/qr', name: "qr", component: QrValidation, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
@@ -42,7 +40,6 @@ router.beforeEach((to, from, next) => {
     if (to.matched.some(route => route.meta.requiresAuth)) {
         if (!store.state.user && to.matched.some(route => route.meta.requiresAuth)) {
             next('/login')
-
         }
         else {
             next()
@@ -60,8 +57,6 @@ router.beforeEach((to, from, next) => {
         next()
     }
 })
-
-
 
 export const app = createApp(App);
 

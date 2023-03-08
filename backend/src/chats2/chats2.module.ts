@@ -7,15 +7,22 @@ import { UserEntity } from 'src/users/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ChatRoomEntity]),
-    TypeOrmModule.forFeature([ChatMembershipEntity]),
-    TypeOrmModule.forFeature([ChatMsgEntity]),
-    TypeOrmModule.forFeature([UserEntity]),
-    TypeOrmModule.forFeature([DuologueEntity]),
-    TypeOrmModule.forFeature([DirectMsgEntity]),
+    TypeOrmModule.forFeature([
+      ChatRoomEntity,
+      ChatMembershipEntity,
+      ChatMsgEntity,
+      UserEntity,
+      DuologueEntity,
+      DirectMsgEntity,
+    ]),
   ],
   providers: [Chats2Service],
-  controllers: [Chats2Controller]
+  controllers: [Chats2Controller],
+  exports: [
+    TypeOrmModule.forFeature([
+      ChatRoomEntity,
+    ])],
+
 })
 
 export class Chats2Module {}

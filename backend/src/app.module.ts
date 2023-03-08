@@ -4,13 +4,14 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
-import { ChatsModule } from './chats/chats.module';
+// import { ChatsModule } from './chats/chats.module';
 import { ChatGateway } from './chatSocket/chat.gateway';
 import {GameGateway} from './gameSocket/game.gateway'
 import { FriendshipsModule } from './friendships/friendships.module';
 import { GamesModule } from './games/games.module';
 import { MatchesModule } from './matches/matches.module';
 import { Chats2Module } from './chats2/chats2.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -24,13 +25,14 @@ import { Chats2Module } from './chats2/chats2.module';
       database: process.env.POSTGRES_DATABASE,
       autoLoadEntities: true,
       synchronize: true,
-    }),
+    }),    
     UsersModule,
-    ChatsModule,
+    // ChatsModule,
     FriendshipsModule,
     GamesModule,
     MatchesModule,
     Chats2Module,
+    AuthModule,
   ],
   controllers: [],
   providers: [ChatGateway, GameGateway],

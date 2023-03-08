@@ -73,11 +73,10 @@
 </template>
 
 <script lang="ts">
+import { signup } from "@/api/auth";
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
-//import { hashPassword } from "@/utils/utils";
 import { IUser, key, store } from "../../store/store";
-import { createUser, } from "../..//api/user";
 
 export default defineComponent({
   name: "SignUp",
@@ -102,22 +101,24 @@ export default defineComponent({
   methods: {
     signUpNewUser() {
       if (this.email === this.repeatedemail) {
-        createUser({
+        signup({
           username: this.username,
           password: this.password,
-          email: this.email
+          email: this.email,
         })
         .then((response) => {
           console.log(response.data);
           const user: IUser = {
             id: response.data.id,
-            username: response.data.username,
             email: response.data.email,
-            password: this.password
+            password: response.data.password,
+            username: response.data.username,
+            pic:"",
+            is2fa: response.data.is2fa,
           }
           store.commit("changeUser", user);
           this.$router.push("/");
-        }).catch(error => alert("username already in use"));
+        }).catch(error => alert("Can not sign up! ("+error+")"));
         
       } else {
         alert("email and repeated email are not the same");

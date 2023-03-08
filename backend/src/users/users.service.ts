@@ -1,54 +1,63 @@
-import { Injectable } from '@nestjs/common';
-import { UserDTO } from './user.dto';
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { UserEntity } from './user.entity';
-import { UserMapper } from './user.mapper';
-import { UsersRepository } from './users.repository';
+import { User } from './user.interface';
+import * as bcrypt from 'bcrypt';
+
 
 @Injectable()
 export class UsersService {
-
     constructor(
-        private usersRepository: UsersRepository,
-        private mapper: UserMapper
-        ){}
+        @InjectRepository(UserEntity)
+        private readonly usersRepo: Repository<UserEntity>
+    ) { }
 
-    async getAllUsers(): Promise<UserDTO[]> {
-        const users: UserEntity[] = await this.usersRepository.getAllUsers()
-        return users.map(user => this.mapper.entityToDto(user));
+    async createUser(user: User): Promise<User> {
+        return this.usersRepo.save(user);
     }
 
-    async getUserById(id: string): Promise<UserDTO> {
-        const user: UserEntity = await this.usersRepository.getUserById(id);
-        return this.mapper.entityToDto(user);
+    async findOneById(id: string): Promise<User> {
+        return this.usersRepo.findOne( { where: { id: id } } )
     }
 
-    async getUserByUsername(username: string): Promise<UserDTO> {
-        const user: UserEntity = await this.usersRepository.getUserByUsername(username);
-        return this.mapper.entityToDto(user);
+    async findBy42Login(login42: string): Promise<User> {
+        return this.usersRepo.findOne( { where: { login42: login42 } } )
     }
 
-    async newUser(userDTO: UserDTO): Promise<UserDTO> {
-        const newUser: UserEntity = await this.usersRepository.newUser(userDTO);        
-        return this.mapper.entityToDto(newUser);
+    async findByEmail(email: string): Promise<User> {
+        return this.usersRepo.findOne( { where: { email: email } } )
     }
 
-    async updateUser(id: string, userDTO: UserDTO): Promise<UserDTO> {
-        const updateUser = await this.usersRepository.updateUser(id, userDTO);
-        return this.mapper.entityToDto(updateUser);
+    async checkpass(pass: string, encryptedPass: string): Promise<Boolean> {
+        return await bcrypt.compare(pass, encryptedPass);
     }
 
-    async updateUserChats(id: string,  chat: {name: string, role: string, isBanned: boolean, isMuted: boolean}): Promise<UserDTO> {
-        const updateUser = await this.usersRepository.updateUserChats(id, chat);
-        return this.mapper.entityToDto(updateUser);
+    findAllUsers(): Promise<User[]> {
+        return this.usersRepo.find();
     }
 
-    async muteUser(id: string,  chat: {name: string}): Promise<UserDTO> {
-        const updateUser = await this.usersRepository.muteUser(id, chat);
-        return this.mapper.entityToDto(updateUser);
+    updateUser(id: string, user: User): Promise<UpdateResult> {
+        // No se puede activar 2FA sin validar el codigo de google authenticator
+        if (user.is2fa === true)
+            delete user.is2fa
+        return this.usersRepo.update(id, user)
     }
 
-    async deleteUser(id: string): Promise<void> {
-        await this.usersRepository.deleteUser(id);
+    deleteUser(id: string): Promise<DeleteResult> {
+        return this.usersRepo.delete(id);
     }
 
+    async EnableTwofa(login42: string, value: boolean) {
+        const u = await this.usersRepo.findOneBy({ login42 : login42 })
+        u.is2fa = value
+        u.save()
+        return u.is2fa
+    }
+
+    async setTwofaSecret(userId: string, secret: string) {
+        const user = await this.usersRepo.findOneBy({ id : userId })
+        user.twofaSecret = secret
+        user.save()
+    }
 }
