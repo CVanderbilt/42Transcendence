@@ -3,9 +3,8 @@ import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
 import { Jwt2faAuthGuard } from './jwt-2fa-auth.guard';
 import { User } from 'src/users/user.interface';
-import { Signin2faDto } from './auth.dto';
+import { EmailSignupDto, LoginEmailDto } from './auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { request } from 'http';
 
 @Controller('auth')
 export class AuthController {
@@ -14,15 +13,34 @@ export class AuthController {
     private readonly usersService: UsersService,
   ) { }
 
-  
+  @Post('esignup')
+  async signup(@Body() data: EmailSignupDto) {
+    try {
+      const res = await this.authService.registerWithEmail(data)
+      return res
+    } catch (cause) {
+      throw new HttpException("Unauthorized user", 401, { cause })
+    }
+  }
+
+  @HttpCode(200) // cambia el código por defecto que en post es 201
+  @Post('elogin')
+  async loginEmail(@Body() data: LoginEmailDto) {
+    try {
+      return this.authService.loginWithEmail(data);
+    }
+    catch (cause) {
+      Logger.log(cause)
+    }
+  }
+
   @Post('login')
-  async login(@Body() data: any) {
+  async login42(@Body() data: {code: string}) {
     try {
       const res = await this.authService.signIn42(data.code)
       return res
     } catch (cause) {
-        Logger.error(cause)
-      throw new HttpException("Unauthorized user", 401, { cause })
+        Logger.log(cause)
     }
   }
 
@@ -59,7 +77,7 @@ export class AuthController {
 
   @Get('/me')
   @UseGuards(Jwt2faAuthGuard)
-  async me(@Req() req) : Promise<any>{
+  async me(@Req() req) : Promise<any> {
     Logger.log("me called")
     const me = await this.authService.me(req);
     Logger.log("me ok!")

@@ -3,13 +3,14 @@ import { JwtService } from '@nestjs/jwt';
 import { authenticator } from 'otplib';
 import { UsersService } from 'src/users/users.service';
 import { toFileStream } from 'qrcode';
-import { LoginResDto, Signin2faDto } from './auth.dto';
+import { LoginResDto, EmailSignupDto, LoginEmailDto } from './auth.dto';
 import axios from 'axios';
 import { User } from 'src/users/user.interface';
 import { ChatMembership, ChatRoom } from 'src/chats2/chats.interface';
 import { ChatMembershipDto, ChatRoomDto } from 'src/chats2/chats.dto';
 import { Chats2Service } from 'src/chats2/chats2.service';
-import { ChatMembershipEntity } from 'src/chats2/chatEntities.entity';
+import * as bcrypt from 'bcrypt';
+
 
 @Injectable()
 export class AuthService {
@@ -19,8 +20,65 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
-    // LOGIN WITH 42 -------------------------------------------------------------------
+    // LOGIN WITH EMAIL -------------------------------------------------------------------
+    async registerWithEmail(data: EmailSignupDto) {
+        // check if user exists
+        const existingUser = await this.usersService.findByEmail(data.email)
+        if (existingUser) {
+            throw new HttpException("User already exists", HttpStatus.BAD_REQUEST)
+        }
 
+        // create user
+        const saltOrRounds = 10;
+        const hashed = await bcrypt.hash(data.password, saltOrRounds);
+        var userDto: User = {
+            email: data.email,
+            username: data.username,
+            password: hashed,
+        }
+
+        const user : User = await this.usersService.createUser(userDto)
+
+        this.joinUser2GeneralChat(user.id)
+    }
+
+    async loginWithEmail(login: LoginEmailDto) {
+        if (login === undefined)
+            throw new HttpException("INVALID_DATA", HttpStatus.BAD_REQUEST)
+
+        const user = await this.usersService.findByEmail(login.email)
+        if (!user) {
+            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+        }
+
+        const passCheck = await bcrypt.compare(login.password, user.password)
+        if (!passCheck) {
+            throw new HttpException("INCORRECT_PASSWORD", HttpStatus.FORBIDDEN)
+        }
+
+        const chats : ChatMembership[] = await this.chats2Service.findUserMemberships(user.id)
+        const pic : string = "" // TODO: get generic pic?
+        
+        const payload = {
+            userId: user.id,
+            email: user.email,
+        }
+
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
+        const res : LoginResDto = {
+            "userId": user.id,
+            "email": user.email,
+            "name": user.username,
+            "pic": pic,
+            "token": token,
+            "is2fa": user.is2fa,
+            "chats": chats
+        }
+
+        return res
+    }
+
+    // LOGIN WITH 42 -------------------------------------------------------------------
     async exchangeCodeForAccessData(code: string): Promise<any> {
         var bodyFormData = new FormData();
         bodyFormData.append("grant_type", "authorization_code");
@@ -86,7 +144,7 @@ export class AuthService {
         const pic = me42.image.link
 
         // get user
-        var user: User = await this.usersService.findByCredentials(me42.login)
+        var user: User = await this.usersService.findBy42Login(me42.login)
         if (!user) {
             // create user
             const newUserData: User = {

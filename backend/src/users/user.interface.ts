@@ -3,7 +3,9 @@ import { IsUUID } from "class-validator"
 export class User {
     @IsUUID()
     id?: string
-    login42: string
+    email?: string
+    password?: string
+    login42?: string
     username: string
     is2fa?: boolean
     twofaSecret?: string

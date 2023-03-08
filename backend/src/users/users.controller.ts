@@ -8,10 +8,10 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 export class UsersController {
     constructor(private usersService: UsersService) { }
 
-    @Post()
-    async create(@Body() user: User) {
-        return this.usersService.createUser(user)
-    }
+    // @Post()
+    // async create(@Body() user: User) {
+    //     return this.usersService.createUser(user)
+    // }
 
     // @UseGuards(JwtAuthGuard)
     @Get()
@@ -32,11 +32,5 @@ export class UsersController {
     @Delete(':id')
     delete(@Param('id') id: string): Promise<DeleteResult> {
         return this.usersService.deleteUser(id)
-    }
-
-    @Get("/me")
-    getTokenUser() {
-        return "hola"
-    }
-    
+    }    
 }

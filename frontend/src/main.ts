@@ -20,7 +20,7 @@ import User from './components/User.vue'
 const routes = [
     { path: '/', name: "home", component: Home, meta: { requiresAuth: true } },
     { path: '/login', name: "login", component: Login, meta: { onlyWithoutAuth: true } },
-    // { path: '/signUp', name: "signUp", component: SignUp, meta: { onlyWithoutAuth: true } },
+    { path: '/signUp', name: "signUp", component: SignUp, meta: { onlyWithoutAuth: true } },
     { path: '/settings', name: "settings", component: Settings, meta: { requiresAuth: true } },
     { path: '/chats', name: "chats", component: Chat, meta: { requiresAuth: true } },
     { path: '/user', name: "user", component: User, meta: { requiresAuth: true } },

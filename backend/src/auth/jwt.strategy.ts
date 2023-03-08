@@ -17,7 +17,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
-        const user = await this.userService.findByCredentials(payload.login42);
+        const user = await this.userService.findBy42Login(payload.login42);
         if (user === null)
             throw new NotFoundException()
         return user // hay que devolver algo que no sea null para que el guard passe ok

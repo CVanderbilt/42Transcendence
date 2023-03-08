@@ -21,10 +21,12 @@ export class UsersService {
         return this.usersRepo.findOne( { where: { id: id } } )
     }
 
-    async findByCredentials(login42: string): Promise<User> {
-        Logger.log("inside findByCredentials")
-        Logger.log(login42)
+    async findBy42Login(login42: string): Promise<User> {
         return this.usersRepo.findOne( { where: { login42: login42 } } )
+    }
+
+    async findByEmail(email: string): Promise<User> {
+        return this.usersRepo.findOne( { where: { email: email } } )
     }
 
     async checkpass(pass: string, encryptedPass: string): Promise<Boolean> {

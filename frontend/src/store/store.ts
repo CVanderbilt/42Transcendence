@@ -7,7 +7,9 @@ import { isNumeric } from 'bootstrap-vue-3/dist/utils';
 
 export interface IUser {
   id: string,
+  email: string,
   username: string,
+  password: string,
   pic: string,
   is2fa: boolean,
 
