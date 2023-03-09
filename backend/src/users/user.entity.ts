@@ -5,10 +5,10 @@ export class UserEntity extends BaseEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string
 
-    @Column () 
+    @Column ({ nullable: true }) 
     email: string
 
-    @Column () 
+    @Column ({ nullable: true }) 
     password: string
 
     @Column({ nullable: true })
