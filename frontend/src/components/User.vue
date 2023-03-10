@@ -52,7 +52,7 @@ import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
 import { key, store } from "../store/store";
 import { getUserById } from "../api/user";
-import { newChat } from "../api/chat";
+import { newChat } from "../api/chatApi";
 import { getChat } from "../api/chatname";
 import axios from "axios";
 
@@ -117,7 +117,7 @@ export default defineComponent({
         password: "",
         messages: [],
       })
-        .then((response) => {
+        .then((response : any) => {
           axios({
             method: "put",
             url: "http://localhost:3000/addChat/" + UUID,
@@ -133,7 +133,7 @@ export default defineComponent({
             this.$router.push("/chats?name=" + response.data.chatname)
           );
         })
-        .catch((err) => {
+        .catch((err: any) => {
           alert("Direct chat already created");
           this.$router.push("/chats?name=" + chatName);
         });

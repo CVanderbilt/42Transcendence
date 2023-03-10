@@ -7,7 +7,7 @@ import { Chats2Service } from './chats2.service';
 export class Chats2Controller {
     constructor(private chatsService: Chats2Service) { }
 
-    // get chats rooms
+    // get chat rooms
     @Get('rooms')
     async findAllRooms(): Promise<ChatRoom[]> {
         return await (this.chatsService.findAllChatRooms()) 
@@ -17,6 +17,12 @@ export class Chats2Controller {
     @Get('rooms/:id')
     async findRoom(@Param('id') id: number): Promise<ChatRoom> {
         return await (this.chatsService.findChatRoomById(id))
+    }
+
+    // get chat room by name
+    @Get('rooms/name/:name')
+    async findRoomByName(@Param('name') name: string): Promise<ChatRoom> {
+        return await (this.chatsService.findChatRoomByName(name))
     }
            
     // get chat rooms for user
@@ -51,9 +57,9 @@ export class Chats2Controller {
         return await (this.chatsService.findChatRoomMembers(id))
     }
 
-    // get user membership
+    // get user memberships
     @Get('memberships/user/:userId')
-    async findUserMembership(@Param('userId') userId: string) : Promise<ChatMembership[]> {
+    async findUserMemberships(@Param('userId') userId: string) : Promise<ChatMembership[]> {
         return await (this.chatsService.findUserMemberships(userId)) 
     }
 

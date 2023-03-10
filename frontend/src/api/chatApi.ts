@@ -37,4 +37,43 @@ async function getChatById(id: string) {
     return apiClient.get(`${URL}/${id}`);
 }
 
-export {updateChat, getChatById, newChat, makeid}
+// ----------------------------------------------
+
+async function getChatRoomsForUser(userId: string) {
+    return apiClient.get(`${URL}/rooms/${userId}`);
+}
+
+async function getUserMemberships(userId: string) {
+    return apiClient.get(`${URL}/memberships/user/${userId}`);
+}
+
+async function getChatRoomByName(name: string) {
+    try {
+        const response = await apiClient.get(`${URL}/rooms/name/${name}`)
+        return response.data
+    }
+    catch (error) {
+        console.log(error)
+    }
+}
+
+async function getChatRoomMessages(roomId: string) {
+    try {
+        const response = await apiClient.get(`${URL}/rooms/${roomId}/messages`)
+        return response.data
+    }
+    catch (error) {
+        console.log(error)
+    }
+}
+
+export {
+    updateChat, 
+    getChatById, 
+    newChat, 
+    makeid,
+    getChatRoomsForUser, 
+    getUserMemberships,
+    getChatRoomByName, 
+    getChatRoomMessages,
+}

@@ -6,90 +6,57 @@
         <main>
           <div class="container-fluid px-4">
             <h1 class="mt-0" style="color: white">CHAT</h1>
-    
+
             <div class="row chats-window">
               <div class="col chats-list">
                 <div v-for="item in chatsFromUser" v-bind:key="item.name">
-                  <b-button
-                    v-on:click="searchChat(item.name)"
-                    style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;"
-                  >
+                  <b-button v-on:click="searchChat(item.name)"
+                    style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                     {{ getNameDirectMessage(item.name) }}
                   </b-button>
                 </div>
               </div>
               <div class="col-9 chat-column">
                 <div class="chat-header">
-                  {{ getNameDirectMessage(chatname) }}
+                  {{ getNameDirectMessage(chatName) }}
                 </div>
                 <div ref="chatArea" class="chat-area">
-                  <div
-                    v-for="message in messages"
-                    v-bind:key="message.message"
-                    class="message"
-                    :class="{
-                      'message-out': message.username === user?.username,
-                      'message-in': message.username !== user?.username,
-                    }"
-                  >
-                    <b-col
-                      ><p
-                        v-if="message.username === user?.username"
-                        class="message-text"
-                      >
+                  <div v-for="message in messages" v-bind:key="message.message" class="message" :class="{
+                    'message-out': message.username === user?.username,
+                    'message-in': message.username !== user?.username,
+                  }">
+                    <b-col>
+                      <p v-if="message.username === user?.username" class="message-text">
                         <a>{{ message.message }}</a>
-                      </p></b-col
-                    >
-                    <b-col
-                      ><p
-                        v-if="message.username !== user?.username"
-                        class="message-text"
-                      >
+                      </p>
+                    </b-col>
+                    <b-col>
+                      <p v-if="message.username !== user?.username" class="message-text">
                         <a v-on:click="searchFriend(message.username)">{{
                           message.username + ": "
-                        }}</a
-                        ><a>{{ message.message }}</a>
-                      </p></b-col
-                    >
+                        }}</a><a>{{ message.message }}</a>
+                      </p>
+                    </b-col>
                   </div>
                 </div>
                 <div class="form-outline form-white chat-footer">
-                  <input
-                    type="username"
-                    id="typeusernameX"
-                    v-on:keyup.enter="sendMessage()"
-                    v-model="message"
-                    class="chat-input"
-                  />
+                  <input type="username" id="typeusernameX" v-on:keyup.enter="sendMessage()" v-model="message"
+                    class="chat-input" />
                   <b-button class="chat-button" v-on:click="sendMessage()">Send message</b-button>
-                  <b-button v-if="role === 'owner' ||  role === 'admin'" class="chat-button" @click="modalChatAdmin = !modalChatAdmin"   style="margin-left: 10px">Manage chat</b-button>
+                  <b-button v-if="role === 'owner' || role === 'admin'" class="chat-button"
+                    @click="modalChatAdmin = !modalChatAdmin" style="margin-left: 10px">Manage chat</b-button>
                 </div>
               </div>
             </div>
 
             <div class="form-outline form-white mb-4">
-              <input
-                type="username"
-                id="typeusernameX"
-                class="form-control form-control-lg"
-                v-model="searchedChat"
-                placeholder="Chat name"
-              />
-              <input
-                type="password"
-                id="typePasswordX"
-                class="form-control form-control-lg"
-                placeholder="Password"
-                v-model="searchedChatPassword"
-                :disabled="!searchedChatRequiresPassword"
-              />
+              <input type="username" id="typeusernameX" class="form-control form-control-lg" v-model="searchedChat"
+                placeholder="Chat name" />
+              <input type="password" id="typePasswordX" class="form-control form-control-lg" placeholder="Password"
+                v-model="searchedChatPassword" :disabled="!searchedChatRequiresPassword" />
 
               <b-button @click="searchChat(searchedChat)">Search chat</b-button>
-              <input
-                type="checkbox"
-                v-model="searchedChatRequiresPassword"
-                v-on:click="searchedChatPassword = ''"
-              />
+              <input type="checkbox" v-model="searchedChatRequiresPassword" v-on:click="searchedChatPassword = ''" />
             </div>
             <b-button @click="modalShow = !modalShow">Create Chat</b-button>
 
@@ -98,51 +65,28 @@
       </div>
     </div>
     <div>
-      <b-modal
-        id="modal-center"
-        centered="true"
-        v-model="modalShow"
-        @ok="handleSubmitCreateChat()"
-      >
+      <b-modal id="modal-center" centered="true" v-model="modalShow" @ok="handleSubmitCreateChat()">
         <div class="mb-md-5 pb-9">
           <h2 class="fw-bold mb-5 text-uppercase">Create chat</h2>
 
           <div class="form-outline form-white mb-2">
-            <input
-              type="chatname"
-              id="typeChatname"
-              class="form-control form-control-lg"
-              placeholder="Type chat name"
-              v-model="createdChatName"
-            />
+            <input type="chatName" id="typechatName" class="form-control form-control-lg" placeholder="Type chat name"
+              v-model="createdchatName" />
             <label class="form-label" for="typeUsername">Chat name</label>
           </div>
           <div class="form-outline form-white mb-2">
-            <input
-              type="password"
-              id="typePasswordX"
-              class="form-control form-control-lg"
-              placeholder="Type your new password"
-              v-model="createdChatPassword"
-              :disabled="!createdChatRequiresPassword"
-            />
+            <input type="password" id="typePasswordX" class="form-control form-control-lg"
+              placeholder="Type your new password" v-model="createdChatPassword"
+              :disabled="!createdChatRequiresPassword" />
             <label class="form-label" for="typeEmailX">Password needed? </label>
             <input type="checkbox" v-model="createdChatRequiresPassword" />
           </div>
 
           <div class="form-outline form-white mb-2">
-            <input
-              type="participants"
-              id="typeParticipantsdX"
-              class="form-control form-control-lg"
-              placeholder="Participant name"
-              v-model="createdChatAddParticipant"
-            />
-            <b-button
-              class="mt-1 pb-9"
-              @click="createdChatParticipants.push(createdChatAddParticipant)"
-              >Add participant</b-button
-            >
+            <input type="participants" id="typeParticipantsdX" class="form-control form-control-lg"
+              placeholder="Participant name" v-model="createdChatAddParticipant" />
+            <b-button class="mt-1 pb-9" @click="createdChatParticipants.push(createdChatAddParticipant)">Add
+              participant</b-button>
           </div>
           <label class="form-label" for="typePasswordX">Participants:</label>
           <div v-for="item in createdChatParticipants" v-bind:key="item">
@@ -157,41 +101,23 @@
 
 
     <div>
-      <b-modal
-        id="modal-center"
-        centered="true"
-        v-model="modalChatAdmin"
-        @ok="handleSubmitCreateChat()"
-      >
+      <b-modal id="modal-center" centered="true" v-model="modalChatAdmin" @ok="handleSubmitCreateChat()">
         <div class=" pb-9">
-          <h2 class="fw-bold text-uppercase">{{ 'Manage chat ' + chatname}}</h2>
+          <h2 class="fw-bold text-uppercase">{{ 'Manage chat ' + chatName }}</h2>
 
           <div class="form-outline form-white mb-2">
-            <input
-              type="password"
-              id="typePasswordX"
-              class="form-control form-control-lg"
-              placeholder="Type your new password"
-              v-model="createdChatPassword"
-              :disabled="!createdChatRequiresPassword"
-            />
+            <input type="password" id="typePasswordX" class="form-control form-control-lg"
+              placeholder="Type your new password" v-model="createdChatPassword"
+              :disabled="!createdChatRequiresPassword" />
             <label class="form-label" for="typeEmailX">Password needed? </label>
             <input type="checkbox" v-model="createdChatRequiresPassword" />
           </div>
 
           <div class="form-outline form-white mb-2">
-            <input
-              type="participants"
-              id="typeParticipantsdX"
-              class="form-control form-control-lg"
-              placeholder="Participant name"
-              v-model="createdChatAddParticipant"
-            />
-            <b-button
-              class="mt-1 pb-9"
-              @click="createdChatParticipants.push(createdChatAddParticipant)"
-              >Add participant
-              </b-button>
+            <input type="participants" id="typeParticipantsdX" class="form-control form-control-lg"
+              placeholder="Participant name" v-model="createdChatAddParticipant" />
+            <b-button class="mt-1 pb-9" @click="createdChatParticipants.push(createdChatAddParticipant)">Add participant
+            </b-button>
           </div>
           <label class="form-label" for="typePasswordX">Participants:</label>
           <div v-for="item in createdChatParticipants" v-bind:key="item">
@@ -206,25 +132,87 @@
   </section>
 </template>
   
-  <script lang="ts">
+<script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
-import { key, store } from "../..//store/store";
+import { IUser, key, store } from "../../store/store";
 import "@/style/styles.css";
-import { useSocketIO } from "../..//main";
-import { getChatById, IMessage, newChat, updateChat } from "../../api/chatApi";
-import { getChat } from "../..//api/chatname";
+import { useSocketIO } from "../../main";
+import { getChatById, getChatRoomMessages, getUserMemberships, IMessage, newChat, updateChat } from "../../api/chatApi";
+import { getChatRoomsForUser, getChatRoomByName } from "../../api/chatApi";
+import { getChat } from "../../api/chatname";
 import { updateUserChats } from "../../api/user";
 import { getUser } from "../../api/username";
 import axios from "axios";
 
 declare var require: any;
 
-
-
-
 export default defineComponent({
-  name: "Chat",
+  name: "Chat2",
+
+  data() {
+    let searchedChat = "";
+    let chatName = "general";
+    let message = "";
+    let messages: IMessage[] = [];
+    let userMemberships: any[] = [];
+    var createdChatParticipants: string[] = [];
+    const user = store.state.user;
+    // messages.pop();
+    // userMemberships.pop();
+    // createdChatParticipants.pop();
+
+    // // get user memeberships
+    // if (user !== undefined) {
+    //   getUserMemberships(user.id).then((response) => {
+    //     for (var i in response.data) {
+    //       userMemberships.push(response.data[i]);
+    //     }
+    //   })
+    // }
+
+    // // get chat messages
+    // const roomId = getChatRoomByName(chatName).then((response) => {
+    //   return response.id as string;
+    // })
+    // getChatRoomMessages(roomId).then((response) => {
+    //   this.chatUUID = response.data;
+    //   axios({
+    //     method: "get",
+    //     url: "http://localhost:3000/chats/" + response.data,
+    //     data: {},
+    //   }).then((response) => {
+    //     for (var i in response.data.messages) {
+    //       messages.push(response.data.messages[i]);
+    //     }
+    //     //this.$forceUpdate();
+    //   });
+    // });
+
+    const io = useSocketIO();
+
+    return {
+      message,
+      io,
+      chatName: "general",
+      role: "user",
+      searchedChat,
+      messages,
+      chatsFromUser: userMemberships,
+      modalShow: false,
+      createdchatName: "",
+      createdChatPassword: "",
+      createdChatRequiresPassword: false,
+      createdChatAddParticipant: "",
+      createdChatParticipants,
+      searchedChatPassword: "",
+      searchedChatRequiresPassword: false,
+      modalChatAdmin: false,
+      banned: false,
+      muted: false
+    };
+  },
+
 
   setup() {
     const store = useStore(key);
@@ -239,15 +227,16 @@ export default defineComponent({
 
   mounted() {
     if (this.$route.query.name !== undefined) {
-      this.chatname = this.$route.query.name as string;
+      this.chatName = this.$route.query.name as string;
     } else {
-      this.chatname = "general";
+      this.chatName = "general";
       this.role = "user";
     }
+
     try {
-      this.searchChat(this.chatname);
+      this.searchChat(this.chatName);
     } catch {
-      this.chatname = "general";
+      this.chatName = "general";
       this.role = "user";
     }
 
@@ -265,65 +254,6 @@ export default defineComponent({
     this.io.socket.offAny();
   },
 
-  data() {
-    let searchedChat = "";
-    let chatname = "general";
-    let message = "";
-    let messages: IMessage[] = [{ message: "hola", username: "lolo" }];
-    let chatsFromUser = [{ name: "", role: "", isBanned: false, isMuted:false}];
-    var createdChatParticipants: string[] = ["lolo"];
-    const user = store.state.user;
-    messages.pop();
-    chatsFromUser.pop();
-    createdChatParticipants.pop();
-
-    axios({
-      method: "get",
-      url: "http://localhost:3000/users/" + user?.id,
-      data: {},
-    }).then((response) => {
-      for (var i in response.data.chats) {
-        chatsFromUser.push(response.data.chats[i]);
-      }
-    });
-
-    getChat(chatname).then((response) => {
-      this.chatUUID = response.data;
-      axios({
-        method: "get",
-        url: "http://localhost:3000/chats/" + response.data,
-        data: {},
-      }).then((response) => {
-        for (var i in response.data.messages) {
-          messages.push(response.data.messages[i]);
-        }
-        //this.$forceUpdate();
-      });
-    });
-
-    const io = useSocketIO();
-
-    return {
-      message,
-      io,
-      chatname,
-      role: "user",
-      searchedChat,
-      messages,
-      chatsFromUser,
-      modalShow: false,
-      createdChatName: "",
-      createdChatPassword: "",
-      createdChatRequiresPassword: false,
-      createdChatAddParticipant: "",
-      createdChatParticipants,
-      searchedChatPassword: "",
-      searchedChatRequiresPassword: false,
-      modalChatAdmin: false,
-      banned: false,
-      muted: false
-    };
-  },
 
   methods: {
     getNameDirectMessage(name: string) {
@@ -342,7 +272,7 @@ export default defineComponent({
           return;
         }
         this.io.socket.emit("event_message", {
-          room: this.chatname,
+          room: this.chatName,
           message: this.message,
           username: this.user.username,
         });
@@ -351,7 +281,7 @@ export default defineComponent({
           username: this.user.username,
         });
         updateChat(this.chatUUID, {
-          chatname: this.chatname,
+          chatname: this.chatName,
           password: "",
           messages: this.messages,
         }).catch((err: any) => {
@@ -362,10 +292,22 @@ export default defineComponent({
       }
     },
 
-    searchChat(searchedChat: string) {
+    async searchChat(searchedChat: string) {
+      // get chat room
+      const roomId = await getChatRoomByName(searchedChat).then((response) => {
+        return response.id as string;
+      })
+
+      // get chat messages
+      getChatRoomMessages(roomId).then((response) => {
+        for (var i in response) {
+          this.messages.push(response[i]);
+        }
+      });
+
       axios({
         method: "get",
-        url: "http://localhost:3000/chatname/" + searchedChat,
+        url: "http://localhost:3000/chatName/" + searchedChat,
         data: {},
       })
         .then((response) => {
@@ -383,9 +325,8 @@ export default defineComponent({
               ) !== undefined
             ) {
               validated = true;
-            } 
-              else 
-            {
+            }
+            else {
               if (response.data.password !== "") {
                 if (this.searchedChatPassword === response.data.password) {
                   validated = true;
@@ -408,7 +349,7 @@ export default defineComponent({
                   url: "http://localhost:3000/addChat/" + this.user?.id,
                   data: { name: searchedChat, role: "user", isBanned: false, isMuted: false },
                 });
-                this.chatsFromUser.push({ name: searchedChat, role: "user", isBanned:false , isMuted:false});
+                this.chatsFromUser.push({ name: searchedChat, role: "user", isBanned: false, isMuted: false });
               }
               let chat = this.chatsFromUser.find((str) => str.name === searchedChat)
               this.role = chat?.role as string
@@ -424,15 +365,15 @@ export default defineComponent({
         .catch(() => alert("No chats found with that name"));
     },
 
-    changeChat(chatUUID: string, chatname: string) {
+    changeChat(chatUUID: string, chatName: string) {
       if (!this.user) return;
       this.chatUUID = chatUUID;
-      this.io.socket.emit("event_leave", this.chatname);
+      this.io.socket.emit("event_leave", this.chatName);
       this.messages = [];
-      this.io.socket.emit("event_join", chatname);
-      this.chatname = chatname;
+      this.io.socket.emit("event_join", chatName);
+      this.chatName = chatName;
     },
-    
+
     addUsersToChat(users: string[], chatName: string) {
       for (var l in users) {
         getUser(users[l])
@@ -459,7 +400,7 @@ export default defineComponent({
         method: "post",
         url: "http://localhost:3000/chats",
         data: {
-          chatname: chatName,
+          chatName: chatName,
           password: password,
           messages: "",
         },
@@ -474,15 +415,15 @@ export default defineComponent({
     },
 
     async handleSubmitCreateChat() {
-      if (this.createdChatName === "") {
+      if (this.createdchatName === "") {
         alert("Chat name cannot be empty");
       } else {
         await this.createChat(
-          this.createdChatName,
+          this.createdchatName,
           this.createdChatPassword,
           this.createdChatParticipants
         ).then(() => {
-          this.createdChatName = "";
+          this.createdchatName = "";
           this.createdChatPassword = "";
           this.createdChatRequiresPassword = false;
           this.createdChatAddParticipant = "";
@@ -510,43 +451,40 @@ export default defineComponent({
 </script>
   
   <!-- Add "scoped" attribute to limit CSS to this component only -->
-  <style scoped>
+<style scoped>
 .gradient-custom {
   /* fallback for old browsers */
   height: 100vh;
   background: #3609da;
 
   /* Chrome 10-25, Safari 5.1-6 */
-  background: -webkit-linear-gradient(
-    to right,
-    rgba(4, 8, 22, 0.804),
-    rgb(252, 253, 254)
-  );
+  background: -webkit-linear-gradient(to right,
+      rgba(4, 8, 22, 0.804),
+      rgb(252, 253, 254));
 
   /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-  background: linear-gradient(
-    to right,
-    rgba(4, 8, 22, 0.804),
-    rgb(249, 251, 255)
-  );
+  background: linear-gradient(to right,
+      rgba(4, 8, 22, 0.804),
+      rgb(249, 251, 255));
 }
 
 
 
-.chat-button{
+.chat-button {
   background: #3466cb;
   color: #dfdfdf;
 
 }
-.chat-input{
+
+.chat-input {
   width: 73%;
   height: 4vh;
   background: #d1d1d1;
 }
+
 .chat-header {
   height: 3vh;
-  color:#f4f4f4
-
+  color: #f4f4f4
 }
 
 .chats-window {
@@ -558,6 +496,7 @@ export default defineComponent({
   height: 61vh;
   border-radius: 10px;
 }
+
 .chats-list {
   background: #5b5b5b;
   height: 61vh;
@@ -566,6 +505,7 @@ export default defineComponent({
   width: 100%;
   border-radius: 10px;
 }
+
 .chat-area {
   /*   border: 1px solid #ccc; */
   background: #343434;
@@ -576,6 +516,7 @@ export default defineComponent({
   box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.3);
   border-radius: 10px;
 }
+
 .message {
   max-width: 45%;
   border-radius: 10px;
@@ -583,8 +524,9 @@ export default defineComponent({
   margin-bottom: 0.1em;
   font-size: 0.9em;
   text-overflow: ellipsis;
-  
+
 }
+
 .message-out {
   background: #407fff;
   color: white;
@@ -593,6 +535,7 @@ export default defineComponent({
   text-align: right;
   max-width: 45%;
 }
+
 .message-in {
   background: #62c530;
   color: black;
