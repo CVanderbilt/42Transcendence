@@ -8,10 +8,10 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 export class UsersController {
     constructor(private usersService: UsersService) { }
 
-    // @Post()
-    // async create(@Body() user: User) {
-    //     return this.usersService.createUser(user)
-    // }
+    @Post()
+    async create(@Body() user: User) {
+        return this.usersService.createUser(user)
+    }
 
     // @UseGuards(JwtAuthGuard)
     @Get()

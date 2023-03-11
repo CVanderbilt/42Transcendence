@@ -52,8 +52,6 @@ import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
 import { key, store } from "../store/store";
 import { getUserById } from "../api/user";
-import { newChat } from "../api/chatApi";
-import { getChat } from "../api/chatname";
 import axios from "axios";
 
 declare var require: any;
@@ -112,31 +110,31 @@ export default defineComponent({
         "directMessage¿" + this.username + "¿" + this._user?.username;
 
       const UUID = this._user?.id;
-      newChat({
-        chatname: chatName,
-        password: "",
-        messages: [],
-      })
-        .then((response : any) => {
-          axios({
-            method: "put",
-            url: "http://localhost:3000/addChat/" + UUID,
-            data: { name: chatName, role: "direct" },
-          }).then((resp) =>
-            this.$router.push("/chats?name=" + response.data.chatname)
-          );
-          axios({
-            method: "put",
-            url: "http://localhost:3000/addChat/" + this.uuid,
-            data: { name: chatName, role: "direct" },
-          }).then((resp) =>
-            this.$router.push("/chats?name=" + response.data.chatname)
-          );
-        })
-        .catch((err: any) => {
-          alert("Direct chat already created");
-          this.$router.push("/chats?name=" + chatName);
-        });
+      // newChat({
+      //   chatname: chatName,
+      //   password: "",
+      //   messages: [],
+      // })
+      //   .then((response : any) => {
+      //     axios({
+      //       method: "put",
+      //       url: "http://localhost:3000/addChat/" + UUID,
+      //       data: { name: chatName, role: "direct" },
+      //     }).then((resp) =>
+      //       this.$router.push("/chats?name=" + response.data.chatname)
+      //     );
+      //     axios({
+      //       method: "put",
+      //       url: "http://localhost:3000/addChat/" + this.uuid,
+      //       data: { name: chatName, role: "direct" },
+      //     }).then((resp) =>
+      //       this.$router.push("/chats?name=" + response.data.chatname)
+      //     );
+      //   })
+      //   .catch((err: any) => {
+      //     alert("Direct chat already created");
+      //     this.$router.push("/chats?name=" + chatName);
+      //   });
     },
 
     createGame(){

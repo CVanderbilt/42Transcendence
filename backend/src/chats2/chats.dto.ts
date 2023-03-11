@@ -19,6 +19,8 @@ export interface ChatMsgDto {
     senderId: string
     chatRoomId: number
     content: string
+    senderName?: string
+    createdAt?: Date
 }
 
 export interface DirectMsgDto {
@@ -31,4 +33,9 @@ export interface DuologueDto {
     duologueId: number
     user1Id: string
     user2Id: string
+}
+
+export interface JoinChatRoomDto {
+    userId: string
+    password?: string
 }

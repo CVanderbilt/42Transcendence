@@ -5,7 +5,8 @@ import { ChatRoomEntity, ChatMembershipEntity, ChatMsgEntity, DirectMsgEntity, D
 import { ChatRoom, ChatMembership, ChatMsg, Duologue, DirectMsg } from './chats.interface';
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from 'src/users/user.entity';
-import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, DirectMsgDto, DuologueDto } from './chats.dto';
+import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, DirectMsgDto, DuologueDto, JoinChatRoomDto } from './chats.dto';
+import { Logger2 } from 'src/utils/Logger2';
 
 @Injectable()
 export class Chats2Service {
@@ -25,14 +26,32 @@ export class Chats2Service {
         private readonly directMsgsRepo: Repository<DirectMsgEntity>
     ) { }
 
-    async createChatRoom(room: ChatRoomDto): Promise<ChatRoom> {
-        const user = await this.usersRepo.findOne({ where: { id: room.ownerId } });
-        return this.chatRoomsRepo.save({
-            name: room.name,
-            isPrivate: room.isPrivate,
-            password: room.password ? bcrypt.hashSync(room.password, 10) : null,
+    async createChatRoom(roomDto: ChatRoomDto): Promise<ChatRoom> {
+        Logger2.log('Creating chat room with dto:')
+        Logger2.log({roomDto})
+        const user = await this.usersRepo.findOne({ where: { id: roomDto.ownerId } });
+        Logger2.log('Found user:')
+        Logger2.log({user})
+        // check whether the room name is already taken
+        const existingRoom = await this.chatRoomsRepo.findOne({ where: { name: roomDto.name } })
+        if (existingRoom) {
+            throw new Error('Room name already taken')
+        }
+        // create room
+        const room = await this.chatRoomsRepo.save({
+            name: roomDto.name,
+            isPrivate: roomDto.isPrivate,
+            password: roomDto.password ? bcrypt.hashSync(roomDto.password, 10) : null,
             owner: user
         })
+        // add owner as member
+        this.chatMembershipsRepo.save({
+            user: user,
+            chatRoom: room,
+            isAdmin: true,
+        })
+
+        return room
     }
 
     findAllChatRooms(): Promise<ChatRoom[]> {
@@ -62,43 +81,44 @@ export class Chats2Service {
         return rooms
     }
 
-    async joinChatRoom(id: number, data: ChatMembershipDto): Promise<ChatMembership> {
-        const user = await this.usersRepo.findOne({ where: { id: data.userId } });
-        const room = await this.chatRoomsRepo.findOne({ where: { id: id } });
-
-        // //if there is no other membership for this room set isAdmin to true unless specified in DTO
-        const roomMemberships = await this.chatMembershipsRepo.find({ where: { chatRoom: { id: id } } })
-        if (roomMemberships.length == 0 && data.isAdmin === undefined) {
-            data.isAdmin = true
-        }
-
-        // find a membership for this user in this room
+    async joinChatRoom(id: number, data: JoinChatRoomDto): Promise<ChatMembership> {
+        
+        // find if the user is already a member of the room
         const userMembership = await this.chatMembershipsRepo.find({
             where: {
                 user: { id: data.userId },
                 chatRoom: { id: id }
             }
         })
-        
-        // if there is a membership, update it and return it
         if (userMembership.length > 0) {
-            delete data.userId
-            delete data.chatRoomId
-            this.updateMembership(userMembership[0].id, data)
             return this.chatMembershipsRepo.findOne({ where: { id: userMembership[0].id } })
         }
-
+        
+        // if the room is private, check the password
+        const room = await this.chatRoomsRepo.findOne({ where: { id: id } })
+        if (room.isPrivate) {
+            if (!data.password) {
+                throw new Error('Password is required for this room')
+            }
+            if (!bcrypt.compareSync(data.password, room.password)) {
+                throw new Error('Password is incorrect')
+            }
+        }
+        
+        // create a new membership
+        const user = await this.usersRepo.findOne({ where: { id: data.userId } });
         return this.chatMembershipsRepo.save({
             user: user,
             chatRoom: room,
-            isAdmin: data.isAdmin,
-            isBanned: data.isBanned,
-            bannedUntil: data.bannedUntil,
-            isMuted: data.isMuted,
-            mutedUntil: data.mutedUntil
         })
-
     }
+
+    async inviteUsers(id: number, userIds: string[]) {
+        userIds.forEach(element => {
+            this.joinChatRoom(id, { userId: element })
+        });
+    }
+
 
     findChatRoomMembers(id: number): Promise<ChatMembership[]> {
         return this.chatMembershipsRepo.find({
@@ -123,21 +143,37 @@ export class Chats2Service {
         return this.chatMembershipsRepo.delete({ chatRoom: { id: id }, user: { id: userId } })
     }
 
-    async createChatRoomMessage(id: number, msg: ChatMsgDto): Promise<ChatMsg> {
-        const user = await this.usersRepo.findOne({ where: { id: msg.senderId } });
-        const room = await this.chatRoomsRepo.findOne({ where: { id: id } });
-        return this.chatMsgsRepo.save({
-            user: user,
+    async createChatRoomMessage(msg: ChatMsgDto): Promise<ChatMsg> {
+        const sender = await this.usersRepo.findOne({ where: { id: msg.senderId } });
+        const room = await this.chatRoomsRepo.findOne({ where: { id: msg.chatRoomId } });
+        const postedMsg = await this.chatMsgsRepo.save({
+            sender: sender,
             chatRoom: room,
             content: msg.content
         })
+
+        return postedMsg
     }
 
-    findChatRoomMessages(id: number): Promise<ChatMsg[]> {
-        return this.chatMsgsRepo.find({
-            where: { chatRoom: { id: id } },
-            relations: ['user']
+    async findChatRoomMessages(roomId: number): Promise<ChatMsgDto[]> {
+        const msgs = await this.chatMsgsRepo.find({
+            where: { chatRoom: { id: roomId } },
+            relations: ['sender', 'chatRoom']
         })
+
+        let outMsgs : ChatMsgDto[] = []
+        for (let i = 0; i < msgs.length; i++) {
+            const element = msgs[i]
+            outMsgs.push ({
+                senderId: element.sender.id,
+                senderName: element.sender.username,
+                chatRoomId: element.chatRoom.id,
+                content: element.content,
+                createdAt: element.createdAt
+            })
+        }
+
+        return outMsgs
     }
 
     // Duologues -------------------------------------------------------------------------------

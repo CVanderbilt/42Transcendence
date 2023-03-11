@@ -64,7 +64,7 @@ export class ChatMsgEntity extends BaseEntity {
     @JoinColumn()
     chatRoom: ChatRoomEntity
     
-    @ManyToOne(type => ChatRoomEntity)
+    @ManyToOne(type => UserEntity)
     @JoinColumn()
     sender: UserEntity
 

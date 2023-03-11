@@ -1,6 +1,6 @@
 <template>
   <section>
-    <div class="background">
+  <!--   <div class="background">
       <div id="layoutSidenav_nav"></div>
       <div id="layoutSidenav_content">
         <main>
@@ -202,23 +202,23 @@
           <div class="form-outline form-white"></div>
         </div>
       </b-modal>
-    </div>
-  </section>
+    </div>-->
+  </section> 
 </template>
   
   <script lang="ts">
 import { computed, defineComponent } from "vue";
-import { useStore, mapActions } from "vuex";
-import { key, store } from "../..//store/store";
-import "@/style/styles.css";
-import { useSocketIO } from "../..//main";
-import { getChatById, IMessage, newChat, updateChat } from "../../api/chatApi";
-import { getChat } from "../..//api/chatname";
-import { updateUserChats } from "../../api/user";
-import { getUser } from "../../api/username";
-import axios from "axios";
+// import { useStore, mapActions } from "vuex";
+// import { key, store } from "../..//store/store";
+// import "@/style/styles.css";
+// import { useSocketIO } from "../..//main";
+// import { getChatById, IMessage, newChat, updateChat } from "../../api/chatApi";
+// import { getChat } from "../..//api/chatname";
+// import { updateUserChats } from "../../api/user";
+// import { getUser } from "../../api/username";
+// import axios from "axios";
 
-declare var require: any;
+// declare var require: any;
 
 
 
@@ -226,286 +226,286 @@ declare var require: any;
 export default defineComponent({
   name: "Chat",
 
-  setup() {
-    const store = useStore(key);
-    const user = store.state.user;
+  // setup() {
+  //   const store = useStore(key);
+  //   const user = store.state.user;
 
-    let chatUUID = "";
-    return {
-      chatUUID,
-      user,
-    };
-  },
+  //   let chatUUID = "";
+  //   return {
+  //     chatUUID,
+  //     user,
+  //   };
+  // },
 
-  mounted() {
-    if (this.$route.query.name !== undefined) {
-      this.chatname = this.$route.query.name as string;
-    } else {
-      this.chatname = "general";
-      this.role = "user";
-    }
-    try {
-      this.searchChat(this.chatname);
-    } catch {
-      this.chatname = "general";
-      this.role = "user";
-    }
+  // mounted() {
+  //   if (this.$route.query.name !== undefined) {
+  //     this.chatname = this.$route.query.name as string;
+  //   } else {
+  //     this.chatname = "general";
+  //     this.role = "user";
+  //   }
+  //   try {
+  //     this.searchChat(this.chatname);
+  //   } catch {
+  //     this.chatname = "general";
+  //     this.role = "user";
+  //   }
 
-    this.io.socket.offAny();
-    this.io.socket.on("new_message", (message, username) => {
-      if (this.user?.username !== username) {
-        console.log("Nuevo mensaje!!");
-        this.messages.push({ message: message, username: username });
-      }
-    });
+  //   this.io.socket.offAny();
+  //   this.io.socket.on("new_message", (message, username) => {
+  //     if (this.user?.username !== username) {
+  //       console.log("Nuevo mensaje!!");
+  //       this.messages.push({ message: message, username: username });
+  //     }
+  //   });
 
-  },
+  // },
 
-  beforeRouteLeave() {
-    this.io.socket.offAny();
-  },
+  // beforeRouteLeave() {
+  //   this.io.socket.offAny();
+  // },
 
-  data() {
-    let searchedChat = "";
-    let chatname = "general";
-    let message = "";
-    let messages: IMessage[] = [{ message: "hola", username: "lolo" }];
-    let chatsFromUser = [{ name: "", role: "", isBanned: false, isMuted:false}];
-    var createdChatParticipants: string[] = ["lolo"];
-    const user = store.state.user;
-    messages.pop();
-    chatsFromUser.pop();
-    createdChatParticipants.pop();
+  // data() {
+  //   let searchedChat = "";
+  //   let chatname = "general";
+  //   let message = "";
+  //   let messages: IMessage[] = [{ message: "hola", username: "lolo" }];
+  //   let chatsFromUser = [{ name: "", role: "", isBanned: false, isMuted:false}];
+  //   var createdChatParticipants: string[] = ["lolo"];
+  //   const user = store.state.user;
+  //   messages.pop();
+  //   chatsFromUser.pop();
+  //   createdChatParticipants.pop();
 
-    axios({
-      method: "get",
-      url: "http://localhost:3000/users/" + user?.id,
-      data: {},
-    }).then((response) => {
-      for (var i in response.data.chats) {
-        chatsFromUser.push(response.data.chats[i]);
-      }
-    });
+  //   axios({
+  //     method: "get",
+  //     url: "http://localhost:3000/users/" + user?.id,
+  //     data: {},
+  //   }).then((response) => {
+  //     for (var i in response.data.chats) {
+  //       chatsFromUser.push(response.data.chats[i]);
+  //     }
+  //   });
 
-    getChat(chatname).then((response) => {
-      this.chatUUID = response.data;
-      axios({
-        method: "get",
-        url: "http://localhost:3000/chats/" + response.data,
-        data: {},
-      }).then((response) => {
-        for (var i in response.data.messages) {
-          messages.push(response.data.messages[i]);
-        }
-        //this.$forceUpdate();
-      });
-    });
+  //   getChat(chatname).then((response) => {
+  //     this.chatUUID = response.data;
+  //     axios({
+  //       method: "get",
+  //       url: "http://localhost:3000/chats/" + response.data,
+  //       data: {},
+  //     }).then((response) => {
+  //       for (var i in response.data.messages) {
+  //         messages.push(response.data.messages[i]);
+  //       }
+  //       //this.$forceUpdate();
+  //     });
+  //   });
 
-    const io = useSocketIO();
+  //   const io = useSocketIO();
 
-    return {
-      message,
-      io,
-      chatname,
-      role: "user",
-      searchedChat,
-      messages,
-      chatsFromUser,
-      modalShow: false,
-      createdChatName: "",
-      createdChatPassword: "",
-      createdChatRequiresPassword: false,
-      createdChatAddParticipant: "",
-      createdChatParticipants,
-      searchedChatPassword: "",
-      searchedChatRequiresPassword: false,
-      modalChatAdmin: false,
-      banned: false,
-      muted: false
-    };
-  },
+  //   return {
+  //     message,
+  //     io,
+  //     chatname,
+  //     role: "user",
+  //     searchedChat,
+  //     messages,
+  //     chatsFromUser,
+  //     modalShow: false,
+  //     createdChatName: "",
+  //     createdChatPassword: "",
+  //     createdChatRequiresPassword: false,
+  //     createdChatAddParticipant: "",
+  //     createdChatParticipants,
+  //     searchedChatPassword: "",
+  //     searchedChatRequiresPassword: false,
+  //     modalChatAdmin: false,
+  //     banned: false,
+  //     muted: false
+  //   };
+  // },
 
-  methods: {
-    getNameDirectMessage(name: string) {
-      if (name.split("¿")[0] === "directMessage") {
-        return name.split("¿")[1].includes(this.user?.username as string)
-          ? name.split("¿")[2]
-          : name.split("¿")[1];
-      }
-      return name;
-    },
+  // methods: {
+  //   getNameDirectMessage(name: string) {
+  //     if (name.split("¿")[0] === "directMessage") {
+  //       return name.split("¿")[1].includes(this.user?.username as string)
+  //         ? name.split("¿")[2]
+  //         : name.split("¿")[1];
+  //     }
+  //     return name;
+  //   },
 
-    sendMessage() {
-      if (this.message !== "") {
-        if (!this.user) {
-          console.error("user not defined, esto no deberia pasar");
-          return;
-        }
-        this.io.socket.emit("event_message", {
-          room: this.chatname,
-          message: this.message,
-          username: this.user.username,
-        });
-        this.messages.push({
-          message: this.message,
-          username: this.user.username,
-        });
-        updateChat(this.chatUUID, {
-          chatname: this.chatname,
-          password: "",
-          messages: this.messages,
-        }).catch((err: any) => {
-          alert("Error sending the message. Try again later");
-        });
-        this.message = "";
-        //this.chatArea.scrollTop = this.chatArea.scrollHeight
-      }
-    },
+  //   sendMessage() {
+  //     if (this.message !== "") {
+  //       if (!this.user) {
+  //         console.error("user not defined, esto no deberia pasar");
+  //         return;
+  //       }
+  //       this.io.socket.emit("event_message", {
+  //         room: this.chatname,
+  //         message: this.message,
+  //         username: this.user.username,
+  //       });
+  //       this.messages.push({
+  //         message: this.message,
+  //         username: this.user.username,
+  //       });
+  //       updateChat(this.chatUUID, {
+  //         chatname: this.chatname,
+  //         password: "",
+  //         messages: this.messages,
+  //       }).catch((err: any) => {
+  //         alert("Error sending the message. Try again later");
+  //       });
+  //       this.message = "";
+  //       //this.chatArea.scrollTop = this.chatArea.scrollHeight
+  //     }
+  //   },
 
-    searchChat(searchedChat: string) {
-      axios({
-        method: "get",
-        url: "http://localhost:3000/chatname/" + searchedChat,
-        data: {},
-      })
-        .then((response) => {
-          //validar
-          this.chatUUID = response.data;
-          axios({
-            method: "get",
-            url: "http://localhost:3000/chats/" + response.data,
-            data: {},
-          }).then((response) => {
-            var validated = false;
-            if (
-              this.chatsFromUser.find(
-                (element) => element.name === searchedChat
-              ) !== undefined
-            ) {
-              validated = true;
-            } 
-              else 
-            {
-              if (response.data.password !== "") {
-                if (this.searchedChatPassword === response.data.password) {
-                  validated = true;
-                } else {
-                  alert("Wrong password!!");
-                }
-              } else {
-                validated = true;
-              }
-            }
+  //   searchChat(searchedChat: string) {
+  //     axios({
+  //       method: "get",
+  //       url: "http://localhost:3000/chatname/" + searchedChat,
+  //       data: {},
+  //     })
+  //       .then((response) => {
+  //         //validar
+  //         this.chatUUID = response.data;
+  //         axios({
+  //           method: "get",
+  //           url: "http://localhost:3000/chats/" + response.data,
+  //           data: {},
+  //         }).then((response) => {
+  //           var validated = false;
+  //           if (
+  //             this.chatsFromUser.find(
+  //               (element) => element.name === searchedChat
+  //             ) !== undefined
+  //           ) {
+  //             validated = true;
+  //           } 
+  //             else 
+  //           {
+  //             if (response.data.password !== "") {
+  //               if (this.searchedChatPassword === response.data.password) {
+  //                 validated = true;
+  //               } else {
+  //                 alert("Wrong password!!");
+  //               }
+  //             } else {
+  //               validated = true;
+  //             }
+  //           }
 
-            if (validated) {
-              this.changeChat(this.chatUUID, searchedChat);
-              if (
-                this.chatsFromUser.find((str) => str.name === searchedChat) ===
-                undefined
-              ) {
-                axios({
-                  method: "put",
-                  url: "http://localhost:3000/addChat/" + this.user?.id,
-                  data: { name: searchedChat, role: "user", isBanned: false, isMuted: false },
-                });
-                this.chatsFromUser.push({ name: searchedChat, role: "user", isBanned:false , isMuted:false});
-              }
-              let chat = this.chatsFromUser.find((str) => str.name === searchedChat)
-              this.role = chat?.role as string
-              this.banned = chat?.isBanned as boolean;
-              this.muted = chat?.isMuted as boolean
-              for (var i in response.data.messages) {
-                this.messages.push(response.data.messages[i]);
-              }
-            }
+  //           if (validated) {
+  //             this.changeChat(this.chatUUID, searchedChat);
+  //             if (
+  //               this.chatsFromUser.find((str) => str.name === searchedChat) ===
+  //               undefined
+  //             ) {
+  //               axios({
+  //                 method: "put",
+  //                 url: "http://localhost:3000/addChat/" + this.user?.id,
+  //                 data: { name: searchedChat, role: "user", isBanned: false, isMuted: false },
+  //               });
+  //               this.chatsFromUser.push({ name: searchedChat, role: "user", isBanned:false , isMuted:false});
+  //             }
+  //             let chat = this.chatsFromUser.find((str) => str.name === searchedChat)
+  //             this.role = chat?.role as string
+  //             this.banned = chat?.isBanned as boolean;
+  //             this.muted = chat?.isMuted as boolean
+  //             for (var i in response.data.messages) {
+  //               this.messages.push(response.data.messages[i]);
+  //             }
+  //           }
 
-          });
-        })
-        .catch(() => alert("No chats found with that name"));
-    },
+  //         });
+  //       })
+  //       .catch(() => alert("No chats found with that name"));
+  //   },
 
-    changeChat(chatUUID: string, chatname: string) {
-      if (!this.user) return;
-      this.chatUUID = chatUUID;
-      this.io.socket.emit("event_leave", this.chatname);
-      this.messages = [];
-      this.io.socket.emit("event_join", chatname);
-      this.chatname = chatname;
-    },
+  //   changeChat(chatUUID: string, chatname: string) {
+  //     if (!this.user) return;
+  //     this.chatUUID = chatUUID;
+  //     this.io.socket.emit("event_leave", this.chatname);
+  //     this.messages = [];
+  //     this.io.socket.emit("event_join", chatname);
+  //     this.chatname = chatname;
+  //   },
     
-    addUsersToChat(users: string[], chatName: string) {
-      for (var l in users) {
-        getUser(users[l])
-          .then((response) => {
-            axios({
-              method: "put",
-              url: "http://localhost:3000/addChat/" + response.data.id,
-              data: { name: chatName, role: "user", isBanned: false, isMuted: false },
-            });
-          })
-          .catch((error) =>
-            console.log("tryed to add a user that doesn't exist to a new chat")
-          );
-      }
-      axios({
-        method: "put",
-        url: "http://localhost:3000/addChat/" + this.user?.id,
-        data: { name: chatName, role: "owner", isBanned: false, isMuted: false },
-      });
-    },
+  //   addUsersToChat(users: string[], chatName: string) {
+  //     for (var l in users) {
+  //       getUser(users[l])
+  //         .then((response) => {
+  //           axios({
+  //             method: "put",
+  //             url: "http://localhost:3000/addChat/" + response.data.id,
+  //             data: { name: chatName, role: "user", isBanned: false, isMuted: false },
+  //           });
+  //         })
+  //         .catch((error) =>
+  //           console.log("tryed to add a user that doesn't exist to a new chat")
+  //         );
+  //     }
+  //     axios({
+  //       method: "put",
+  //       url: "http://localhost:3000/addChat/" + this.user?.id,
+  //       data: { name: chatName, role: "owner", isBanned: false, isMuted: false },
+  //     });
+  //   },
 
-    async createChat(chatName: string, password: string, users: string[]) {
-      axios({
-        method: "post",
-        url: "http://localhost:3000/chats",
-        data: {
-          chatname: chatName,
-          password: password,
-          messages: "",
-        },
-      })
-        .then((response) => {
-          this.chatsFromUser.push({ name: chatName, role: "owner", isBanned: false, isMuted: false });
-          this.addUsersToChat(users, chatName);
-        })
-        .catch((err) => {
-          alert("Name already in use");
-        });
-    },
+  //   async createChat(chatName: string, password: string, users: string[]) {
+  //     axios({
+  //       method: "post",
+  //       url: "http://localhost:3000/chats",
+  //       data: {
+  //         chatname: chatName,
+  //         password: password,
+  //         messages: "",
+  //       },
+  //     })
+  //       .then((response) => {
+  //         this.chatsFromUser.push({ name: chatName, role: "owner", isBanned: false, isMuted: false });
+  //         this.addUsersToChat(users, chatName);
+  //       })
+  //       .catch((err) => {
+  //         alert("Name already in use");
+  //       });
+  //   },
 
-    async handleSubmitCreateChat() {
-      if (this.createdChatName === "") {
-        alert("Chat name cannot be empty");
-      } else {
-        await this.createChat(
-          this.createdChatName,
-          this.createdChatPassword,
-          this.createdChatParticipants
-        ).then(() => {
-          this.createdChatName = "";
-          this.createdChatPassword = "";
-          this.createdChatRequiresPassword = false;
-          this.createdChatAddParticipant = "";
-          this.createdChatParticipants = [];
-        });
-      }
-    },
+  //   async handleSubmitCreateChat() {
+  //     if (this.createdChatName === "") {
+  //       alert("Chat name cannot be empty");
+  //     } else {
+  //       await this.createChat(
+  //         this.createdChatName,
+  //         this.createdChatPassword,
+  //         this.createdChatParticipants
+  //       ).then(() => {
+  //         this.createdChatName = "";
+  //         this.createdChatPassword = "";
+  //         this.createdChatRequiresPassword = false;
+  //         this.createdChatAddParticipant = "";
+  //         this.createdChatParticipants = [];
+  //       });
+  //     }
+  //   },
 
-    searchFriend(username: string) {
-      //todo: update para usar apis
-      getUser(username)
-        .then((response) => {
-          this.$router.push("/user?uuid=" + response.data.id);
-        })
-        .catch((error) => {
-          alert("usuario o contraseña incorrectos");
-        });
-    },
+  //   searchFriend(username: string) {
+  //     //todo: update para usar apis
+  //     getUser(username)
+  //       .then((response) => {
+  //         this.$router.push("/user?uuid=" + response.data.id);
+  //       })
+  //       .catch((error) => {
+  //         alert("usuario o contraseña incorrectos");
+  //       });
+  //   },
 
-    modifyProfileRoute() {
-      this.$router.push("/settings");
-    },
-  },
+  //   modifyProfileRoute() {
+  //     this.$router.push("/settings");
+  //   },
+  // },
 });
 </script>
   

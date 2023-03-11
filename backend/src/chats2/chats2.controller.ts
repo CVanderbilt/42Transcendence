@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Logger, Param, Post, Put } from '@nestjs/common';
-import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, DirectMsgDto, DuologueDto } from './chats.dto';
+import { Logger2 } from 'src/utils/Logger2';
+import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, DirectMsgDto, DuologueDto, JoinChatRoomDto } from './chats.dto';
 import { ChatMembership, ChatMsg, ChatRoom } from './chats.interface';
 import { Chats2Service } from './chats2.service';
 
@@ -10,9 +11,9 @@ export class Chats2Controller {
     // get chat rooms
     @Get('rooms')
     async findAllRooms(): Promise<ChatRoom[]> {
-        return await (this.chatsService.findAllChatRooms()) 
+        return await (this.chatsService.findAllChatRooms())
     }
-    
+
     // get chat room by id (room + members)
     @Get('rooms/:id')
     async findRoom(@Param('id') id: number): Promise<ChatRoom> {
@@ -24,33 +25,41 @@ export class Chats2Controller {
     async findRoomByName(@Param('name') name: string): Promise<ChatRoom> {
         return await (this.chatsService.findChatRoomByName(name))
     }
-           
+
     // get chat rooms for user
     @Get('rooms/user/:id')
     async findUserRooms(@Param('id') id: string): Promise<ChatRoom[]> {
         return await (this.chatsService.findUserChatRooms(id))
     }
 
-    // new chat room
+    // new chat room : Also joins user as member
     @Post('rooms')
-    async create(@Body() room: ChatRoomDto) : Promise<ChatRoom> {
-        return this.chatsService.createChatRoom(room)
+    async create(@Body() dto: ChatRoomDto): Promise<ChatRoom> {
+        try {
+            return await this.chatsService.createChatRoom(dto)
+        } catch (error) {
+            Logger2.error(error)
+        }
     }
-
-    // update chat room ?
 
     // join chat room
     @Post('rooms/:roomId/join')
-    async joinRoom(@Param('roomId') roomId: number, @Body() data: ChatMembershipDto) : Promise<ChatMembership> {
+    async joinRoom(@Param('roomId') roomId: number, @Body() data: JoinChatRoomDto): Promise<ChatMembership> {
         return this.chatsService.joinChatRoom(roomId, data)
+    }
+
+    // invite users to chat room
+    @Post('rooms/:roomId/invite')
+    async inviteUsers(@Param('roomId') roomId: number, @Body() data: string[]) {
+        return this.chatsService.inviteUsers(roomId, data)
     }
 
     // leave chat room
     @Delete('rooms/:id/leave')
     async leaveRoom(@Param('id') id: number, @Body() data: ChatMembershipDto) {
         return this.chatsService.deleteMembership(id, data.userId)
-    }    
-    
+    }
+
     // get chat room members
     @Get('rooms/:id/members')
     async findRoomMembers(@Param('id') id: number): Promise<ChatMembership[]> {
@@ -59,8 +68,8 @@ export class Chats2Controller {
 
     // get user memberships
     @Get('memberships/user/:userId')
-    async findUserMemberships(@Param('userId') userId: string) : Promise<ChatMembership[]> {
-        return await (this.chatsService.findUserMemberships(userId)) 
+    async findUserMemberships(@Param('userId') userId: string): Promise<ChatMembership[]> {
+        return await (this.chatsService.findUserMemberships(userId))
     }
 
     // update membership
@@ -70,15 +79,15 @@ export class Chats2Controller {
     }
 
     // get chat messages for room
-    @Get('rooms/:id/messages')
-    async findRoomMessages(@Param('id') id: number): Promise<ChatMsg[]> {
-        return await (this.chatsService.findChatRoomMessages(id))
+    @Get('/messages/:roomId')
+    async findRoomMessages(@Param('roomId') roomId: number): Promise<ChatMsgDto[]> {
+        return await (this.chatsService.findChatRoomMessages(roomId))
     }
 
     // post chat message for room
-    @Post('rooms/:id/messages')
-    async postRoomMessage(@Param('id') id: number, @Body() msg: ChatMsgDto) {
-        return this.chatsService.createChatRoomMessage(id, msg)
+    @Post('/messages/:roomId')
+    async postRoomMessage(@Param('roomId') roomId: number, @Body() msg: ChatMsgDto) {
+        return this.chatsService.createChatRoomMessage(msg)
     }
 
     // Direct Messages ------------------------------------------------------------------

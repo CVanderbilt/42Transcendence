@@ -10,7 +10,7 @@
             <div class="row chats-window">
               <div class="col chats-list">
                 <div v-for="item in chatsFromUser" v-bind:key="item.name">
-                  <b-button v-on:click="searchChat(item.name)"
+                  <b-button v-on:click="joinRoom(item.name)"
                     style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                     {{ getNameDirectMessage(item.name) }}
                   </b-button>
@@ -18,7 +18,7 @@
               </div>
               <div class="col-9 chat-column">
                 <div class="chat-header">
-                  {{ getNameDirectMessage(chatName) }}
+                  {{ getNameDirectMessage(chatRoomName) }}
                 </div>
                 <div ref="chatArea" class="chat-area">
                   <div v-for="message in messages" v-bind:key="message.message" class="message" :class="{
@@ -43,7 +43,7 @@
                   <input type="username" id="typeusernameX" v-on:keyup.enter="sendMessage()" v-model="message"
                     class="chat-input" />
                   <b-button class="chat-button" v-on:click="sendMessage()">Send message</b-button>
-                  <b-button v-if="role === 'owner' || role === 'admin'" class="chat-button"
+                  <b-button v-if="isAdmin === 'owner' || isAdmin === 'admin'" class="chat-button"
                     @click="modalChatAdmin = !modalChatAdmin" style="margin-left: 10px">Manage chat</b-button>
                 </div>
               </div>
@@ -55,7 +55,7 @@
               <input type="password" id="typePasswordX" class="form-control form-control-lg" placeholder="Password"
                 v-model="searchedChatPassword" :disabled="!searchedChatRequiresPassword" />
 
-              <b-button @click="searchChat(searchedChat)">Search chat</b-button>
+              <b-button @click="joinRoom(searchedChat)">Search chat</b-button>
               <input type="checkbox" v-model="searchedChatRequiresPassword" v-on:click="searchedChatPassword = ''" />
             </div>
             <b-button @click="modalShow = !modalShow">Create Chat</b-button>
@@ -103,7 +103,7 @@
     <div>
       <b-modal id="modal-center" centered="true" v-model="modalChatAdmin" @ok="handleSubmitCreateChat()">
         <div class=" pb-9">
-          <h2 class="fw-bold text-uppercase">{{ 'Manage chat ' + chatName }}</h2>
+          <h2 class="fw-bold text-uppercase">{{ 'Manage chat ' + chatRoomName }}</h2>
 
           <div class="form-outline form-white mb-2">
             <input type="password" id="typePasswordX" class="form-control form-control-lg"
@@ -138,10 +138,8 @@ import { useStore, mapActions } from "vuex";
 import { IUser, key, store } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
-import { getChatById, getChatRoomMessages, getUserMemberships, IMessage, newChat, updateChat } from "../../api/chatApi";
-import { getChatRoomsForUser, getChatRoomByName } from "../../api/chatApi";
-import { getChat } from "../../api/chatname";
-import { updateUserChats } from "../../api/user";
+import { postChatMessage, getChatRoomByName, joinChatRoom, inviteUsers, createChatRoom, getChatRoomMessages } from "../../api/chatApi";
+import { ChatMessage } from "../../api/chatApi";
 import { getUser } from "../../api/username";
 import axios from "axios";
 
@@ -151,10 +149,7 @@ export default defineComponent({
   name: "Chat2",
 
   data() {
-    let searchedChat = "";
-    let chatName = "general";
-    let message = "";
-    let messages: IMessage[] = [];
+    let chatMessages: ChatMessage[] = [];
     let userMemberships: any[] = [];
     var createdChatParticipants: string[] = [];
     const user = store.state.user;
@@ -192,12 +187,13 @@ export default defineComponent({
     const io = useSocketIO();
 
     return {
-      message,
+      message: "",
       io,
-      chatName: "general",
-      role: "user",
-      searchedChat,
-      messages,
+      chatRoomName: "general",
+      chatRoomId: "",
+      isAdmin: false,
+      searchedChat: "",
+      messages: chatMessages,
       chatsFromUser: userMemberships,
       modalShow: false,
       createdchatName: "",
@@ -220,31 +216,44 @@ export default defineComponent({
 
     let chatUUID = "";
     return {
-      chatUUID,
+      roomId: chatUUID,
       user,
     };
   },
 
-  mounted() {
+  async mounted() {
     if (this.$route.query.name !== undefined) {
-      this.chatName = this.$route.query.name as string;
+      this.chatRoomName = this.$route.query.name as string;
     } else {
-      this.chatName = "general";
-      this.role = "user";
+      this.chatRoomName = "general";
+      this.isAdmin = false;
     }
 
     try {
-      this.searchChat(this.chatName);
+      this.joinRoom(this.chatRoomName);
     } catch {
-      this.chatName = "general";
-      this.role = "user";
+      this.chatRoomName = "general";
+      this.isAdmin = false;
+    }
+
+    try {
+      const room : any = await getChatRoomByName(this.chatRoomName);
+      this.roomId = room.id;
+    } catch {
+      console.log("Error getting chat room")
     }
 
     this.io.socket.offAny();
     this.io.socket.on("new_message", (message, username) => {
       if (this.user?.username !== username) {
-        console.log("Nuevo mensaje!!");
-        this.messages.push({ message: message, username: username });
+        console.log("Nuevo mensaje!!")
+        const msg : ChatMessage = {
+          content: message,
+          senderName: username,
+          senderId: this.user?.id,
+          roomId: this.roomId
+        }
+        this.messages.push(msg)
       }
     });
 
@@ -253,7 +262,6 @@ export default defineComponent({
   beforeRouteLeave() {
     this.io.socket.offAny();
   },
-
 
   methods: {
     getNameDirectMessage(name: string) {
@@ -272,153 +280,112 @@ export default defineComponent({
           return;
         }
         this.io.socket.emit("event_message", {
-          room: this.chatName,
+          room: this.chatRoomName,
           message: this.message,
           username: this.user.username,
-        });
-        this.messages.push({
-          message: this.message,
-          username: this.user.username,
-        });
-        updateChat(this.chatUUID, {
-          chatname: this.chatName,
-          password: "",
-          messages: this.messages,
-        }).catch((err: any) => {
+        })
+
+        const outMessage: ChatMessage = {
+          content: this.message,
+          roomId: this.roomId,
+          senderId: this.user.id,
+        }
+
+        this.messages.push(outMessage)
+
+        try {
+          postChatMessage(this.roomId, outMessage)
+        }
+        catch (err: any) {
           alert("Error sending the message. Try again later");
-        });
+        }
+
         this.message = "";
         //this.chatArea.scrollTop = this.chatArea.scrollHeight
       }
     },
 
-    async searchChat(searchedChat: string) {
+    async joinRoom(chat2join: string) {
+      let room: any;
+
       // get chat room
-      const roomId = await getChatRoomByName(searchedChat).then((response) => {
-        return response.id as string;
-      })
-
-      // get chat messages
-      getChatRoomMessages(roomId).then((response) => {
-        for (var i in response) {
-          this.messages.push(response[i]);
-        }
-      });
-
-      axios({
-        method: "get",
-        url: "http://localhost:3000/chatName/" + searchedChat,
-        data: {},
-      })
-        .then((response) => {
-          //validar
-          this.chatUUID = response.data;
-          axios({
-            method: "get",
-            url: "http://localhost:3000/chats/" + response.data,
-            data: {},
-          }).then((response) => {
-            var validated = false;
-            if (
-              this.chatsFromUser.find(
-                (element) => element.name === searchedChat
-              ) !== undefined
-            ) {
-              validated = true;
-            }
-            else {
-              if (response.data.password !== "") {
-                if (this.searchedChatPassword === response.data.password) {
-                  validated = true;
-                } else {
-                  alert("Wrong password!!");
-                }
-              } else {
-                validated = true;
-              }
-            }
-
-            if (validated) {
-              this.changeChat(this.chatUUID, searchedChat);
-              if (
-                this.chatsFromUser.find((str) => str.name === searchedChat) ===
-                undefined
-              ) {
-                axios({
-                  method: "put",
-                  url: "http://localhost:3000/addChat/" + this.user?.id,
-                  data: { name: searchedChat, role: "user", isBanned: false, isMuted: false },
-                });
-                this.chatsFromUser.push({ name: searchedChat, role: "user", isBanned: false, isMuted: false });
-              }
-              let chat = this.chatsFromUser.find((str) => str.name === searchedChat)
-              this.role = chat?.role as string
-              this.banned = chat?.isBanned as boolean;
-              this.muted = chat?.isMuted as boolean
-              for (var i in response.data.messages) {
-                this.messages.push(response.data.messages[i]);
-              }
-            }
-
-          });
+      try {
+        room = await getChatRoomByName(chat2join).then((response) => {
+          return response.data;
         })
-        .catch(() => alert("No chats found with that name"));
+      }
+      catch (err) {
+        console.log("Can not find chat room");
+        return;
+      }
+
+      // join membership (returns membership if user already a member of the chat room)
+      try {
+        joinChatRoom(room.id, this.user?.id as string)
+      }
+      catch (err: any) {
+        if (err.stattus === 404)
+          console.log("Wrong password");
+        else
+          console.log("Can not join room");
+        return;
+      }
+
+      // try to get messages
+      try {
+        getChatRoomMessages(room.id).then((response) => {
+          for (var i in response.data) {
+            this.messages.push(response.data[i]);
+          }
+        })
+      }
+      catch (err) {
+        console.log("Can not get messages");
+      }
+
+      // change chat
+      this.changeChat(room.id, room.name);
     },
 
     changeChat(chatUUID: string, chatName: string) {
       if (!this.user) return;
-      this.chatUUID = chatUUID;
-      this.io.socket.emit("event_leave", this.chatName);
+      this.roomId = chatUUID;
+      this.io.socket.emit("event_leave", this.chatRoomName);
       this.messages = [];
       this.io.socket.emit("event_join", chatName);
-      this.chatName = chatName;
+      this.chatRoomName = chatName;
     },
 
-    addUsersToChat(users: string[], chatName: string) {
-      for (var l in users) {
-        getUser(users[l])
-          .then((response) => {
-            axios({
-              method: "put",
-              url: "http://localhost:3000/addChat/" + response.data.id,
-              data: { name: chatName, role: "user", isBanned: false, isMuted: false },
-            });
-          })
-          .catch((error) =>
-            console.log("tryed to add a user that doesn't exist to a new chat")
-          );
+    async addUsersToChat(users: string[], chatName: string) {
+      // find room id
+      try {
+        const room : any = await getChatRoomByName(chatName)
+        inviteUsers(room.id, users)
       }
-      axios({
-        method: "put",
-        url: "http://localhost:3000/addChat/" + this.user?.id,
-        data: { name: chatName, role: "owner", isBanned: false, isMuted: false },
-      });
+      catch (err) {
+        console.log("Can not join users to chat room");
+        return;
+      }
     },
 
-    async createChat(chatName: string, password: string, users: string[]) {
-      axios({
-        method: "post",
-        url: "http://localhost:3000/chats",
-        data: {
-          chatName: chatName,
-          password: password,
-          messages: "",
-        },
-      })
-        .then((response) => {
-          this.chatsFromUser.push({ name: chatName, role: "owner", isBanned: false, isMuted: false });
-          this.addUsersToChat(users, chatName);
+    async createChatRoom(roomName: string, password: string, users: string[]) {
+      try {
+        const room : any = await createChatRoom(roomName, this.user?.id as string, password)
+        inviteUsers(room.id, users).catch((err) => {
+          console.log("Can not invite users to chat room: " + err.message);
         })
-        .catch((err) => {
-          alert("Name already in use");
-        });
+      }
+      catch (err) {
+        console.log("Can not create chat room");
+        return;
+      }
     },
 
     async handleSubmitCreateChat() {
       if (this.createdchatName === "") {
         alert("Chat name cannot be empty");
       } else {
-        await this.createChat(
+        await this.createChatRoom(
           this.createdchatName,
           this.createdChatPassword,
           this.createdChatParticipants

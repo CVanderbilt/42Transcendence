@@ -1,7 +1,7 @@
 export interface ChatRoom {
     id?: number
     name: string
-    isPrivate: boolean
+    isPrivate?: boolean
 }
 
 export interface ChatMembership {
