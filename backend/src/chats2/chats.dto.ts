@@ -13,6 +13,8 @@ export interface ChatMembershipDto {
     bannedUntil?: Date
     isMuted?: boolean
     mutedUntil?: Date
+    chatRoomName?: string
+    userName?: string
 }
 
 export interface ChatMsgDto {

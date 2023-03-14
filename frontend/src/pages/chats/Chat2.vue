@@ -9,10 +9,10 @@
 
             <div class="row chats-window">
               <div class="col chats-list">
-                <div v-for="item in userMemberships" v-bind:key="item.name">
-                  <b-button v-on:click="joinRoom(item.name)"
+                <div v-for="item in userMemberships" v-bind:key="item.chatRoomName">
+                  <b-button v-on:click="joinRoom(item.chatRoomName as string)"
                     style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
-                    {{ getNameDirectMessage(item.name) }}
+                    {{ getNameDirectMessage(item.chatRoomName as string) }}
                   </b-button>
                 </div>
               </div>
@@ -20,6 +20,7 @@
                 <div class="chat-header">
                   {{ getNameDirectMessage(chatRoomName) }}
                 </div>
+
 
                 <!-- ------------------ chat area ------------------ -->
                 <div ref="chatArea" class="chat-area">
@@ -140,7 +141,7 @@ import { useStore } from "vuex";
 import { key, store } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
-import { postChatMessage, getChatRoomMessages } from "../../api/chatApi";
+import { postChatMessage, getChatRoomMessages, Membership, getUserMemberships } from "../../api/chatApi";
 import { getChatRoomByName, joinChatRoom, inviteUsers, createChatRoom, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "@/api/user";
@@ -152,7 +153,7 @@ export default defineComponent({
 
   data() {
     let chatMessages: ChatMessage[] = [];
-    let userMemberships: any[] = [];
+    let userMemberships: Membership[] = [];
     var createdChatParticipants: string[] = [];
 
 
@@ -212,10 +213,17 @@ export default defineComponent({
     }
 
     try {
-      const room: any = await getChatRoomByName(this.chatRoomName);
-      this.roomId = room.id;
+      this.roomId = await (await getChatRoomByName(this.chatRoomName)).data.id;
     } catch {
       console.log("Error getting chat room")
+    }
+
+    try {
+      this.userMemberships = await getUserMemberships(this.user?.id as string)
+      console.log("User memberships:")
+      console.log(this.userMemberships)
+    } catch {
+      console.log("Error getting user memberships")
     }
 
     this.io.socket.offAny();
@@ -245,7 +253,7 @@ export default defineComponent({
           ? name.split("¿")[2]
           : name.split("¿")[1];
       }
-      // return name;
+      return name;
     },
 
     sendMessage() {
@@ -303,9 +311,8 @@ export default defineComponent({
         return;
       }
 
-      // join membership (returns membership even if user is already a member of the room)
       try {
-        joinChatRoom(room.id, this.user?.id as string)
+        joinChatRoom(room.id, this.user?.id as string) // returns membership even if user is already a member of the room
       }
       catch (err: any) {
         if (err.stattus === 404)

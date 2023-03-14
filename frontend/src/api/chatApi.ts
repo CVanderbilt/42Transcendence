@@ -9,39 +9,38 @@ export interface ChatMessage {
     content: string,
 }
 
-export interface NewChatOptions {
-    chatname: string,
+export interface Membership {
+    userId: string
+    chatRoomId: number
+    isAdmin?: boolean
+    isBanned?: boolean
+    bannedUntil?: Date
+    isMuted?: boolean
+    mutedUntil?: Date
+    chatRoomName?: string
+    userName?: string
+}
+
+export interface ChatRoom {
+    name: string,
     password: string,
-    // messages: IMessage[],
 }
 
-function makeid(length: number) {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    let counter = 0;
-    while (counter < length) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-      counter += 1;
-    }
-    return result;
-}
-
-// async function newChat(options: NewChatOptions) {
-//     return apiClient.post(URL, options);
-// }
-
-// async function updateChat(id: string, options: NewChatOptions) {
-//     return apiClient.put(`${URL}/${id}`, options);
-// }
-
-// async function getChatById(id: string) {
-//     return apiClient.get(`${URL}/${id}`);
+// export function makeid(length: number) { //TODO esto debería ser innecesario ya que se encarga el backend
+//     let result = '';
+//     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+//     const charactersLength = characters.length;
+//     let counter = 0;
+//     while (counter < length) {
+//       result += characters.charAt(Math.floor(Math.random() * charactersLength));
+//       counter += 1;
+//     }
+//     return result;
 // }
 
 // ----------------------------------------------
 
-async function createChatRoom(roomName:string, owner:string, password = "") {
+export async function createChatRoom(roomName:string, owner:string, password = "") {
     
     const room : any = {
         name: roomName,
@@ -53,45 +52,30 @@ async function createChatRoom(roomName:string, owner:string, password = "") {
     return apiClient.post(`${URL}/rooms`, room)
 }
 
-async function getChatRoomsForUser(userId: string) {
+export async function getChatRoomsForUser(userId: string) {
     return apiClient.get(`${URL}/rooms/${userId}`);
 }
 
-async function getUserMemberships(userId: string) {
-    return apiClient.get(`${URL}/memberships/user/${userId}`);
+export async function getUserMemberships(userId: string) : Promise<Membership[]> {
+    return await (await apiClient.get(`${URL}/memberships/user/${userId}`)).data
 }
 
-async function getChatRoomByName(name: string) {
+export async function getChatRoomByName(name: string) {
     return apiClient.get(`${URL}/rooms/name/${name}`)
 }
 
-async function getChatRoomMessages(roomId: string) {
+export async function getChatRoomMessages(roomId: string) {
     return apiClient.get(`${URL}/messages/${roomId}`)
 }
 
-async function joinChatRoom(roomId: string, userId: string) {
+export async function joinChatRoom(roomId: string, userId: string) {
     return apiClient.post(`${URL}/rooms/${roomId}/join`, {userId})
 }
 
-async function inviteUsers(roomID: string, usersIds:string[]) {
+export async function inviteUsers(roomID: string, usersIds:string[]) {
     return apiClient.post(`${URL}/rooms/${roomID}/invite`, usersIds)
 }
 
-async function postChatMessage(roomId: string, message : ChatMessage) {
+export async function postChatMessage(roomId: string, message : ChatMessage) {
     return apiClient.post(`${URL}/messages/${roomId}`, message)
-}
-
-export {
-    // updateChat, 
-    // getChatById, 
-    // newChat, 
-    makeid,
-    getChatRoomsForUser, 
-    getUserMemberships,
-    getChatRoomByName, 
-    getChatRoomMessages,
-    joinChatRoom,
-    inviteUsers,
-    createChatRoom,
-    postChatMessage,
 }
