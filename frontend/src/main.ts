@@ -5,7 +5,6 @@ import Login from './pages/login/Login.vue'
 import SignUp from './pages/signup/SignUp.vue'
 import Settings from './pages/settings/Settings.vue'
 import Home from './pages/home/Home.vue'
-import Chat from './pages/chats/Chat.vue'
 import Chat2 from './pages/chats/Chat2.vue'
 import Game from './pages/game/Game.vue'
 import QrValidation from './pages/2fa/Qr.vue'
@@ -23,7 +22,6 @@ const routes = [
     { path: '/login', name: "login", component: Login, meta: { onlyWithoutAuth: true } },
     { path: '/signUp', name: "signUp", component: SignUp, meta: { onlyWithoutAuth: true } },
     { path: '/settings', name: "settings", component: Settings, meta: { requiresAuth: true } },
-    { path: '/chats', name: "chats", component: Chat, meta: { requiresAuth: true } },
     { path: '/chats2', name: "chats2", component: Chat2, meta: { requiresAuth: true } },
     { path: '/user', name: "user", component: User, meta: { requiresAuth: true } },
     { path: '/game', name: "game", component: Game, meta: { requiresAuth: true } },
@@ -75,6 +73,13 @@ export const gameSocketIO = () => {
         socket,
     }
 }
+
+export const chatSocketIO = () => {
+    const socket = io('http://localhost:83');
+    return {
+      socket,
+    };
+  };
 
 app.use(store, key)
 app.use(router)

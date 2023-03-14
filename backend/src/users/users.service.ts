@@ -21,6 +21,10 @@ export class UsersService {
         return this.usersRepo.findOne( { where: { id: id } } )
     }
 
+    async findOneByName(username: string): Promise<User> {
+        return this.usersRepo.findOne( { where: { username: username } } )
+    }
+
     async findBy42Login(login42: string): Promise<User> {
         return this.usersRepo.findOne( { where: { login42: login42 } } )
     }

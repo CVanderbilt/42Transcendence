@@ -135,7 +135,7 @@ import { key, store } from "../..//store/store";
 import "@/style/styles.css";
 import { onUnmounted } from 'vue'
 
-import { useSocketIO } from "../../main";
+import { chatSocketIO } from "../../main";
 declare var require: any;
 
 export default defineComponent({

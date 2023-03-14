@@ -69,15 +69,10 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, reactive } from "vue";
-import { useStore, mapActions } from "vuex";
-import { IUser, key, store } from "../../store/store";
-import axios, { AxiosError } from "axios";
-import { anyTypeAnnotation } from "@babel/types";
-import { getUser } from "../../api/username";
-import { AUTHENTICATE_2FA_ENDPOINT, ENABLE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";
+import { defineComponent, reactive } from "vue";
+import { IUser, store } from "../../store/store";
+import { AUTHENTICATE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";
 import { apiClient } from "@/api/baseApi";
-import { ConstantTypes } from "@vue/compiler-core";
 import { elogin, get42Token } from "@/api/auth";
 
 export default defineComponent({
@@ -126,8 +121,8 @@ export default defineComponent({
         .then((response) => {
           if (response.status === 200) {
             const user: IUser = {
-              id: response.data.id,
-              username: response.data.username,
+              id: response.data.userId,
+              username: response.data.name,
               email: response.data.email,
               password: response.data.password,
               pic: response.data.pic,
@@ -137,8 +132,6 @@ export default defineComponent({
 
             localStorage.setItem("token", response.data.token)
             console.log("regular token: " + localStorage.getItem("token"))
-
-            // store.commit("setupChats", response.data.chats)
 
             this.$router.push("/");
           }
@@ -151,8 +144,6 @@ export default defineComponent({
           console.log(error);
         });
     },
-    // ...mapActions(["mockLogin"]),
-  // },
 
   // Cambia el codigo de 42 por el JWT token y los datos de usuario
   async getToken(code: string) {
@@ -184,7 +175,6 @@ export default defineComponent({
         is2fa: response.data.is2fa,
       }
       store.commit("changeUser", user)
-      //store.commit("setupChats", response.data.chats)
     }
     catch (error) {
       console.log("Get token: " + error)

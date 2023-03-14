@@ -130,12 +130,10 @@
 
 <script lang="ts">
 import { computed, defineComponent } from "vue";
-import { useStore, mapActions } from "vuex";
-import { key, store } from "../..//store/store";
+import { useStore } from "vuex";
+import { key } from "../..//store/store";
 import "@/style/styles.css";
-import { onUnmounted } from 'vue'
 
-import { useSocketIO } from "../../main";
 declare var require: any;
 
 export default defineComponent({

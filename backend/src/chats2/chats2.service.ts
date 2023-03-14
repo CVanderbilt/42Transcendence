@@ -7,6 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { UserEntity } from 'src/users/user.entity';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, DirectMsgDto, DuologueDto, JoinChatRoomDto } from './chats.dto';
 import { Logger2 } from 'src/utils/Logger2';
+import { Console } from 'console';
 
 @Injectable()
 export class Chats2Service {
@@ -145,7 +146,9 @@ export class Chats2Service {
 
     async createChatRoomMessage(msg: ChatMsgDto): Promise<ChatMsg> {
         const sender = await this.usersRepo.findOne({ where: { id: msg.senderId } });
+        Logger2.log(msg.chatRoomId)
         const room = await this.chatRoomsRepo.findOne({ where: { id: msg.chatRoomId } });
+        Logger2.log({room})
         const postedMsg = await this.chatMsgsRepo.save({
             sender: sender,
             chatRoom: room,

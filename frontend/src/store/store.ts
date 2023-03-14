@@ -1,9 +1,7 @@
 import { InjectionKey } from 'vue'
 import { createStore, Store } from 'vuex'
 import createPersistedState from 'vuex-persistedstate'
-import { io } from 'socket.io-client'
 import { useSocketIO } from "../main";
-import { isNumeric } from 'bootstrap-vue-3/dist/utils';
 
 export interface IUser {
   id: string,
@@ -12,8 +10,8 @@ export interface IUser {
   password: string,
   pic: string,
   is2fa: boolean,
-
 }
+
 // define your typings for the store state
 export interface State {
   apiCode: string
@@ -32,7 +30,6 @@ export const store = createStore<State>({
   },
 
   mutations: {
-    
     removeChats(state){
       state.chats = [{ name: "general", role: "user", isBanned: false, isMuted: false}]
     },
@@ -45,10 +42,8 @@ export const store = createStore<State>({
     changeUser(state, user: IUser) {
       state.user = user;
       console.log("changing user");
-      console.log(user);
-      
+      console.log({user});
       console.log(state.user);
-      
     },
   },
   actions: {

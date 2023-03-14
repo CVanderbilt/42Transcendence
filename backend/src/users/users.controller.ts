@@ -19,6 +19,11 @@ export class UsersController {
         return await (this.usersService.findAllUsers())
     }
 
+    @Get('name/:username')
+    async findUserByName(@Param('username') username: string): Promise<User> {
+        return this.usersService.findOneByName(username)
+    }
+    
     @Get(':id')
     async findUser(@Param('id') id: string): Promise<User> {
         return this.usersService.findOneById(id)

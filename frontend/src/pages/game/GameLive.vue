@@ -9,12 +9,12 @@
   
   <script lang="ts">
   import { defineComponent, computed } from "vue";
-  import { useSocketIO } from "../..//main";
+  import { chatSocketIO } from "../..//main";
   
   export default defineComponent({
     name: "Game",
     data(): any {
-      const io = useSocketIO();
+      const io = chatSocketIO();
       return {
         io,
         canvas: null,

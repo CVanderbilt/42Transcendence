@@ -5,7 +5,7 @@ const URL = "/chats";
 export interface ChatMessage {
     senderId?: string,
     senderName?: string,
-    roomId: string,
+    chatRoomId: string,
     content: string,
 }
 

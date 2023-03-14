@@ -9,7 +9,7 @@
 
             <div class="row chats-window">
               <div class="col chats-list">
-                <div v-for="item in chatsFromUser" v-bind:key="item.name">
+                <div v-for="item in userMemberships" v-bind:key="item.name">
                   <b-button v-on:click="joinRoom(item.name)"
                     style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                     {{ getNameDirectMessage(item.name) }}
@@ -20,21 +20,23 @@
                 <div class="chat-header">
                   {{ getNameDirectMessage(chatRoomName) }}
                 </div>
+
+                <!-- ------------------ chat area ------------------ -->
                 <div ref="chatArea" class="chat-area">
-                  <div v-for="message in messages" v-bind:key="message.message" class="message" :class="{
-                    'message-out': message.username === user?.username,
-                    'message-in': message.username !== user?.username,
+                  <div v-for="message in messages" v-bind:key="message.content" class="message" :class="{
+                    'message-out': message.senderName === user?.username,
+                    'message-in': message.senderName !== user?.username,
                   }">
                     <b-col>
-                      <p v-if="message.username === user?.username" class="message-text">
-                        <a>{{ message.message }}</a>
+                      <p v-if="message.senderName === user?.username" class="message-text">
+                        <a>{{ message.content }}</a>
                       </p>
                     </b-col>
                     <b-col>
-                      <p v-if="message.username !== user?.username" class="message-text">
-                        <a v-on:click="searchFriend(message.username)">{{
-                          message.username + ": "
-                        }}</a><a>{{ message.message }}</a>
+                      <p v-if="message.senderName !== user?.username" class="message-text">
+                        <a v-on:click="searchFriend(message.senderName as string)">{{
+                          message.senderName + ": "
+                        }}</a><a>{{ message.content }}</a>
                       </p>
                     </b-col>
                   </div>
@@ -43,8 +45,8 @@
                   <input type="username" id="typeusernameX" v-on:keyup.enter="sendMessage()" v-model="message"
                     class="chat-input" />
                   <b-button class="chat-button" v-on:click="sendMessage()">Send message</b-button>
-                  <b-button v-if="isAdmin === 'owner' || isAdmin === 'admin'" class="chat-button"
-                    @click="modalChatAdmin = !modalChatAdmin" style="margin-left: 10px">Manage chat</b-button>
+                  <b-button v-if="isAdmin === true" class="chat-button" @click="modalChatAdmin = !modalChatAdmin"
+                    style="margin-left: 10px">Manage chat</b-button>
                 </div>
               </div>
             </div>
@@ -133,15 +135,15 @@
 </template>
   
 <script lang="ts">
-import { computed, defineComponent } from "vue";
-import { useStore, mapActions } from "vuex";
-import { IUser, key, store } from "../../store/store";
+import { defineComponent } from "vue";
+import { useStore } from "vuex";
+import { key, store } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
-import { postChatMessage, getChatRoomByName, joinChatRoom, inviteUsers, createChatRoom, getChatRoomMessages } from "../../api/chatApi";
+import { postChatMessage, getChatRoomMessages } from "../../api/chatApi";
+import { getChatRoomByName, joinChatRoom, inviteUsers, createChatRoom, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
-import { getUser } from "../../api/username";
-import axios from "axios";
+import { getUserByName } from "@/api/user";
 
 declare var require: any;
 
@@ -152,37 +154,7 @@ export default defineComponent({
     let chatMessages: ChatMessage[] = [];
     let userMemberships: any[] = [];
     var createdChatParticipants: string[] = [];
-    const user = store.state.user;
-    // messages.pop();
-    // userMemberships.pop();
-    // createdChatParticipants.pop();
 
-    // // get user memeberships
-    // if (user !== undefined) {
-    //   getUserMemberships(user.id).then((response) => {
-    //     for (var i in response.data) {
-    //       userMemberships.push(response.data[i]);
-    //     }
-    //   })
-    // }
-
-    // // get chat messages
-    // const roomId = getChatRoomByName(chatName).then((response) => {
-    //   return response.id as string;
-    // })
-    // getChatRoomMessages(roomId).then((response) => {
-    //   this.chatUUID = response.data;
-    //   axios({
-    //     method: "get",
-    //     url: "http://localhost:3000/chats/" + response.data,
-    //     data: {},
-    //   }).then((response) => {
-    //     for (var i in response.data.messages) {
-    //       messages.push(response.data.messages[i]);
-    //     }
-    //     //this.$forceUpdate();
-    //   });
-    // });
 
     const io = useSocketIO();
 
@@ -194,7 +166,7 @@ export default defineComponent({
       isAdmin: false,
       searchedChat: "",
       messages: chatMessages,
-      chatsFromUser: userMemberships,
+      userMemberships: userMemberships,
       modalShow: false,
       createdchatName: "",
       createdChatPassword: "",
@@ -211,8 +183,11 @@ export default defineComponent({
 
 
   setup() {
+    console.log("setting up chat component")
     const store = useStore(key);
     const user = store.state.user;
+    console.log("loggin user");
+    console.log({ user });
 
     let chatUUID = "";
     return {
@@ -237,7 +212,7 @@ export default defineComponent({
     }
 
     try {
-      const room : any = await getChatRoomByName(this.chatRoomName);
+      const room: any = await getChatRoomByName(this.chatRoomName);
       this.roomId = room.id;
     } catch {
       console.log("Error getting chat room")
@@ -245,16 +220,16 @@ export default defineComponent({
 
     this.io.socket.offAny();
     this.io.socket.on("new_message", (message, username) => {
-      if (this.user?.username !== username) {
-        console.log("Nuevo mensaje!!")
-        const msg : ChatMessage = {
-          content: message,
-          senderName: username,
-          senderId: this.user?.id,
-          roomId: this.roomId
-        }
-        this.messages.push(msg)
+      const msg: ChatMessage = {
+        content: message,
+        senderName: username,
+        senderId: "",
+        chatRoomId: ""
       }
+
+      console.log("Pushing message:")
+      console.log(msg)
+      this.messages.push(msg)
     });
 
   },
@@ -270,30 +245,34 @@ export default defineComponent({
           ? name.split("¿")[2]
           : name.split("¿")[1];
       }
-      return name;
+      // return name;
     },
 
     sendMessage() {
+      console.log("sendMessage: ")
       if (this.message !== "") {
         if (!this.user) {
           console.error("user not defined, esto no deberia pasar");
           return;
         }
-        this.io.socket.emit("event_message", {
+
+        const msg2emit = {
           room: this.chatRoomName,
           message: this.message,
           username: this.user.username,
-        })
+        }
+
+        console.log("emitting message: ", msg2emit)
+        this.io.socket.emit("event_message", msg2emit)
 
         const outMessage: ChatMessage = {
           content: this.message,
-          roomId: this.roomId,
+          chatRoomId: this.roomId,
           senderId: this.user.id,
         }
 
-        this.messages.push(outMessage)
-
         try {
+          console.log("posting message: ", outMessage)
           postChatMessage(this.roomId, outMessage)
         }
         catch (err: any) {
@@ -301,16 +280,21 @@ export default defineComponent({
         }
 
         this.message = "";
-        //this.chatArea.scrollTop = this.chatArea.scrollHeight
+        // this.chatArea.scrollTop = this.chatArea.scrollHeight
       }
     },
 
-    async joinRoom(chat2join: string) {
+    async joinRoom(room2join: string) {
+      if (room2join === "") {
+        console.log("Empty room name");
+        return;
+      }
+
       let room: any;
 
       // get chat room
       try {
-        room = await getChatRoomByName(chat2join).then((response) => {
+        room = await getChatRoomByName(room2join).then((response) => {
           return response.data;
         })
       }
@@ -319,7 +303,7 @@ export default defineComponent({
         return;
       }
 
-      // join membership (returns membership if user already a member of the chat room)
+      // join membership (returns membership even if user is already a member of the room)
       try {
         joinChatRoom(room.id, this.user?.id as string)
       }
@@ -344,22 +328,27 @@ export default defineComponent({
       }
 
       // change chat
-      this.changeChat(room.id, room.name);
+      this.changeRoom(room.id, room.name);
     },
 
-    changeChat(chatUUID: string, chatName: string) {
-      if (!this.user) return;
+    changeRoom(chatUUID: string, roomName: string) {
+      if (!this.user) {
+        console.log("user not defined, esto no deberia pasar");
+        return;
+      }
+
+      console.log("Current room id: " + this.roomId)
       this.roomId = chatUUID;
+      console.log("New room id: " + this.roomId)
       this.io.socket.emit("event_leave", this.chatRoomName);
       this.messages = [];
-      this.io.socket.emit("event_join", chatName);
-      this.chatRoomName = chatName;
+      this.io.socket.emit("event_join", roomName);
+      this.chatRoomName = roomName;
     },
 
     async addUsersToChat(users: string[], chatName: string) {
-      // find room id
       try {
-        const room : any = await getChatRoomByName(chatName)
+        const room: any = await getChatRoomByName(chatName)
         inviteUsers(room.id, users)
       }
       catch (err) {
@@ -370,7 +359,7 @@ export default defineComponent({
 
     async createChatRoom(roomName: string, password: string, users: string[]) {
       try {
-        const room : any = await createChatRoom(roomName, this.user?.id as string, password)
+        const room: any = await createChatRoom(roomName, this.user?.id as string, password)
         inviteUsers(room.id, users).catch((err) => {
           console.log("Can not invite users to chat room: " + err.message);
         })
@@ -400,13 +389,12 @@ export default defineComponent({
     },
 
     searchFriend(username: string) {
-      //todo: update para usar apis
-      getUser(username)
+      getUserByName(username)
         .then((response) => {
           this.$router.push("/user?uuid=" + response.data.id);
         })
         .catch((error) => {
-          alert("usuario o contraseña incorrectos");
+          alert("usuario no encontrado");
         });
     },
 

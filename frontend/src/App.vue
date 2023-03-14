@@ -22,7 +22,7 @@
         
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <a class="nav-link" href="/chats">Chats</a>
+              <a class="nav-link" href="/chats2">Chats</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="/game?id=ajshdfgjakshdgf">Game</a>
@@ -78,7 +78,7 @@ import { useStore } from "vuex";
 import { key, store } from "./store/store";
 import { BDropdown, BDropdownItem, BDropdownDivider } from "bootstrap-vue-3";
 import { RouterView } from "vue-router";
-import { getUser } from "./api/username";
+import { getUserByName } from "./api/user";
 declare var require: any;
 
 export default defineComponent({
@@ -100,7 +100,7 @@ export default defineComponent({
   },
   methods: {
     searchFriend(username: string){ //todo: update para usar apis
-      getUser(username)
+      getUserByName(username)
         .then((response) => {
           this.$router.push("/user?uuid=" + response.data.id);
         })
