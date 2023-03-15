@@ -18,13 +18,3 @@ export interface ChatMsg {
     content: string
     createdAt: Date
 }
-
-export interface Duologue {
-    id?: number
-}
-
-export interface DirectMsg {
-    id?: number
-    content: string
-    createdAt: Date
-}

@@ -22,7 +22,7 @@ const routes = [
     { path: '/login', name: "login", component: Login, meta: { onlyWithoutAuth: true } },
     { path: '/signUp', name: "signUp", component: SignUp, meta: { onlyWithoutAuth: true } },
     { path: '/settings', name: "settings", component: Settings, meta: { requiresAuth: true } },
-    { path: '/chats2', name: "chats2", component: Chat2, meta: { requiresAuth: true } },
+    { path: '/chats', name: "chats", component: Chat2, meta: { requiresAuth: true } },
     { path: '/user', name: "user", component: User, meta: { requiresAuth: true } },
     { path: '/game', name: "game", component: Game, meta: { requiresAuth: true } },
     { path: '/qr', name: "qr", component: QrValidation, meta: { requiresAuth: true } },

@@ -22,8 +22,8 @@
                     style="border-radius: 50%"
                   />
                 </div>
-                <h2 class="fw-bold mt-1 mb-5 text-uppercase">{{ username }}</h2>
-                <h4 class="fw-bold mt-1 mb-5">Email: {{ email }}</h4>
+                <h2 class="fw-bold mt-1 mb-5 text-uppercase">{{ lookedUpUserName }}</h2>
+                <h4 class="fw-bold mt-1 mb-5">Email: {{ lookedUpEmail }}</h4>
                 <button
                   class="btn btn-outline-light mt-3 btn-lg px-5"
                   type="submit"
@@ -53,6 +53,7 @@ import { useStore, mapActions } from "vuex";
 import { key, store } from "../store/store";
 import { getUserById } from "../api/user";
 import axios from "axios";
+import { getChatRoom, inviteUsers } from "@/api/chatApi";
 
 declare var require: any;
 
@@ -65,23 +66,23 @@ export default defineComponent({
 
     return {
       profilePicture,
-      _user,
+      currentUser: _user,
     };
   },
 
   data() {
     return {
-      uuid: "",
-      username: "",
-      email: "",
+      lookedUpUuid: "",
+      lookedUpUserName: "",
+      lookedUpEmail: "",
     };
   },
 
   mounted() {
     if (this.$route.query.uuid !== undefined) {
-      this.uuid = this.$route.query.uuid as string;
-      console.log("UUID: " + this.uuid);
-      this.getUserInfo(this.uuid);
+      this.lookedUpUuid = this.$route.query.uuid as string;
+      console.log("UUID: " + this.lookedUpUuid);
+      this.getUserInfo(this.lookedUpUuid);
     }
   },
 
@@ -94,56 +95,54 @@ export default defineComponent({
       getUserById(uuid)
         .then((response) => {
           console.log("USUARIO:" + response.data.username);
-          this.username = response.data.username;
-          this.email = response.data.email;
+          this.lookedUpUserName = response.data.username;
+          this.lookedUpEmail = response.data.email;
         })
         .catch((error) => {
           alert("usuario o contraseña incorrectos");
         });
     },
 
-    createChat() {
+    async createChat() {
       //console.log("UUID que llega"+  this.chatUUID)
-      const chatName =
-        "directMessage¿" + this._user?.username + "¿" + this.username;
-      const oppositeName =
-        "directMessage¿" + this.username + "¿" + this._user?.username;
+      const names : string[] = [];
+      names.push(this.currentUser?.username as string);
+      names.push(this.lookedUpUserName);
+      names.sort();
 
-      const UUID = this._user?.id;
-      // newChat({
-      //   chatname: chatName,
-      //   password: "",
-      //   messages: [],
-      // })
-      //   .then((response : any) => {
-      //     axios({
-      //       method: "put",
-      //       url: "http://localhost:3000/addChat/" + UUID,
-      //       data: { name: chatName, role: "direct" },
-      //     }).then((resp) =>
-      //       this.$router.push("/chats?name=" + response.data.chatname)
-      //     );
-      //     axios({
-      //       method: "put",
-      //       url: "http://localhost:3000/addChat/" + this.uuid,
-      //       data: { name: chatName, role: "direct" },
-      //     }).then((resp) =>
-      //       this.$router.push("/chats?name=" + response.data.chatname)
-      //     );
-      //   })
-      //   .catch((err: any) => {
-      //     alert("Direct chat already created");
-      //     this.$router.push("/chats?name=" + chatName);
-      //   });
+      const chatRoomName =
+        "" + names[0] + "&" + names[1];
+
+      const UUID = this.currentUser?.id as string;
+
+      console.log(chatRoomName)
+
+      let room;
+      try {
+        room = (await getChatRoom(chatRoomName, UUID, "", true)).data
+      } catch(err) {
+        alert("Direct chat could not be created");
+        console.log(err)
+        return
+      }
+      try {
+        inviteUsers(room.id, [this.lookedUpUuid])
+      } catch(err) {
+        alert("User could not be invited to chat");
+        console.log(err)
+        return
+      }
+
+      this.$router.push("/chats?name=" + chatRoomName);
     },
 
     createGame(){
       const gameId = "skdlfjhgsdkjfh"
-      this.$router.push("/game?id=" + this.uuid);
+      this.$router.push("/game?id=" + this.lookedUpUuid);
     },
 
     openChat() {
-      this.$router.push("/chats?id=" + this.uuid);
+      this.$router.push("/chats?id=" + this.lookedUpUuid);
     },
 
     onUpload() {

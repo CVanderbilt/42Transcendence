@@ -10,13 +10,13 @@ import { ChatMembership, ChatRoom } from 'src/chats2/chats.interface';
 import { ChatMembershipDto, ChatRoomDto } from 'src/chats2/chats.dto';
 import { Chats2Service } from 'src/chats2/chats2.service';
 import * as bcrypt from 'bcrypt';
+import { Logger2 } from 'src/utils/Logger2';
 
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly usersService: UsersService,
-        private readonly chats2Service: Chats2Service,
         private jwtService: JwtService,
     ) { }
 
@@ -38,8 +38,6 @@ export class AuthService {
         }
 
         const user : User = await this.usersService.createUser(userDto)
-
-        this.joinUser2GeneralChat(user.id)
     }
 
     async loginWithEmail(login: LoginEmailDto) {
@@ -56,7 +54,6 @@ export class AuthService {
             throw new HttpException("INCORRECT_PASSWORD", HttpStatus.FORBIDDEN)
         }
 
-        const chats : ChatMembership[] = await this.chats2Service.findUserMemberships(user.id)
         const pic : string = "" // TODO: get generic pic?
         
         const payload = {
@@ -72,7 +69,6 @@ export class AuthService {
             "pic": pic,
             "token": token,
             "is2fa": user.is2fa,
-            "chats": chats
         }
 
         return res
@@ -114,26 +110,7 @@ export class AuthService {
         return (await res).data
     }
     
-    async joinUser2GeneralChat(userId : string)
-    {
-        var generalChat : ChatRoom = await this.chats2Service.findChatRoomByName(process.env.GENERAL_CHAT_NAME)
-        if (!generalChat)
-        {
-            const generalChatRoomDto : ChatRoomDto = {
-                name: process.env.GENERAL_CHAT_NAME,
-                ownerId: userId,
-                isPrivate: false,
-                password: "",
-            }
-            generalChat = await this.chats2Service.createChatRoom(generalChatRoomDto)            
-        }
-        const membership : ChatMembershipDto = {
-            userId: userId,
-            chatRoomId: generalChat.id,
-            isAdmin: false,
-        }            
-        this.chats2Service.joinChatRoom(generalChat.id, membership)
-    }
+
 
     async signIn42(code: string): Promise<LoginResDto> {
         const accessData = await this.exchangeCodeForAccessData(code)
@@ -153,10 +130,6 @@ export class AuthService {
             }
             user = await this.usersService.createUser(newUserData)
         }
-        Logger.log("User: " + user.id + " logged in")
-
-        this.joinUser2GeneralChat(user.id)
-        const chats : ChatMembership[] = await this.chats2Service.findUserMemberships(user.id)
 
         const payload = {
             userId: user.id,
@@ -171,7 +144,6 @@ export class AuthService {
             "pic": pic,
             "token": token,
             "is2fa": user.is2fa,
-            "chats": chats
         }
 
         return res

@@ -108,16 +108,17 @@ export default defineComponent({
         })
         .then((response) => {
           console.log(response.data);
-          const user: IUser = {
-            id: response.data.id,
-            email: response.data.email,
-            password: response.data.password,
-            username: response.data.username,
-            pic:"",
-            is2fa: response.data.is2fa,
-          }
-          store.commit("changeUser", user);
-          this.$router.push("/");
+          // const user: IUser = {
+          //   id: response.data.id,
+          //   email: response.data.email,
+          //   password: response.data.password,
+          //   username: response.data.username,
+          //   pic:"",
+          //   is2fa: response.data.is2fa,
+          // }
+          // store.commit("changeUser", user);
+          alert("You can now login!");
+          this.$router.push("/login");
         }).catch(error => alert("Can not sign up! ("+error+")"));
         
       } else {

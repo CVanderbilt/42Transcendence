@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { Chats2Service } from './chats2.service';
 import { Chats2Controller } from './chats2.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ChatMembershipEntity, ChatMsgEntity, ChatRoomEntity, DirectMsgEntity, DuologueEntity } from './chatEntities.entity';
+import { ChatMembershipEntity, ChatMsgEntity, ChatRoomEntity } from './chatEntities.entity';
 import { UserEntity } from 'src/users/user.entity';
 
 @Module({
@@ -12,8 +12,6 @@ import { UserEntity } from 'src/users/user.entity';
       ChatMembershipEntity,
       ChatMsgEntity,
       UserEntity,
-      DuologueEntity,
-      DirectMsgEntity,
     ]),
   ],
   providers: [Chats2Service],

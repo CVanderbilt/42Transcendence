@@ -1,13 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ChatRoomEntity, ChatMembershipEntity, ChatMsgEntity, DirectMsgEntity, DuologueEntity } from './chatEntities.entity';
-import { ChatRoom, ChatMembership, ChatMsg, Duologue, DirectMsg } from './chats.interface';
+import { ChatRoomEntity, ChatMembershipEntity, ChatMsgEntity } from './chatEntities.entity';
+import { ChatRoom, ChatMembership, ChatMsg } from './chats.interface';
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from 'src/users/user.entity';
-import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, DirectMsgDto, DuologueDto, JoinChatRoomDto } from './chats.dto';
+import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { Logger2 } from 'src/utils/Logger2';
-import { Console } from 'console';
 
 @Injectable()
 export class Chats2Service {
@@ -21,13 +20,9 @@ export class Chats2Service {
         private readonly chatMsgsRepo: Repository<ChatMsgEntity>,
         @InjectRepository(UserEntity)
         private readonly usersRepo: Repository<UserEntity>,
-        @InjectRepository(DuologueEntity)
-        private readonly duologuesRepo: Repository<DuologueEntity>,
-        @InjectRepository(DirectMsgEntity)
-        private readonly directMsgsRepo: Repository<DirectMsgEntity>
     ) { }
 
-    async createChatRoom(roomDto: ChatRoomDto): Promise<ChatRoom> {
+    async getChatRoom(roomDto: ChatRoomDto): Promise<ChatRoom> {
         Logger2.log('Creating chat room with dto:')
         Logger2.log({roomDto})
         const user = await this.usersRepo.findOne({ where: { id: roomDto.ownerId } });
@@ -36,14 +31,16 @@ export class Chats2Service {
         // check whether the room name is already taken
         const existingRoom = await this.chatRoomsRepo.findOne({ where: { name: roomDto.name } })
         if (existingRoom) {
-            throw new Error('Room name already taken')
+            return existingRoom
         }
         // create room
         const room = await this.chatRoomsRepo.save({
             name: roomDto.name,
             isPrivate: roomDto.isPrivate,
             password: roomDto.password ? bcrypt.hashSync(roomDto.password, 10) : null,
-            owner: user
+            owner: user,
+            // if dto has isDirect, use it, otherwise default to false
+            isDirect: roomDto.isDirect ? roomDto.isDirect : false,
         })
         // add owner as member
         this.chatMembershipsRepo.save({
@@ -80,6 +77,27 @@ export class Chats2Service {
         });
 
         return rooms
+    }
+
+    async joinUser2GeneralChat(userId : string)
+    {
+        var generalChat : ChatRoom = await this.findChatRoomByName(process.env.GENERAL_CHAT_NAME)
+        if (!generalChat)
+        {
+            const generalChatRoomDto : ChatRoomDto = {
+                name: process.env.GENERAL_CHAT_NAME,
+                ownerId: userId,
+                isPrivate: false,
+                password: "",
+            }
+            generalChat = await this.getChatRoom(generalChatRoomDto)            
+        }
+        const membership : ChatMembershipDto = {
+            userId: userId,
+            chatRoomId: generalChat.id,
+            isAdmin: false,
+        }            
+        this.joinChatRoom(generalChat.id, membership)
     }
 
     async joinChatRoom(id: number, data: JoinChatRoomDto): Promise<ChatMembership> {
@@ -200,43 +218,5 @@ export class Chats2Service {
         }
 
         return outMsgs
-    }
-
-    // Duologues -------------------------------------------------------------------------------
-
-    async getDuologue(data: DuologueDto): Promise<Duologue> {
-        var duologue = await this.findDuologue(data)
-        if (!duologue) {
-            const user1 = await this.usersRepo.findOne({ where: { id: data.user1Id } });
-            const user2 = await this.usersRepo.findOne({ where: { id: data.user2Id } });
-            duologue = await this.duologuesRepo.save({
-                user1: user1,
-                user2: user2
-            })
-        }
-
-        return duologue
-    }
-
-    findDuologue(data: DuologueDto): Promise<Duologue> {
-        var duologue = this.duologuesRepo.findOne({
-            where: [
-                { user1: { id: data.user1Id }, user2: { id: data.user2Id } },
-                { user1: { id: data.user2Id }, user2: { id: data.user1Id } }
-            ],
-            relations: ['user1', 'user2']
-        })
-
-        return duologue
-    }
-
-    async createDirectMessage(id: number, dmsg: DirectMsgDto): Promise<DirectMsg> {
-        const duologue = await this.duologuesRepo.findOne({ where: { id: id } });
-        const user = await this.usersRepo.findOne({ where: { id: dmsg.senderId } });
-        return this.directMsgsRepo.save({
-            duologue: duologue,
-            sender: user,
-            content: dmsg.content
-        })
     }
 }

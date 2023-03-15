@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Logger, Param, Post, Put } from '@nestjs/common';
 import { Logger2 } from 'src/utils/Logger2';
-import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, DirectMsgDto, DuologueDto, JoinChatRoomDto } from './chats.dto';
-import { ChatMembership, ChatMsg, ChatRoom } from './chats.interface';
+import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
+import { ChatMembership, ChatRoom } from './chats.interface';
 import { Chats2Service } from './chats2.service';
 
 @Controller('chats')
@@ -36,7 +36,7 @@ export class Chats2Controller {
     @Post('rooms')
     async create(@Body() dto: ChatRoomDto): Promise<ChatRoom> {
         try {
-            return await this.chatsService.createChatRoom(dto)
+            return await this.chatsService.getChatRoom(dto)
         } catch (error) {
             Logger2.error(error)
         }
@@ -88,26 +88,5 @@ export class Chats2Controller {
     @Post('/messages/:roomId')
     async postRoomMessage(@Param('roomId') roomId: number, @Body() msg: ChatMsgDto) {
         return this.chatsService.createChatRoomMessage(msg)
-    }
-
-    // Direct Messages ------------------------------------------------------------------
-
-    // get duologue
-    // finds or creates duologue
-    @Post('duologues')
-    async getDuologue(@Body() data: DuologueDto) {
-        return await (this.chatsService.getDuologue(data))
-    }
-    // get duologue
-    // takes two user ids and returns duologue id
-    @Get('duologues')
-    async findDuologue(@Body() data: DuologueDto) {
-        return await (this.chatsService.findDuologue(data))
-    }
-
-    // post direct message
-    @Post('duologues/:id')
-    async postDirectMessage(@Param('id') duologueId: number, @Body() msg: DirectMsgDto) {
-        return this.chatsService.createDirectMessage(duologueId, msg)
     }
 }

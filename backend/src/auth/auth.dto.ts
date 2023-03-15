@@ -32,7 +32,6 @@ export class LoginResDto {
     pic: string
     token: string
     is2fa: boolean
-    chats: ChatMembership[]
 }
 
 export class Signin2faDto {

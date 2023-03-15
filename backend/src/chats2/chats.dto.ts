@@ -3,6 +3,7 @@ export interface ChatRoomDto {
     ownerId: string
     password?: string
     isPrivate?: boolean
+    isDirect?: boolean
 }
 
 export interface ChatMembershipDto {
@@ -23,18 +24,6 @@ export interface ChatMsgDto {
     content: string
     senderName?: string
     createdAt?: Date
-}
-
-export interface DirectMsgDto {
-    duologueId: number
-    senderId: string
-    content: string
-}
-
-export interface DuologueDto {
-    duologueId: number
-    user1Id: string
-    user2Id: string
 }
 
 export interface JoinChatRoomDto {

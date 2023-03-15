@@ -24,6 +24,7 @@ export interface Membership {
 export interface ChatRoom {
     name: string,
     password: string,
+    isDirect?: boolean,
 }
 
 // export function makeid(length: number) { //TODO esto debería ser innecesario ya que se encarga el backend
@@ -40,13 +41,14 @@ export interface ChatRoom {
 
 // ----------------------------------------------
 
-export async function createChatRoom(roomName:string, owner:string, password = "") {
+export async function getChatRoom(roomName:string, owner:string, password = "", isDirect = false) {
     
     const room : any = {
         name: roomName,
         ownerId: owner,
         password: password,
         isPrivate: password.length > 0 ? true : false,
+        isDirect: isDirect
     }
 
     return apiClient.post(`${URL}/rooms`, room)
@@ -78,4 +80,8 @@ export async function inviteUsers(roomID: string, usersIds:string[]) {
 
 export async function postChatMessage(roomId: string, message : ChatMessage) {
     return apiClient.post(`${URL}/messages/${roomId}`, message)
+}
+
+export async function leaveChatRoom(roomId: string, userId: string) {
+    return apiClient.post(`${URL}/rooms/${roomId}/leave`, {userId})
 }

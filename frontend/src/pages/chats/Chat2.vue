@@ -142,7 +142,7 @@ import { key, store } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
 import { postChatMessage, getChatRoomMessages, Membership, getUserMemberships } from "../../api/chatApi";
-import { getChatRoomByName, joinChatRoom, inviteUsers, createChatRoom, } from "../../api/chatApi";
+import { getChatRoomByName, joinChatRoom, inviteUsers, getChatRoom, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "@/api/user";
 
@@ -366,7 +366,7 @@ export default defineComponent({
 
     async createChatRoom(roomName: string, password: string, users: string[]) {
       try {
-        const room: any = await createChatRoom(roomName, this.user?.id as string, password)
+        const room: any = await getChatRoom(roomName, this.user?.id as string, password)
         inviteUsers(room.id, users).catch((err) => {
           console.log("Can not invite users to chat room: " + err.message);
         })

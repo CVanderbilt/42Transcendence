@@ -15,12 +15,8 @@ export class AuthController {
 
   @Post('esignup')
   async signup(@Body() data: EmailSignupDto) {
-    try {
       const res = await this.authService.registerWithEmail(data)
       return res
-    } catch (cause) {
-      throw new HttpException("Unauthorized user", 401, { cause })
-    }
   }
 
   @HttpCode(200) // cambia el código por defecto que en post es 201
@@ -78,9 +74,7 @@ export class AuthController {
   @Get('/me')
   @UseGuards(Jwt2faAuthGuard)
   async me(@Req() req) : Promise<any> {
-    Logger.log("me called")
     const me = await this.authService.me(req);
-    Logger.log("me ok!")
     return me;
   }
 }

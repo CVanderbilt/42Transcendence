@@ -4,17 +4,21 @@ import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { User } from './user.interface';
 import * as bcrypt from 'bcrypt';
+import { Chats2Service } from 'src/chats2/chats2.service';
 
 
 @Injectable()
 export class UsersService {
     constructor(
+        private readonly chatsService: Chats2Service,
         @InjectRepository(UserEntity)
         private readonly usersRepo: Repository<UserEntity>
     ) { }
 
     async createUser(user: User): Promise<User> {
-        return this.usersRepo.save(user);
+        const newUser = this.usersRepo.save(user)
+        this.chatsService.joinUser2GeneralChat(user.id)
+        return newUser
     }
 
     async findOneById(id: string): Promise<User> {

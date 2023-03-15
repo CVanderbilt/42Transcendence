@@ -17,6 +17,9 @@ export class ChatRoomEntity extends BaseEntity{
     @Column({default: false})
     isPrivate: boolean
 
+    @Column({default: false})
+    isDirect: boolean
+
     // por si no funciona con null 
     // // is password protected   
     // @Column({default: false})
@@ -64,42 +67,6 @@ export class ChatMsgEntity extends BaseEntity {
     @JoinColumn()
     chatRoom: ChatRoomEntity
     
-    @ManyToOne(type => UserEntity)
-    @JoinColumn()
-    sender: UserEntity
-
-    @Column({default: ""})
-    content: string
-    
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt: Date
-}
-
-// Direct Messages ------------------------------------------------------------------
-@Entity('duologue')
-export class DuologueEntity extends BaseEntity {
-    @PrimaryGeneratedColumn()
-    id: number
-
-    @ManyToOne(type => UserEntity)
-    @JoinColumn()
-    user1: UserEntity
-
-    @ManyToOne(type => UserEntity)
-    @JoinColumn()
-    user2: UserEntity
-}
-
-
-@Entity('directMsg')
-export class DirectMsgEntity extends BaseEntity {
-    @PrimaryGeneratedColumn()
-    id: number
-
-    @ManyToOne(type => DuologueEntity)
-    @JoinColumn()
-    duologue: DuologueEntity
-
     @ManyToOne(type => UserEntity)
     @JoinColumn()
     sender: UserEntity
