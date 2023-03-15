@@ -23,11 +23,7 @@ export class Chats2Service {
     ) { }
 
     async getChatRoom(roomDto: ChatRoomDto): Promise<ChatRoom> {
-        Logger2.log('Creating chat room with dto:')
-        Logger2.log({roomDto})
         const user = await this.usersRepo.findOne({ where: { id: roomDto.ownerId } });
-        Logger2.log('Found user:')
-        Logger2.log({user})
         // check whether the room name is already taken
         const existingRoom = await this.chatRoomsRepo.findOne({ where: { name: roomDto.name } })
         if (existingRoom) {
@@ -187,9 +183,7 @@ export class Chats2Service {
 
     async createChatRoomMessage(msg: ChatMsgDto): Promise<ChatMsg> {
         const sender = await this.usersRepo.findOne({ where: { id: msg.senderId } });
-        Logger2.log(msg.chatRoomId)
         const room = await this.chatRoomsRepo.findOne({ where: { id: msg.chatRoomId } });
-        Logger2.log({room})
         const postedMsg = await this.chatMsgsRepo.save({
             sender: sender,
             chatRoom: room,
