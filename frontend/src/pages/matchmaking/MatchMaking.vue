@@ -156,7 +156,6 @@ export default defineComponent({
       return require(`@/assets/noPictureProfile.png`);
     },
   },
-  
 });
 </script>
 

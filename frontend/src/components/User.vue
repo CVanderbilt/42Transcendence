@@ -111,7 +111,7 @@ export default defineComponent({
       names.sort();
 
       const chatRoomName =
-        "" + names[0] + "&" + names[1];
+        "directMessage¿" + names[0] + "¿" + names[1];
 
       const UUID = this.currentUser?.id as string;
 

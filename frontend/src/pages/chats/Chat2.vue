@@ -9,10 +9,10 @@
 
             <div class="row chats-window">
               <div class="col chats-list">
-                <div v-for="item in userMemberships" v-bind:key="item.chatRoomName">
-                  <b-button v-on:click="joinRoom(item.chatRoomName as string)"
+                <div v-for="item in RoomsList" v-bind:key="item">
+                  <b-button v-on:click="joinRoom(item)"
                     style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
-                    {{ getNameDirectMessage(item.chatRoomName as string) }}
+                    {{ getNameDirectMessage(item) }}
                   </b-button>
                 </div>
               </div>
@@ -58,7 +58,7 @@
               <input type="password" id="typePasswordX" class="form-control form-control-lg" placeholder="Password"
                 v-model="searchedChatPassword" :disabled="!searchedChatRequiresPassword" />
 
-              <b-button @click="joinRoom(searchedChat)">Search chat</b-button>
+              <b-button @click="searchRoom(searchedChat)">Search chat</b-button>
               <input type="checkbox" v-model="searchedChatRequiresPassword" v-on:click="searchedChatPassword = ''" />
             </div>
             <b-button @click="modalShow = !modalShow">Create Chat</b-button>
@@ -144,7 +144,7 @@ import { useSocketIO } from "../../main";
 import { postChatMessage, getChatRoomMessages, Membership, getUserMemberships } from "../../api/chatApi";
 import { getChatRoomByName, joinChatRoom, inviteUsers, getChatRoom, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
-import { getUserByName } from "@/api/user";
+import { getUserByName } from "../../api/user";
 
 declare var require: any;
 
@@ -155,6 +155,7 @@ export default defineComponent({
     let chatMessages: ChatMessage[] = [];
     let userMemberships: Membership[] = [];
     var createdChatParticipants: string[] = [];
+    var RoomsList: string[] = [];
 
 
     const io = useSocketIO();
@@ -164,6 +165,7 @@ export default defineComponent({
       io,
       chatRoomName: "general",
       chatRoomId: "",
+      RoomsList,
       isAdmin: false,
       searchedChat: "",
       messages: chatMessages,
@@ -225,6 +227,12 @@ export default defineComponent({
     } catch {
       console.log("Error getting user memberships")
     }
+
+    this.userMemberships.forEach((item) =>{
+      this.RoomsList.push(item.chatRoomName as string)
+    })
+
+      //this.RoomsList.push item.chatRoomName
 
     this.io.socket.offAny();
     this.io.socket.on("new_message", (message, username) => {
@@ -292,7 +300,7 @@ export default defineComponent({
       }
     },
 
-    async joinRoom(room2join: string) {
+    async searchRoom(room2join: string) {
       if (room2join === "") {
         console.log("Empty room name");
         return;
@@ -313,6 +321,54 @@ export default defineComponent({
 
       try {
         joinChatRoom(room.id, this.user?.id as string) // returns membership even if user is already a member of the room
+        this.RoomsList.push(room2join)
+      }
+      catch (err: any) {
+        if (err.stattus === 404)
+          console.log("Wrong password");
+        else
+          console.log("Can not join room");
+        return;
+      }
+
+      // try to get messages
+      try {
+        getChatRoomMessages(room.id).then((response) => {
+          for (var i in response.data) {
+            this.messages.push(response.data[i]);
+          }
+        })
+      }
+      catch (err) {
+        console.log("Can not get messages");
+      }
+
+      // change chat
+      this.changeRoom(room.id, room.name);
+    },
+
+    async joinRoom(room2join: string) {
+      if (room2join === "") {
+        console.log("Empty room name");
+        return;
+      }
+
+      let room: any;
+
+      // get chat room
+      try {
+        room = await getChatRoomByName(room2join).then((response) => {
+          return response.data;
+        })
+      }
+      catch (err) {
+        console.log("Can not find chat room");
+        return;
+      }
+
+      try {
+        const resp = joinChatRoom(room.id, this.user?.id as string) // returns membership even if user is already a member of the room
+        this.isAdmin = (await resp).data.isAdmin
       }
       catch (err: any) {
         if (err.stattus === 404)
@@ -367,6 +423,8 @@ export default defineComponent({
     async createChatRoom(roomName: string, password: string, users: string[]) {
       try {
         const room: any = await getChatRoom(roomName, this.user?.id as string, password)
+        this.RoomsList.push(roomName)
+        
         inviteUsers(room.id, users).catch((err) => {
           console.log("Can not invite users to chat room: " + err.message);
         })

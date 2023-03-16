@@ -140,7 +140,7 @@ export default defineComponent({
 canvas {
   background: rgb(0, 0, 0);
   border: 1px solid #333;
-  width: 70%;
+  width: 60%;
   margin-top: 2em;
   height: auto;
 }
