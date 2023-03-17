@@ -9,11 +9,16 @@
 
             <div class="row chats-window">
               <div class="col chats-list">
-                <div v-for="item in userMemberships" v-bind:key="item.chatRoomName">
+                <div v-for="item in userMemberships" v-bind:key="item.chatRoomName" style="display: flex;">
                   <b-button v-on:click="joinRoom(item.chatRoomName as string)"
                     style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                     {{ getNameDirectMessage(item.chatRoomName as string) }}
                   </b-button>
+
+                  <button v-if="item.chatRoomName !== 'general'" @click="leaveRoom(item.chatRoomId)">
+                    x
+                  </button>
+                  
                 </div>
               </div>
               <div class="col-9 chat-column">
@@ -55,7 +60,7 @@
             <div class="form-outline form-white mb-4">
               <input type="username" id="typeusernameX" class="form-control form-control-lg" v-model="searchedChat"
                 placeholder="Chat name" />
-              <input type="password" id="typePasswordX" class="form-control form-control-lg" placeholder="Password"
+              <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Password"
                 v-model="searchedChatPassword" :disabled="!searchedChatRequiresPassword" />
 
               <b-button @click="joinRoom(searchedChat)">Search chat</b-button>
@@ -78,7 +83,7 @@
             <label class="form-label" for="typeUsername">Chat name</label>
           </div>
           <div class="form-outline form-white mb-2">
-            <input type="password" id="typePasswordX" class="form-control form-control-lg"
+            <input type="password" class="typePasswordX form-control form-control-lg"
               placeholder="Type your new password" v-model="createdChatPassword"
               :disabled="!createdChatRequiresPassword" />
             <label class="form-label" for="typeEmailX">Password needed? </label>
@@ -109,7 +114,7 @@
           <h2 class="fw-bold text-uppercase">{{ 'Manage chat ' + chatRoomName }}</h2>
 
           <div class="form-outline form-white mb-2">
-            <input type="password" id="typePasswordX" class="form-control form-control-lg"
+            <input type="password" class="typePasswordX form-control form-control-lg"
               placeholder="Type your new password" v-model="createdChatPassword"
               :disabled="!createdChatRequiresPassword" />
             <label class="form-label" for="typeEmailX">Password needed? </label>
@@ -141,7 +146,7 @@ import { useStore } from "vuex";
 import { key, store } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
-import { postChatMessage, getChatRoomMessages, Membership, getUserMemberships } from "../../api/chatApi";
+import { postChatMessage, getChatRoomMessages, Membership, getUserMemberships, leaveChatRoom } from "../../api/chatApi";
 import { getChatRoomByName, joinChatRoom, inviteUsers, getChatRoom, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "@/api/user";
@@ -184,11 +189,8 @@ export default defineComponent({
 
 
   setup() {
-    console.log("setting up chat component")
     const store = useStore(key);
     const user = store.state.user;
-    console.log("loggin user");
-    console.log({ user });
 
     let chatUUID = "";
     return {
@@ -220,8 +222,6 @@ export default defineComponent({
 
     try {
       this.userMemberships = await getUserMemberships(this.user?.id as string)
-      console.log("User memberships:")
-      console.log(this.userMemberships)
     } catch {
       console.log("Error getting user memberships")
     }
@@ -235,8 +235,6 @@ export default defineComponent({
         chatRoomId: ""
       }
 
-      console.log("Pushing message:")
-      console.log(msg)
       this.messages.push(msg)
     });
 
@@ -257,7 +255,6 @@ export default defineComponent({
     },
 
     sendMessage() {
-      console.log("sendMessage: ")
       if (this.message !== "") {
         if (!this.user) {
           console.error("user not defined, esto no deberia pasar");
@@ -270,7 +267,6 @@ export default defineComponent({
           username: this.user.username,
         }
 
-        console.log("emitting message: ", msg2emit)
         this.io.socket.emit("event_message", msg2emit)
 
         const outMessage: ChatMessage = {
@@ -280,7 +276,6 @@ export default defineComponent({
         }
 
         try {
-          console.log("posting message: ", outMessage)
           postChatMessage(this.roomId, outMessage)
         }
         catch (err: any) {
@@ -338,15 +333,29 @@ export default defineComponent({
       this.changeRoom(room.id, room.name);
     },
 
+    async leaveRoom(roomId : any)
+    {
+      try {
+        leaveChatRoom(roomId, this.user?.id as string)
+        const membership = this.userMemberships.find((membership) => membership.chatRoomId === roomId)
+        if (membership) {
+          this.userMemberships.splice(this.userMemberships.indexOf(membership), 1)
+        }
+        // change to general chat
+        const generalChat : any = this.userMemberships.find((membership) => membership.chatRoomName === "general")
+        this.changeRoom(generalChat.chatRoomId, "general")
+      } catch (err) {
+        console.log("Can not leave room");
+      }
+    },
+
     changeRoom(chatUUID: string, roomName: string) {
       if (!this.user) {
         console.log("user not defined, esto no deberia pasar");
         return;
       }
 
-      console.log("Current room id: " + this.roomId)
       this.roomId = chatUUID;
-      console.log("New room id: " + this.roomId)
       this.io.socket.emit("event_leave", this.chatRoomName);
       this.messages = [];
       this.io.socket.emit("event_join", roomName);

@@ -28,7 +28,7 @@
               <a class="nav-link" href="/game?id=ajshdfgjakshdgf">Game</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Friends</a>
+              <a class="nav-link" href="/friends">Friends</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#">Explore</a>
