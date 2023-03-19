@@ -1,10 +1,11 @@
+import { UUIDVersion } from "class-validator";
 import { UserEntity } from "src/users/user.entity";
 import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('friendship')
 export class FriendshipEntity extends BaseEntity{
     @PrimaryGeneratedColumn()
-    id: number
+    id: string
 
     @ManyToOne(type => UserEntity)
     @JoinColumn()

@@ -34,7 +34,7 @@
                   />
                   <label class="form-label" for="typeEmailX">Email</label>
                 </div>
-                <div class="form-outline form-white mb-2">
+                <!-- <div class="form-outline form-white mb-2">
                   <input
                     type="repemail"
                     id="typeRepEmailX"
@@ -44,7 +44,7 @@
                   <label class="form-label" for="typeRepEmailX"
                     >Repeat Email</label
                   >
-                </div>
+                </div> -->
 
                 <div class="form-outline form-white mb-2">
                   <input
@@ -100,29 +100,21 @@ export default defineComponent({
 
   methods: {
     signUpNewUser() {
-      if (this.email === this.repeatedemail) {
+      // if (this.email !== this.repeatedemail) {
+        if (this.email !== undefined) {
         signup({
           username: this.username,
           password: this.password,
           email: this.email,
         })
         .then((response) => {
-          console.log(response.data);
-          // const user: IUser = {
-          //   id: response.data.id,
-          //   email: response.data.email,
-          //   password: response.data.password,
-          //   username: response.data.username,
-          //   pic:"",
-          //   is2fa: response.data.is2fa,
-          // }
-          // store.commit("changeUser", user);
           alert("You can now login!");
           this.$router.push("/login");
         }).catch(error => alert("Can not sign up! ("+error+")"));
         
       } else {
-        alert("email and repeated email are not the same");
+        // alert("email and repeated email are not the same");
+        alert("email is not valid");
       }
     },
     ...mapActions(["mockLogin"]),

@@ -34,7 +34,6 @@ import { AuthModule } from './auth/auth.module';
     Chats2Module,
     AuthModule,
   ],
-  controllers: [],
   providers: [ChatGateway, GameGateway],
 })
 export class AppModule {}

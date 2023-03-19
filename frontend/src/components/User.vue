@@ -24,10 +24,30 @@
                 </div>
                 <h2 class="fw-bold mt-1 mb-5 text-uppercase">{{ lookedUpUserName }}</h2>
                 <h4 class="fw-bold mt-1 mb-5">Email: {{ lookedUpEmail }}</h4>
+
+                <button
+                  v-if="!areFriends"
+                  class="btn btn-outline-light mt-3 btn-lg px-5"
+                  type="submit"
+                  v-on:click="makeFriend()"
+                >
+                Make friend
+                </button>
+                <button
+                  v-if="areFriends"
+                  class="btn btn-outline-light mt-3 btn-lg px-5"
+                  type="submit"
+                  v-on:click="unfriend()"
+                >
+                Unfriend
+                </button>
+                <p v-if="areFriends">you guys are friends</p>
+                <p v-if="!areFriends"> </p>
+                
                 <button
                   class="btn btn-outline-light mt-3 btn-lg px-5"
                   type="submit"
-                  v-on:click="createChat()"
+                  v-on:click="createChat(lookedUpUserName, lookedUpId)"
                 >
                   Chat
                 </button>
@@ -54,6 +74,7 @@ import { key, store } from "../store/store";
 import { getUserById } from "../api/user";
 import axios from "axios";
 import { getChatRoom, inviteUsers } from "@/api/chatApi";
+import { getFriendshipsRequest, makeFriendshipRequest, unfriendRequest } from "@/api/friendshipsApi";
 
 declare var require: any;
 
@@ -72,21 +93,39 @@ export default defineComponent({
 
   data() {
     return {
-      lookedUpUuid: "",
+      lookedUpId: "",
       lookedUpUserName: "",
       lookedUpEmail: "",
+      areFriends: false,
+      friendshipId: "",
     };
   },
 
-  mounted() {
+  async mounted() {
     if (this.$route.query.uuid !== undefined) {
-      this.lookedUpUuid = this.$route.query.uuid as string;
-      console.log("UUID: " + this.lookedUpUuid);
-      this.getUserInfo(this.lookedUpUuid);
+      this.lookedUpId = this.$route.query.uuid as string
+      console.log("looked id: " + this.lookedUpId)
+      this.getUserInfo(this.lookedUpId)
+      this.getFriendship()
+
     }
   },
 
   methods: {
+    async getFriendship()
+    {
+      try {
+        const friendships = await getFriendshipsRequest(this.currentUser?.id as string)
+        const found = friendships.find(f => f.friend.id == this.lookedUpId)
+        if (found)
+          {
+            this.areFriends = true
+            this.friendshipId = found.id as string
+          }
+      } catch(err) {
+        console.log(err)
+      }
+    },
     getImgURL(profilePicture: string) {
       return require(`@/assets/noPictureProfile.png`);
     },
@@ -103,11 +142,10 @@ export default defineComponent({
         });
     },
 
-    async createChat() {
-      //console.log("UUID que llega"+  this.chatUUID)
+    async createChat(lookedUpUserName: string, lookedUpId: string) {
       const names : string[] = [];
       names.push(this.currentUser?.username as string);
-      names.push(this.lookedUpUserName);
+      names.push(lookedUpUserName);
       names.sort();
 
       const chatRoomName =
@@ -126,7 +164,7 @@ export default defineComponent({
         return
       }
       try {
-        inviteUsers(room.id, [this.lookedUpUuid])
+        inviteUsers(room.id, [lookedUpId])
       } catch(err) {
         alert("User could not be invited to chat");
         console.log(err)
@@ -138,15 +176,35 @@ export default defineComponent({
 
     createGame(){
       const gameId = "skdlfjhgsdkjfh"
-      this.$router.push("/game?id=" + this.lookedUpUuid);
+      this.$router.push("/game?id=" + this.lookedUpId);
     },
 
     openChat() {
-      this.$router.push("/chats?id=" + this.lookedUpUuid);
+      this.$router.push("/chats?id=" + this.lookedUpId);
     },
 
     onUpload() {
       //const storageRef= storage.ref(`${this.imageData.name}`).put(this.imageData);
+    },
+
+    async makeFriend() {
+      const res = await makeFriendshipRequest(this.currentUser?.id as string, this.lookedUpId)
+      if (res.status === 201) {
+        this.areFriends = true;
+        this.friendshipId = res.data.id
+      }
+    },
+
+    unfriend() {
+      try {
+        unfriendRequest(this.friendshipId)
+        this.areFriends = false
+        this.friendshipId = ""
+      }
+      catch (err) {
+        alert("could not unfriend")
+      }
+
     },
   },
 });
