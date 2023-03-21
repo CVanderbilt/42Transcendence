@@ -70,9 +70,15 @@ export class UsersService {
     }
 
     async getFileById(id: string) {
-        const user: User = await this.findOneById(id)
+        const user = await this.findOneById(id)
         if (user)
             return user.image
         return null;
+    }
+
+    async uploadDatabaseFile(dataBuffer: Buffer, id: string) {
+        const user = await this.usersRepo.findOneBy({ id: id })
+        user.image = dataBuffer;
+        user.save();
     }
 }

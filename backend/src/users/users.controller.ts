@@ -46,12 +46,18 @@ export class UsersController {
     }
 
     @Get(':id/image')
-    async getImageById(@Res({ passthrough: false }) response: Response, @Param('id') id: string) {
-    const image = await this.usersService.getFileById(id);
-    const stream = !image ?
-        fs.createReadStream(path.join(process.cwd(), 'public/noPictureProfile.png')) :
-        Readable.from(image);
-    
-    stream.pipe(response);
-  }
+        async getImageById(@Res({ passthrough: false }) response: Response, @Param('id') id: string) {
+        const image = await this.usersService.getFileById(id);
+        const stream = !image ?
+            fs.createReadStream(path.join(process.cwd(), 'public/noPictureProfile.png')) :
+            Readable.from(image);
+        
+        stream.pipe(response);
+    }
+
+    @Put(':id/image')
+    @UseInterceptors(FileInterceptor('file'))
+    async setImage(@Param('id') id: string, @UploadedFile() file: Multer.File) {
+        return this.usersService.uploadDatabaseFile(file.buffer, id)
+    }
 }
