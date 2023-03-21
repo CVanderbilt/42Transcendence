@@ -35,8 +35,11 @@ export class UsersController {
         return this.usersService.findOneById(id)
     }
 
+    //todo: cambiar tipo de User a uno que solo contenga lo que se puede cambiar (nombre, email, password, is2fa, 2fasecret? ), no queremos que nadie pueda cambiar sus estadísticas por ejemplo
     @Put(':id')
     update(@Body() user: User, @Param('id') id: string): Promise<UpdateResult> {
+        delete user.id // cuando hagamos el todo de arriba estos dos deletes no serán necesarios, pero habrá que crear un objeto tipo User con los parametros definidos
+        delete user.image
         return this.usersService.updateUser(id, user)
     }
 

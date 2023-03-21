@@ -4,10 +4,11 @@ const URL = "/users";
 const IMAGE_URL = "/image"
 
 export interface IUserAPI {
-    username: string,
-    email: string,
-    is2fa: boolean,
-    // pic : string, // TODO: add pic
+    email?: string
+    password?: string
+    username?: string
+    is2fa?: boolean
+    twofaSecret?: string // todo: no estoy seguro
 }
 
 

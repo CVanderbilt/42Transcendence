@@ -16,6 +16,7 @@ export class UsersService {
     ) { }
 
     async createUser(user: User): Promise<User> {
+        user.is2fa = false;
         const newUser = this.usersRepo.save(user)
         this.chatsService.joinUser2GeneralChat(user.id)
         return newUser
@@ -45,11 +46,16 @@ export class UsersService {
         return this.usersRepo.find();
     }
 
-    updateUser(id: string, user: User): Promise<UpdateResult> {
+    async updateUser(id: string, user: User): Promise<UpdateResult> {
         // No se puede activar 2FA sin validar el codigo de google authenticator
-        if (user.is2fa === true)
-            delete user.is2fa
-        return this.usersRepo.update(id, user)
+        //if (user.is2fa === true)
+        //    delete user.is2fa
+        //user.id = undefined;
+        const storedUser = await this.findOneById(id)
+
+        const updatedUser = Object.assign({}, storedUser, user)
+
+        return this.usersRepo.update(id, updatedUser)
     }
 
     deleteUser(id: string): Promise<DeleteResult> {

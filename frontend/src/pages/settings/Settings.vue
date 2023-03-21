@@ -80,7 +80,7 @@ import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
 import { key, store } from "../../store/store";
 import { generateImageURL } from "@/utils/utils";
-import { putImage, updateUser } from "@/api/user";
+import { IUserAPI, putImage, updateUser } from "@/api/user";
 
 declare var require: any;
 
@@ -95,16 +95,7 @@ export default defineComponent({
     };
   },
   data() {
-    const options: {
-      username: string,
-      email: string,
-      is2fa: boolean,
-      password?: string
-    } = {
-      username: "",
-      email: "",
-      is2fa: false,
-    }
+    const options: IUserAPI = {}
     var selectedFile: File | undefined
     return {
       options,
