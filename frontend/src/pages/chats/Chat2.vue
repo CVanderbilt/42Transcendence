@@ -366,7 +366,7 @@ export default defineComponent({
 
     async createChatRoom(roomName: string, password: string, users: string[]) {
       try {
-        const room: any = await getChatRoom(roomName, this.user?.id as string, password)
+        const room = await getChatRoom(roomName, this.user!.id, password)
         inviteUsers(room.id, users).catch((err) => {
           console.log("Can not invite users to chat room: " + err.message);
         })

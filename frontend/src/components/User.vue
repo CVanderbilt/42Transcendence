@@ -119,7 +119,7 @@ export default defineComponent({
 
       let room;
       try {
-        room = (await getChatRoom(chatRoomName, UUID, "", true)).data
+        room = await getChatRoom(chatRoomName, UUID, "", true)
       } catch(err) {
         alert("Direct chat could not be created");
         console.log(err)

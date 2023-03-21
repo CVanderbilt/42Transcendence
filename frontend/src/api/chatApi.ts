@@ -41,7 +41,11 @@ export interface ChatRoom {
 
 // ----------------------------------------------
 
-export async function getChatRoom(roomName:string, owner:string, password = "", isDirect = false) {
+export async function getChatRoom(roomName:string, owner:string, password = "", isDirect = false): Promise<{
+        id: number
+        name: string
+        isPrivate: boolean
+    }> {
     
     const room : any = {
         name: roomName,
@@ -51,7 +55,7 @@ export async function getChatRoom(roomName:string, owner:string, password = "", 
         isDirect: isDirect
     }
 
-    return apiClient.post(`${URL}/rooms`, room)
+    return (await apiClient.post(`${URL}/rooms`, room)).data
 }
 
 export async function getChatRoomsForUser(userId: string) {
@@ -74,7 +78,7 @@ export async function joinChatRoom(roomId: string, userId: string) {
     return apiClient.post(`${URL}/rooms/${roomId}/join`, {userId})
 }
 
-export async function inviteUsers(roomID: string, usersIds:string[]) {
+export async function inviteUsers(roomID: number, usersIds:string[]) {
     return apiClient.post(`${URL}/rooms/${roomID}/invite`, usersIds)
 }
 
