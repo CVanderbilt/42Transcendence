@@ -68,4 +68,11 @@ export class UsersService {
         user.twofaSecret = secret
         user.save()
     }
+
+    async getFileById(id: string) {
+        const user: User = await this.findOneById(id)
+        if (user)
+            return user.image
+        return null;
+    }
 }

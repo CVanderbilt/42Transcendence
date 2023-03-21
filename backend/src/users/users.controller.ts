@@ -1,8 +1,14 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { UsersService as UsersService } from './users.service';
 import { User } from './user.interface';
+import { Multer } from 'multer';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Readable } from 'typeorm/platform/PlatformTools';
+var fs  = require('fs'),
+path    = require('path'),
+url     = require('url');
 
 @Controller('users')
 export class UsersController {
@@ -37,5 +43,15 @@ export class UsersController {
     @Delete(':id')
     delete(@Param('id') id: string): Promise<DeleteResult> {
         return this.usersService.deleteUser(id)
-    }    
+    }
+
+    @Get(':id/image')
+    async getImageById(@Res({ passthrough: false }) response: Response, @Param('id') id: string) {
+    const image = await this.usersService.getFileById(id);
+    const stream = !image ?
+        fs.createReadStream(path.join(process.cwd(), 'public/noPictureProfile.png')) :
+        Readable.from(image);
+    
+    stream.pipe(response);
+  }
 }

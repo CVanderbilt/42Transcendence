@@ -38,4 +38,7 @@ export class UserEntity extends BaseEntity {
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date
+
+    @Column({ type: 'bytea', nullable: true })
+    image: Uint8Array;
 }
