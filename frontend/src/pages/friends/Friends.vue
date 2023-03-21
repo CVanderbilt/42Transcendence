@@ -38,7 +38,7 @@ import { defineComponent } from "vue";
 import { useStore } from "vuex";
 import { key } from "../../store/store";
 import "@/style/styles.css";
-import { getFriendshipsRequest, IFriend, IFriendship, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
+import { getFriendshipsRequest, IFriendship, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
 import { getChatRoom, inviteUsers } from "@/api/chatApi";
 
 export default defineComponent({

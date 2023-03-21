@@ -29,22 +29,24 @@
 
                 <!-- ------------------ chat area ------------------ -->
                 <div ref="chatArea" class="chat-area">
-                  <div v-for="message in messages" v-bind:key="message.content" class="message" :class="{
-                    'message-out': message.senderName === user?.username,
-                    'message-in': message.senderName !== user?.username,
-                  }">
-                    <b-col>
-                      <p v-if="message.senderName === user?.username" class="message-text">
-                        <a>{{ message.content }}</a>
-                      </p>
-                    </b-col>
-                    <b-col>
-                      <p v-if="message.senderName !== user?.username" class="message-text">
-                        <a v-on:click="searchFriend(message.senderName as string)">{{
-                          message.senderName + ": "
-                        }}</a><a>{{ message.content }}</a>
-                      </p>
-                    </b-col>
+                  <div v-for="message in messages" v-bind:key="message.content">
+                    <div v-if="isDisplayMessage(message.senderId as string)" class="message" :class="{
+                      'message-out': message.senderName === user?.username,
+                      'message-in': message.senderName !== user?.username,
+                    }">
+                      <b-col>
+                        <p v-if="message.senderName === user?.username" class="message-text">
+                          <a>{{ message.content }}</a>
+                        </p>
+                      </b-col>
+                      <b-col>
+                        <p v-if="message.senderName !== user?.username" class="message-text">
+                          <a v-on:click="searchFriend(message.senderName as string)">{{
+                            message.senderName + ": "
+                          }}</a><a>{{ message.content }}</a>
+                        </p>
+                      </b-col>
+                    </div>
                   </div>
                 </div>
                 <div class="form-outline form-white chat-footer">
@@ -143,15 +145,15 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "vuex";
-import { key, store } from "../../store/store";
+import { key } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
 import { postChatMessage, getChatRoomMessages, Membership, getUserMemberships, leaveChatRoom } from "../../api/chatApi";
 import { getChatRoomByName, joinChatRoom, inviteUsers, getChatRoom, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "@/api/user";
-
-declare var require: any;
+import { getFriendshipsRequest } from "@/api/friendshipsApi";
+import { IFriendship } from "@/api/friendshipsApi";
 
 export default defineComponent({
   name: "Chat2",
@@ -160,7 +162,7 @@ export default defineComponent({
     let chatMessages: ChatMessage[] = [];
     let userMemberships: Membership[] = [];
     var createdChatParticipants: string[] = [];
-
+    let userFriendships: IFriendship[] = [];
 
     const io = useSocketIO();
 
@@ -173,6 +175,7 @@ export default defineComponent({
       searchedChat: "",
       messages: chatMessages,
       userMemberships: userMemberships,
+      userFriendships: userFriendships,
       modalShow: false,
       createdchatName: "",
       createdChatPassword: "",
@@ -192,40 +195,41 @@ export default defineComponent({
     const store = useStore(key);
     const user = store.state.user;
 
-    let chatUUID = "";
+    let roomId = "";
     return {
-      roomId: chatUUID,
+      roomId: roomId,
       user,
     };
   },
 
   async mounted() {
+    // get room from query
     if (this.$route.query.name !== undefined) {
       this.chatRoomName = this.$route.query.name as string;
     } else {
       this.chatRoomName = "general";
       this.isAdmin = false;
     }
-
+    // join room
     try {
       this.joinRoom(this.chatRoomName);
     } catch {
       this.chatRoomName = "general";
       this.isAdmin = false;
     }
-
+    // get room
     try {
       this.roomId = await (await getChatRoomByName(this.chatRoomName)).data.id;
     } catch {
       console.log("Error getting chat room")
     }
-
+    // get room memberships
     try {
       this.userMemberships = await getUserMemberships(this.user?.id as string)
     } catch {
       console.log("Error getting user memberships")
     }
-
+    // register to socket events
     this.io.socket.offAny();
     this.io.socket.on("new_message", (message, username) => {
       const msg: ChatMessage = {
@@ -237,7 +241,12 @@ export default defineComponent({
 
       this.messages.push(msg)
     });
-
+    // get friendships
+    try {
+      this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
+    } catch {
+      console.log("Error getting user friendships")
+    }
   },
 
   beforeRouteLeave() {
@@ -252,6 +261,14 @@ export default defineComponent({
           : name.split("¿")[1];
       }
       return name;
+    },
+
+    isDisplayMessage(senderId: string) : boolean {
+      const membership = this.userFriendships.find(x => x.friend.id === senderId)
+      if (membership) {
+        return !membership.isBlocked
+      }
+      return true
     },
 
     sendMessage() {
@@ -294,7 +311,6 @@ export default defineComponent({
       }
 
       let room: any;
-
       // get chat room
       try {
         room = await getChatRoomByName(room2join).then((response) => {
