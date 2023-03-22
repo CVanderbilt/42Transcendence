@@ -73,7 +73,7 @@ import { useStore, mapActions } from "vuex";
 import { key, store } from "../store/store";
 import { getUserById } from "../api/user";
 import axios from "axios";
-import { getChatRoom, inviteUsers } from "@/api/chatApi";
+import { getChatRoomReq, inviteUsersReq } from "@/api/chatApi";
 import { getFriendshipsRequest, makeFriendshipRequest, unfriendRequest } from "@/api/friendshipsApi";
 
 declare var require: any;
@@ -157,14 +157,14 @@ export default defineComponent({
 
       let room;
       try {
-        room = (await getChatRoom(chatRoomName, UUID, "", true)).data
+        room = (await getChatRoomReq(chatRoomName, UUID, "", true)).data
       } catch(err) {
         alert("Direct chat could not be created");
         console.log(err)
         return
       }
       try {
-        inviteUsers(room.id, [lookedUpId])
+        inviteUsersReq(room.id, lookedUpId)
       } catch(err) {
         alert("User could not be invited to chat");
         console.log(err)

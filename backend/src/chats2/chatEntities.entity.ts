@@ -1,4 +1,3 @@
-import { Exclude } from "class-transformer";
 import { UserEntity } from "src/users/user.entity";
 import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 

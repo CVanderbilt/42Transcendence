@@ -41,7 +41,7 @@ export interface ChatRoom {
 
 // ----------------------------------------------
 
-export async function getChatRoom(roomName:string, owner:string, password = "", isDirect = false) {
+export async function getChatRoomReq(roomName:string, owner:string, password = "", isDirect = false) {
     
     const room : any = {
         name: roomName,
@@ -54,35 +54,37 @@ export async function getChatRoom(roomName:string, owner:string, password = "", 
     return apiClient.post(`${URL}/rooms`, room)
 }
 
-export async function getChatRoomsForUser(userId: string) {
+export async function getChatRoomsForUserReq(userId: string) {
     return apiClient.get(`${URL}/rooms/${userId}`);
 }
 
-export async function getUserMemberships(userId: string) : Promise<Membership[]> {
+export async function getUserMembershipsReq(userId: string) : Promise<Membership[]> {
     return await (await apiClient.get(`${URL}/memberships/user/${userId}`)).data
 }
 
-export async function getChatRoomByName(name: string) {
+export async function getChatRoomByNameReq(name: string) {
     return apiClient.get(`${URL}/rooms/name/${name}`)
 }
 
-export async function getChatRoomMessages(roomId: string) {
+export async function getChatRoomMessagesReq(roomId: string) {
     return apiClient.get(`${URL}/messages/${roomId}`)
 }
 
-export async function joinChatRoom(roomId: string, userId: string) {
+export async function joinChatRoomReq(roomId: string, userId: string) {
     return apiClient.post(`${URL}/rooms/${roomId}/join`, {userId})
 }
 
-export async function inviteUsers(roomID: string, usersIds:string[]) {
-    return apiClient.post(`${URL}/rooms/${roomID}/invite`, usersIds)
+export async function inviteUsersReq(roomID: string, userId: string) {
+    console.log("inviting user: " + userId + " to room: " + roomID)
+
+    return apiClient.post(`${URL}/rooms/${roomID}/invite`, {userId})
 }
 
-export async function postChatMessage(roomId: string, message : ChatMessage) {
+export async function postChatMessageReq(roomId: string, message : ChatMessage) {
     return apiClient.post(`${URL}/messages/${roomId}`, message)
 }
 
-export async function leaveChatRoom(roomId: string, userId: string) {
+export async function leaveChatRoomReq(roomId: string, userId: string) {
     alert("leaving room: " + roomId + " user: " + userId + "")
     return apiClient.post(`${URL}/rooms/${roomId}/leave`, {userId})
 }

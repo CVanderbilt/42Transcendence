@@ -38,7 +38,7 @@ export class Chats2Controller {
         try {
             return await this.chatsService.getChatRoom(dto)
         } catch (error) {
-            Logger2.error(error)
+            Logger.error(error)
         }
     }
 
@@ -50,12 +50,12 @@ export class Chats2Controller {
 
     // invite users to chat room
     @Post('rooms/:roomId/invite')
-    async inviteUsers(@Param('roomId') roomId: number, @Body() data: string[]) {
-        return this.chatsService.inviteUsers(roomId, data)
+    async inviteUsers(@Param('roomId') roomId: number, @Body() data: any) {
+        return this.chatsService.inviteUser(roomId, data.userId)
     }
 
     // leave chat room
-    @Delete('rooms/:id/leave')
+    @Post('rooms/:id/leave')
     async leaveRoom(@Param('id') id: number, @Body() data: ChatMembershipDto) {
         return this.chatsService.deleteMembership(id, data.userId)
     }

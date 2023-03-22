@@ -12,13 +12,13 @@
                 <div v-for="item in userMemberships" v-bind:key="item.chatRoomName" style="display: flex;">
                   <b-button v-on:click="joinRoom(item.chatRoomName as string)"
                     style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
-                    {{ getNameDirectMessage(item) }}
+                    {{ getNameDirectMessage(item.chatRoomName as string) }}
                   </b-button>
 
                   <button v-if="item.chatRoomName !== 'general'" @click="leaveRoom(item.chatRoomId)">
                     x
                   </button>
-                  
+
                 </div>
               </div>
               <div class="col-9 chat-column">
@@ -85,9 +85,8 @@
             <label class="form-label" for="typeUsername">Chat name</label>
           </div>
           <div class="form-outline form-white mb-2">
-            <input type="password" class="typePasswordX form-control form-control-lg"
-              placeholder="Type your new password" v-model="createdChatPassword"
-              :disabled="!createdChatRequiresPassword" />
+            <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Type your new password"
+              v-model="createdChatPassword" :disabled="!createdChatRequiresPassword" />
             <label class="form-label" for="typeEmailX">Password needed? </label>
             <input type="checkbox" v-model="createdChatRequiresPassword" />
           </div>
@@ -116,9 +115,8 @@
           <h2 class="fw-bold text-uppercase">{{ 'Manage chat ' + chatRoomName }}</h2>
 
           <div class="form-outline form-white mb-2">
-            <input type="password" class="typePasswordX form-control form-control-lg"
-              placeholder="Type your new password" v-model="createdChatPassword"
-              :disabled="!createdChatRequiresPassword" />
+            <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Type your new password"
+              v-model="createdChatPassword" :disabled="!createdChatRequiresPassword" />
             <label class="form-label" for="typeEmailX">Password needed? </label>
             <input type="checkbox" v-model="createdChatRequiresPassword" />
           </div>
@@ -148,8 +146,8 @@ import { useStore } from "vuex";
 import { key } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
-import { postChatMessage, getChatRoomMessages, Membership, getUserMemberships, leaveChatRoom } from "../../api/chatApi";
-import { getChatRoomByName, joinChatRoom, inviteUsers, getChatRoom, } from "../../api/chatApi";
+import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq } from "../../api/chatApi";
+import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, getChatRoomReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "@/api/user";
 import { getFriendshipsRequest } from "@/api/friendshipsApi";
@@ -163,6 +161,7 @@ export default defineComponent({
     let userMemberships: Membership[] = [];
     var createdChatParticipants: string[] = [];
     let userFriendships: IFriendship[] = [];
+    let RoomsList: string[] = [];
 
     const io = useSocketIO();
 
@@ -220,22 +219,20 @@ export default defineComponent({
     }
     // get room
     try {
-      this.roomId = await (await getChatRoomByName(this.chatRoomName)).data.id;
+      this.roomId = await (await getChatRoomByNameReq(this.chatRoomName)).data.id;
     } catch {
       console.log("Error getting chat room")
     }
-    // get room memberships
+    // get user memberships
     try {
-      this.userMemberships = await getUserMemberships(this.user?.id as string)
+      this.userMemberships = await getUserMembershipsReq(this.user?.id as string)
     } catch {
       console.log("Error getting user memberships")
     }
 
-    this.userMemberships.forEach((item) =>{
+    this.userMemberships.forEach((item) => {
       this.RoomsList.push(item.chatRoomName as string)
     })
-
-      //this.RoomsList.push item.chatRoomName
 
     this.io.socket.offAny();
     this.io.socket.on("new_message", (message, username) => {
@@ -245,9 +242,9 @@ export default defineComponent({
         senderId: "",
         chatRoomId: ""
       }
-
       this.messages.push(msg)
     });
+
     // get friendships
     try {
       this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
@@ -270,7 +267,7 @@ export default defineComponent({
       return name;
     },
 
-    isDisplayMessage(senderId: string) : boolean {
+    isDisplayMessage(senderId: string): boolean {
       const membership = this.userFriendships.find(x => x.friend.id === senderId)
       if (membership) {
         return !membership.isBlocked
@@ -300,7 +297,7 @@ export default defineComponent({
         }
 
         try {
-          postChatMessage(this.roomId, outMessage)
+          postChatMessageReq(this.roomId, outMessage)
         }
         catch (err: any) {
           alert("Error sending the message. Try again later");
@@ -320,7 +317,7 @@ export default defineComponent({
       let room: any;
       // get chat room
       try {
-        room = await getChatRoomByName(room2join).then((response) => {
+        room = await getChatRoomByNameReq(room2join).then((response) => {
           return response.data;
         })
       }
@@ -330,7 +327,7 @@ export default defineComponent({
       }
 
       try {
-        joinChatRoom(room.id, this.user?.id as string) // returns membership even if user is already a member of the room
+        joinChatRoomReq(room.id, this.user?.id as string) // returns membership even if user is already a member of the room
         this.RoomsList.push(room2join)
       }
       catch (err: any) {
@@ -343,7 +340,7 @@ export default defineComponent({
 
       // try to get messages
       try {
-        getChatRoomMessages(room.id).then((response) => {
+        getChatRoomMessagesReq(room.id).then((response) => {
           for (var i in response.data) {
             this.messages.push(response.data[i]);
           }
@@ -366,7 +363,7 @@ export default defineComponent({
       let room: any;
       // get chat room
       try {
-        room = await getChatRoomByName(room2join).then((response) => {
+        room = await getChatRoomByNameReq(room2join).then((response) => {
           return response.data;
         })
       }
@@ -376,7 +373,7 @@ export default defineComponent({
       }
 
       try {
-        const resp = joinChatRoom(room.id, this.user?.id as string) // returns membership even if user is already a member of the room
+        const resp = joinChatRoomReq(room.id, this.user?.id as string) // returns membership even if user is already a member of the room
         this.isAdmin = (await resp).data.isAdmin
       }
       catch (err: any) {
@@ -389,7 +386,7 @@ export default defineComponent({
 
       // try to get messages
       try {
-        getChatRoomMessages(room.id).then((response) => {
+        getChatRoomMessagesReq(room.id).then((response) => {
           for (var i in response.data) {
             this.messages.push(response.data[i]);
           }
@@ -403,58 +400,70 @@ export default defineComponent({
       this.changeRoom(room.id, room.name);
     },
 
-    async leaveRoom(roomId : any)
-    {
+    async leaveRoom(roomId: any) {
       try {
-        leaveChatRoom(roomId, this.user?.id as string)
+        leaveChatRoomReq(roomId, this.user?.id as string)
         const membership = this.userMemberships.find((membership) => membership.chatRoomId === roomId)
         if (membership) {
           this.userMemberships.splice(this.userMemberships.indexOf(membership), 1)
         }
         // change to general chat
-        const generalChat : any = this.userMemberships.find((membership) => membership.chatRoomName === "general")
+        const generalChat: any = this.userMemberships.find((membership) => membership.chatRoomName === "general")
         this.changeRoom(generalChat.chatRoomId, "general")
       } catch (err) {
         console.log("Can not leave room");
       }
     },
 
-    changeRoom(chatUUID: string, roomName: string) {
+    changeRoom(roomId: string, roomName: string) {
       if (!this.user) {
         console.log("user not defined, esto no deberia pasar");
         return;
       }
 
-      this.roomId = chatUUID;
+      this.roomId = roomId;
       this.io.socket.emit("event_leave", this.chatRoomName);
       this.messages = [];
       this.io.socket.emit("event_join", roomName);
       this.chatRoomName = roomName;
     },
 
-    async addUsersToChat(users: string[], chatName: string) {
-      try {
-        const room: any = await getChatRoomByName(chatName)
-        inviteUsers(room.id, users)
-      }
-      catch (err) {
-        console.log("Can not join users to chat room");
-        return;
-      }
-    },
+    // async addUsersToChat(users: string[], chatName: string) {
+    //   try {
+    //     const room: any = await getChatRoomByNameReq(chatName)
+    //     inviteUsersReq(room.id, users)
+    //   }
+    //   catch (err) {
+    //     console.log("Can not join users to chat room");
+    //     return;
+    //   }
+    // },
 
-    async createChatRoom(roomName: string, password: string, users: string[]) {
+    async createChatRoom(roomName: string, password: string, userNames: string[]) {
+      let room: any
       try {
-        const room: any = await getChatRoom(roomName, this.user?.id as string, password)
+        room = await (await getChatRoomReq(roomName, this.user?.id as string, password)).data
         this.RoomsList.push(roomName)
-        
-        inviteUsers(room.id, users).catch((err) => {
-          console.log("Can not invite users to chat room: " + err.message);
-        })
       }
       catch (err) {
         console.log("Can not create chat room");
-        return;
+      }
+
+      if (room) {
+        try {
+          // get user ids
+          userNames.forEach(async (username) => {
+            if (username !== this.user?.username && username !== "") {
+              const invitee = await getUserByName(username)
+              inviteUserReq(room.id, invitee.data.id)
+            }
+          })
+        }
+        catch (err: any) {
+          console.log("Can not invite users to chat room: " + err.message);
+        }
+
+        this.changeRoom(room.id, room.name)
       }
     },
 

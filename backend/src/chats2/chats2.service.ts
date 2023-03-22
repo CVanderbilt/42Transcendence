@@ -6,7 +6,6 @@ import { ChatRoom, ChatMembership, ChatMsg } from './chats.interface';
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from 'src/users/user.entity';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
-import { Logger2 } from 'src/utils/Logger2';
 
 @Injectable()
 export class Chats2Service {
@@ -23,21 +22,23 @@ export class Chats2Service {
     ) { }
 
     async getChatRoom(roomDto: ChatRoomDto): Promise<ChatRoom> {
-        const user = await this.usersRepo.findOne({ where: { id: roomDto.ownerId } });
+        const user = await this.usersRepo.findOneBy({ id: roomDto.ownerId })
+
         // check whether the room name is already taken
         const existingRoom = await this.chatRoomsRepo.findOne({ where: { name: roomDto.name } })
         if (existingRoom) {
             return existingRoom
         }
+
         // create room
         const room = await this.chatRoomsRepo.save({
             name: roomDto.name,
             isPrivate: roomDto.isPrivate,
             password: roomDto.password ? bcrypt.hashSync(roomDto.password, 10) : null,
             owner: user,
-            // if dto has isDirect, use it, otherwise default to false
             isDirect: roomDto.isDirect ? roomDto.isDirect : false,
         })
+
         // add owner as member
         this.chatMembershipsRepo.save({
             user: user,
@@ -75,29 +76,27 @@ export class Chats2Service {
         return rooms
     }
 
-    async joinUser2GeneralChat(userId : string)
-    {
-        var generalChat : ChatRoom = await this.findChatRoomByName(process.env.GENERAL_CHAT_NAME)
-        if (!generalChat)
-        {
-            const generalChatRoomDto : ChatRoomDto = {
+    async joinUser2GeneralChat(userId: string) {
+        var generalChat: ChatRoom = await this.findChatRoomByName(process.env.GENERAL_CHAT_NAME)
+        if (!generalChat) {
+            const generalChatRoomDto: ChatRoomDto = {
                 name: process.env.GENERAL_CHAT_NAME,
                 ownerId: userId,
                 isPrivate: false,
                 password: "",
             }
-            generalChat = await this.getChatRoom(generalChatRoomDto)            
+            generalChat = await this.getChatRoom(generalChatRoomDto)
         }
-        const membership : ChatMembershipDto = {
+        const membership: ChatMembershipDto = {
             userId: userId,
             chatRoomId: generalChat.id,
             isAdmin: false,
-        }            
+        }
         this.joinChatRoom(generalChat.id, membership)
     }
 
     async joinChatRoom(id: number, data: JoinChatRoomDto): Promise<ChatMembership> {
-        
+
         // find if the user is already a member of the room
         const userMembership = await this.chatMembershipsRepo.find({
             where: {
@@ -108,7 +107,7 @@ export class Chats2Service {
         if (userMembership.length > 0) {
             return this.chatMembershipsRepo.findOne({ where: { id: userMembership[0].id } })
         }
-        
+
         // if the room is private, check the password
         const room = await this.chatRoomsRepo.findOne({ where: { id: id } })
         if (room.isPrivate) {
@@ -119,7 +118,7 @@ export class Chats2Service {
                 throw new Error('Password is incorrect')
             }
         }
-        
+
         // create a new membership
         const user = await this.usersRepo.findOne({ where: { id: data.userId } });
         return this.chatMembershipsRepo.save({
@@ -128,10 +127,8 @@ export class Chats2Service {
         })
     }
 
-    async inviteUsers(id: number, userIds: string[]) {
-        userIds.forEach(element => {
-            this.joinChatRoom(id, { userId: element })
-        });
+    async inviteUser(id: number, inviteeId: string) {
+        this.joinChatRoom(id, { userId: inviteeId })
     }
 
 
@@ -146,7 +143,7 @@ export class Chats2Service {
 
         const res = await this.chatMembershipsRepo.find({
             where: { user: { id: userId } },
-            relations: ['user', 'chatRoom'], 
+            relations: ['user', 'chatRoom'],
             // select: ['id', 'isAdmin', 'isBanned', 'bannedUntil', 'isMuted', 'mutedUntil', 'chatRoom.id', 'user.id'] NOT WORKING 
         })
 
@@ -178,6 +175,7 @@ export class Chats2Service {
     }
 
     deleteMembership(id: number, userId: string) {
+        // TODO: borrar chat si no tiene mas miembros
         return this.chatMembershipsRepo.delete({ chatRoom: { id: id }, user: { id: userId } })
     }
 
@@ -199,10 +197,10 @@ export class Chats2Service {
             relations: ['sender', 'chatRoom']
         })
 
-        let outMsgs : ChatMsgDto[] = []
+        let outMsgs: ChatMsgDto[] = []
         for (let i = 0; i < msgs.length; i++) {
             const element = msgs[i]
-            outMsgs.push ({
+            outMsgs.push({
                 senderId: element.sender.id,
                 senderName: element.sender.username,
                 chatRoomId: element.chatRoom.id,
