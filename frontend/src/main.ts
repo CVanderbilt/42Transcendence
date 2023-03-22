@@ -8,6 +8,7 @@ import Home from './pages/home/Home.vue'
 import Chat2 from './pages/chats/Chat2.vue'
 import Game from './pages/game/Game.vue'
 import QrValidation from './pages/2fa/Qr.vue'
+import Friends from './pages/friends/Friends.vue'
 import BootstrapVue3 from 'bootstrap-vue-3'
 import VueAxios from 'vue-axios'
 import axios from 'axios'
@@ -26,6 +27,7 @@ const routes = [
     { path: '/user', name: "user", component: User, meta: { requiresAuth: true } },
     { path: '/game', name: "game", component: Game, meta: { requiresAuth: true } },
     { path: '/qr', name: "qr", component: QrValidation, meta: { requiresAuth: true } },
+    { path: '/friends', name: "friends", component: Friends, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({

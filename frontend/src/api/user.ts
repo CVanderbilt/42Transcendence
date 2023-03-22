@@ -3,6 +3,7 @@ import { apiClient } from "./baseApi";
 const URL = "/users";
 
 export interface IUserAPI {
+    id?: string,
     username: string,
     is2fa: boolean,
     // pic : string, // TODO: add pic

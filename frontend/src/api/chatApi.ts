@@ -83,5 +83,6 @@ export async function postChatMessage(roomId: string, message : ChatMessage) {
 }
 
 export async function leaveChatRoom(roomId: string, userId: string) {
+    alert("leaving room: " + roomId + " user: " + userId + "")
     return apiClient.post(`${URL}/rooms/${roomId}/leave`, {userId})
 }
