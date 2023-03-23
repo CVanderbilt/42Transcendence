@@ -6,7 +6,7 @@ const IMAGE_URL = "/image"
 export interface IUserAPI {
     email?: string
     password?: string
-    username?: string
+    username: string
     is2fa?: boolean
     twofaSecret?: string // todo: no estoy seguro
 }

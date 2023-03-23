@@ -27,7 +27,7 @@
                     type="username"
                     id="typeUsername"
                     class="form-control form-control-lg"
-                    :placeholder="user?.username"
+                    :placeholder="user!.username"
                     v-model="options.username"
                   />
                   <label class="form-label" for="typeUsername">Username</label>
@@ -95,12 +95,17 @@ export default defineComponent({
     };
   },
   data() {
-    const options: IUserAPI = {}
+    const options: IUserAPI = {
+      username: ''
+    }
     var selectedFile: File | undefined
     return {
       options,
       selectedFile
     };
+  },
+  mounted() {
+      this.options.username = this.user!.username;
   },
 
   methods: {
