@@ -22,8 +22,6 @@ export class Chats2Service {
     ) { }
 
     async getChatRoom(roomDto: ChatRoomDto): Promise<ChatRoom> {
-        const user = await this.usersRepo.findOneBy({ id: roomDto.ownerId })
-
         // check whether the room name is already taken
         const existingRoom = await this.chatRoomsRepo.findOne({ where: { name: roomDto.name } })
         if (existingRoom) {
@@ -35,15 +33,7 @@ export class Chats2Service {
             name: roomDto.name,
             isPrivate: roomDto.isPrivate,
             password: roomDto.password ? bcrypt.hashSync(roomDto.password, 10) : null,
-            owner: user,
             isDirect: roomDto.isDirect ? roomDto.isDirect : false,
-        })
-
-        // add owner as member
-        this.chatMembershipsRepo.save({
-            user: user,
-            chatRoom: room,
-            isAdmin: true,
         })
 
         return room
@@ -81,7 +71,6 @@ export class Chats2Service {
         if (!generalChat) {
             const generalChatRoomDto: ChatRoomDto = {
                 name: process.env.GENERAL_CHAT_NAME,
-                ownerId: userId,
                 isPrivate: false,
                 password: "",
             }
@@ -105,7 +94,11 @@ export class Chats2Service {
             }
         })
         if (userMembership.length > 0) {
-            return this.chatMembershipsRepo.findOne({ where: { id: userMembership[0].id } })
+            return this.chatMembershipsRepo.findOne(
+                {
+                    where: { id: userMembership[0].id },
+                    relations: ['user', 'chatRoom'],
+                })
         }
 
         // if the room is private, check the password
@@ -121,9 +114,25 @@ export class Chats2Service {
 
         // create a new membership
         const user = await this.usersRepo.findOne({ where: { id: data.userId } });
-        return this.chatMembershipsRepo.save({
+        // if no other membership exists, make the user the owner
+        const memberships = await this.findChatRoomMembers(id)
+        let isOwner = false;
+        let isAdmin = false;
+        if (memberships.length == 0) {
+            isOwner = true;
+            isAdmin = true;
+        }
+
+        const membership = await this.chatMembershipsRepo.save({
             user: user,
             chatRoom: room,
+            isOwner: isOwner,
+            isAdmin: isAdmin,
+        })
+
+        return this.chatMembershipsRepo.findOne({
+            where: { id: membership.id },
+            relations: ['user', 'chatRoom'],
         })
     }
 
@@ -154,9 +163,9 @@ export class Chats2Service {
                 id: element.id,
                 isAdmin: element.isAdmin,
                 isBanned: element.isBanned,
-                bannedUntil: element.bannedUntil,
+                // bannedUntil: element.bannedUntil,
                 isMuted: element.isMuted,
-                mutedUntil: element.mutedUntil,
+                // mutedUntil: element.mutedUntil,
                 chatRoomId: element.chatRoom.id,
                 userId: element.user.id,
                 chatRoomName: element.chatRoom.name,
@@ -174,9 +183,14 @@ export class Chats2Service {
         return this.chatMembershipsRepo.update({ id: id }, data)
     }
 
-    deleteMembership(id: number, userId: string) {
-        // TODO: borrar chat si no tiene mas miembros
-        return this.chatMembershipsRepo.delete({ chatRoom: { id: id }, user: { id: userId } })
+    async deleteMembership(chatRoomId: number, userId: string) {
+        const res = await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId }, user: { id: userId } })
+        // if the user is the last member of the room, delete the room
+        const memberships = await this.findChatRoomMembers(chatRoomId)
+        if (memberships.length == 0) {
+            this.chatRoomsRepo.delete(chatRoomId)
+        }
+        return res
     }
 
     async createChatRoomMessage(msg: ChatMsgDto): Promise<ChatMsg> {

@@ -9,10 +9,6 @@ export class ChatRoomEntity extends BaseEntity{
     @Column({default: "unnamed"})
     name: string
     
-    @ManyToOne(type => UserEntity)
-    @JoinColumn()
-    owner: UserEntity
-    
     @Column({default: false})
     isPrivate: boolean
 
@@ -42,19 +38,22 @@ export class ChatMembershipEntity extends BaseEntity{
     chatRoom: ChatRoomEntity
 
     @Column({default: false})
+    isOwner: boolean
+
+    @Column({default: false})
     isAdmin: boolean
     
     @Column({default: false})
     isBanned: boolean
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    bannedUntil: Date
+    // @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    // bannedUntil: Date
     
     @Column({default: false})
     isMuted: boolean
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    mutedUntil: Date
+    // @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    // mutedUntil: Date
 }
 
 @Entity('chatMsg')

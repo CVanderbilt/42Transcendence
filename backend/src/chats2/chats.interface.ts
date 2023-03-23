@@ -6,11 +6,12 @@ export interface ChatRoom {
 
 export interface ChatMembership {
     id?: number
+    isOwner: boolean
     isAdmin: boolean
     isBanned: boolean
-    bannedUntil: Date
+    // bannedUntil: Date
     isMuted: boolean
-    mutedUntil: Date
+    // mutedUntil: Date
 }
 
 export interface ChatMsg {

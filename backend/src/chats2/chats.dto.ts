@@ -1,6 +1,5 @@
 export interface ChatRoomDto {    
     name: string
-    ownerId: string
     password?: string
     isPrivate?: boolean
     isDirect?: boolean
@@ -9,11 +8,12 @@ export interface ChatRoomDto {
 export interface ChatMembershipDto {
     userId: string
     chatRoomId: number
+    isOwner?: boolean
     isAdmin?: boolean
     isBanned?: boolean
-    bannedUntil?: Date
+    // bannedUntil?: Date
     isMuted?: boolean
-    mutedUntil?: Date
+    // mutedUntil?: Date
     chatRoomName?: string
     userName?: string
 }

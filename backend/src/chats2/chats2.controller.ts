@@ -1,5 +1,4 @@
 import { Body, Controller, Delete, Get, Logger, Param, Post, Put } from '@nestjs/common';
-import { Logger2 } from 'src/utils/Logger2';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { ChatMembership, ChatRoom } from './chats.interface';
 import { Chats2Service } from './chats2.service';
@@ -32,11 +31,12 @@ export class Chats2Controller {
         return await (this.chatsService.findUserChatRooms(id))
     }
 
-    // new chat room : Also joins user as member
+    // new chat room
     @Post('rooms')
     async create(@Body() dto: ChatRoomDto): Promise<ChatRoom> {
         try {
-            return await this.chatsService.getChatRoom(dto)
+            const res = await this.chatsService.getChatRoom(dto)
+            return res
         } catch (error) {
             Logger.error(error)
         }
@@ -45,7 +45,13 @@ export class Chats2Controller {
     // join chat room
     @Post('rooms/:roomId/join')
     async joinRoom(@Param('roomId') roomId: number, @Body() data: JoinChatRoomDto): Promise<ChatMembership> {
-        return this.chatsService.joinChatRoom(roomId, data)
+        try {
+            const res = await this.chatsService.joinChatRoom(roomId, data)
+            return res
+        }
+        catch (error) {
+            Logger.error(error)
+        }
     }
 
     // invite users to chat room
