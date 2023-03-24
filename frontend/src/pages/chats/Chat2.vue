@@ -8,54 +8,61 @@
             <h1 class="mt-0" style="color: white">CHAT</h1>
 
             <div class="row chats-window">
+              <!-- ------------------ chats list ------------------ -->
               <div class="col chats-list">
-                <div v-for="item in userMemberships" v-bind:key="item.chatRoomName" style="display: flex;">
-                  <b-button v-on:click="joinRoom(item.chatRoomName as string)"
+                <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name" style="display: flex;">
+                  <b-button v-on:click="joinRoom(item.chatRoom.name as string)"
                     style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
-                    {{ getNameDirectMessage(item.chatRoomName as string) }}
+                    {{ getNameDirectMessage(item.chatRoom.name as string) }}
                   </b-button>
 
-                  <button v-if="item.chatRoomName !== 'general'" @click="leaveRoom(item.chatRoomId)">
+                  <button v-if="item.chatRoom.name !== 'general'" @click="leaveRoom(item.chatRoom.id)">
                     x
                   </button>
 
                 </div>
               </div>
+
               <div class="col-9 chat-column">
                 <div class="chat-header">
                   {{ getNameDirectMessage(chatRoomName) }}
                 </div>
 
-
                 <!-- ------------------ chat area ------------------ -->
-                <div ref="chatArea" class="chat-area">
-                  <div v-for="message in messages" v-bind:key="message.content">
-                    <div v-if="isDisplayMessage(message.senderId as string)" class="message" :class="{
-                      'message-out': message.senderName === user?.username,
-                      'message-in': message.senderName !== user?.username,
-                    }">
-                      <b-col>
-                        <p v-if="message.senderName === user?.username" class="message-text">
-                          <a>{{ message.content }}</a>
-                        </p>
-                      </b-col>
-                      <b-col>
-                        <p v-if="message.senderName !== user?.username" class="message-text">
-                          <a v-on:click="searchFriend(message.senderName as string)">{{
-                            message.senderName + ": "
-                          }}</a><a>{{ message.content }}</a>
-                        </p>
-                      </b-col>
+                <div v-if="!currentMembership.isBanned">
+                  <div ref="chatArea" class="chat-area">
+                    <div v-for="message in messages" v-bind:key="message.content">
+                      <div v-if="isDisplayMessage(message.senderId as string)" class="message" :class="{
+                        'message-out': message.senderName === user?.username,
+                        'message-in': message.senderName !== user?.username,
+                      }">
+                        <b-col>
+                          <p v-if="message.senderName === user?.username" class="message-text">
+                            <a>{{ message.content }}</a>
+                          </p>
+                        </b-col>
+                        <b-col>
+                          <p v-if="message.senderName !== user?.username" class="message-text">
+                            <a v-on:click="searchFriend(message.senderName as string)">{{
+                              message.senderName + ": "
+                            }}</a><a>{{ message.content }}</a>
+                          </p>
+                        </b-col>
+                      </div>
                     </div>
                   </div>
+                  <div v-if="!currentMembership.isMuted" class="form-outline form-white chat-footer">
+                    <input type="username" id="typeusernameX" v-on:keyup.enter="sendMessage()" v-model="message"
+                      class="chat-input" />
+                    <b-button class="chat-button" v-on:click="sendMessage()">Send message</b-button>
+                    <b-button v-if="isAdmin === true" class="chat-button" @click="updateManagedChat()"
+                      style="margin-left: 10px">Manage chat</b-button>
+                  </div>
+                  <div v-else>
+                    <p>You are muted</p>
+                  </div>
                 </div>
-                <div class="form-outline form-white chat-footer">
-                  <input type="username" id="typeusernameX" v-on:keyup.enter="sendMessage()" v-model="message"
-                    class="chat-input" />
-                  <b-button class="chat-button" v-on:click="sendMessage()">Send message</b-button>
-                  <b-button v-if="isAdmin === true" class="chat-button" @click="modalChatAdmin = !modalChatAdmin"
-                    style="margin-left: 10px">Manage chat</b-button>
-                </div>
+
               </div>
             </div>
 
@@ -93,8 +100,8 @@
 
           <div class="form-outline form-white mb-2">
             <input type="participants" id="typeParticipantsdX" class="form-control form-control-lg"
-              placeholder="Participant name" v-model="createdChatAddParticipant" />
-            <b-button class="mt-1 pb-9" @click="createdChatParticipants.push(createdChatAddParticipant)">Add
+              placeholder="Participant name" v-model="addParticipant" />
+            <b-button class="mt-1 pb-9" @click="createdChatParticipants.push(addParticipant)">Add
               participant</b-button>
           </div>
           <label class="form-label" for="typePasswordX">Participants:</label>
@@ -110,28 +117,51 @@
 
 
     <div>
-      <b-modal id="modal-center" centered="true" v-model="modalChatAdmin" @ok="handleSubmitCreateChat()">
+      <b-modal id="modal-center" centered="true" v-model="modalChatAdmin" @ok="handleManageChat()">
         <div class=" pb-9">
           <h2 class="fw-bold text-uppercase">{{ 'Manage chat ' + chatRoomName }}</h2>
 
-          <div class="form-outline form-white mb-2">
+          <!-- <div class="form-outline form-white mb-2">
             <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Type your new password"
               v-model="createdChatPassword" :disabled="!createdChatRequiresPassword" />
             <label class="form-label" for="typeEmailX">Password needed? </label>
             <input type="checkbox" v-model="createdChatRequiresPassword" />
+          </div> -->
+
+          <!-- manage participants -->
+          <div>
+            <h2>Current participants:</h2>
+            <div v-for="item in managedChatMemberships" v-bind:key="item">
+              <span>
+                {{ item.user.username }}
+              </span>
+              <span v-if="item.isOwner">Owner</span>
+              <form v-if="!item.isOwner">
+                <input type="checkbox" v-model="item.isAdmin" />
+                <label for="isAdmin">Admin</label>
+                <input type="checkbox" v-model="item.isBanned" />
+                <label for="isBanned">Banned</label>
+                <input type="checkbox" v-model="item.isMuted" />
+                <label for="isMutted">Mutted</label>
+              </form>
+            </div>
           </div>
 
-          <div class="form-outline form-white mb-2">
-            <input type="participants" id="typeParticipantsdX" class="form-control form-control-lg"
-              placeholder="Participant name" v-model="createdChatAddParticipant" />
-            <b-button class="mt-1 pb-9" @click="createdChatParticipants.push(createdChatAddParticipant)">Add participant
-            </b-button>
-          </div>
-          <label class="form-label" for="typePasswordX">Participants:</label>
-          <div v-for="item in createdChatParticipants" v-bind:key="item">
-            <a style="text-align: right">
-              {{ item }}
-            </a>
+          <!-- add participants -->
+          <div>
+            <h2>Invite participants</h2>
+            <div class="form-outline form-white mb-2">
+              <input type="participants" id="typeParticipantsdX" class="form-control form-control-lg"
+                placeholder="Participant name" v-model="addParticipant" />
+              <b-button class="mt-1 pb-9" @click="
+                manageChatParticipants.push(addParticipant)">Add participant
+              </b-button>
+            </div>
+            <div v-for="item in manageChatParticipants" v-bind:key="item">
+              <a style="text-align: right">
+                {{ item }}
+              </a>
+            </div>
           </div>
           <div class="form-outline form-white"></div>
         </div>
@@ -146,7 +176,7 @@ import { useStore } from "vuex";
 import { key } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
-import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq } from "../../api/chatApi";
+import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq } from "../../api/chatApi";
 import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, getChatRoomReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "@/api/user";
@@ -157,11 +187,26 @@ export default defineComponent({
   name: "Chat2",
 
   data() {
-    let chatMessages: ChatMessage[] = [];
-    let userMemberships: Membership[] = [];
-    var createdChatParticipants: string[] = [];
-    let userFriendships: IFriendship[] = [];
-    let RoomsList: string[] = [];
+    let chatMessages: ChatMessage[] = []
+    let userMemberships: Membership[] = []
+    var createdChatParticipants: string[] = []
+    let userFriendships: IFriendship[] = []
+    var managedChatMemberships: any[] = []
+    var manageChatParticipants: string[] = []
+    var currentMembership: Membership = {
+      chatRoom: {
+        id: "",
+        name: "",
+      },
+      user: {
+        id: "",
+        username: "",
+      },
+      isOwner: false,
+      isAdmin: false,
+      isBanned: false,
+      isMuted: false,
+    }
 
     const io = useSocketIO();
 
@@ -170,7 +215,6 @@ export default defineComponent({
       io,
       chatRoomName: "general",
       chatRoomId: "",
-      RoomsList,
       isAdmin: false,
       searchedChat: "",
       messages: chatMessages,
@@ -180,13 +224,16 @@ export default defineComponent({
       createdchatName: "",
       createdChatPassword: "",
       createdChatRequiresPassword: false,
-      createdChatAddParticipant: "",
+      addParticipant: "",
       createdChatParticipants,
       searchedChatPassword: "",
       searchedChatRequiresPassword: false,
       modalChatAdmin: false,
       banned: false,
-      muted: false
+      muted: false,
+      managedChatMemberships: managedChatMemberships,
+      manageChatParticipants: manageChatParticipants,
+      currentMembership,
     };
   },
 
@@ -223,16 +270,18 @@ export default defineComponent({
     } catch {
       console.log("Error getting chat room")
     }
-    // get user memberships
+    // get all user memberships
     try {
-      this.userMemberships = await getUserMembershipsReq(this.user?.id as string)
+      this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
+      console.log(this.userMemberships)
     } catch {
       console.log("Error getting user memberships")
     }
-
-    this.userMemberships.forEach((item) => {
-      this.RoomsList.push(item.chatRoomName as string)
-    })
+    // get current membership
+    const membership = this.userMemberships.find((membership: any) => membership.chatRoom.name === this.chatRoomName)
+    if (membership !== undefined) {
+      this.currentMembership = membership
+    }
 
     this.io.socket.offAny();
     this.io.socket.on("new_message", (message, username) => {
@@ -314,21 +363,19 @@ export default defineComponent({
         return;
       }
 
-      let room: any;
-      // get chat room
-      try {
-        room = await getChatRoomByNameReq(room2join).then((response) => {
-          return response.data;
-        })
-      }
-      catch (err) {
-        console.log("Can not find chat room");
-        return;
+      const room = (await getChatRoomByNameReq(room2join)).data
+      if (!room) {
+        console.log("Room not found")
+        alert("Room not found")
+        return
       }
 
       try {
-        joinChatRoomReq(room.id, this.user?.id as string) // returns membership even if user is already a member of the room
-        this.RoomsList.push(room2join)
+        const membership = (await joinChatRoomReq(room.id, this.user?.id as string)).data // returns membership even if user is already a member of the room
+        membership.chatRoomName = room.name
+        membership.chatRoomId = room.id
+        membership.userName = this.user?.username as string
+        this.userMemberships.push(membership)
       }
       catch (err: any) {
         if (err.stattus === 404)
@@ -360,16 +407,11 @@ export default defineComponent({
         return;
       }
 
-      let room: any;
-      // get chat room
-      try {
-        room = await getChatRoomByNameReq(room2join).then((response) => {
-          return response.data;
-        })
-      }
-      catch (err) {
-        console.log("Can not find chat room");
-        return;
+      const room = (await getChatRoomByNameReq(room2join)).data
+      if (!room) {
+        console.log("Room not found")
+        alert("Room not found")
+        return
       }
 
       try {
@@ -403,7 +445,7 @@ export default defineComponent({
     async leaveRoom(roomId: any) {
       try {
         leaveChatRoomReq(roomId, this.user?.id as string)
-        const membership = this.userMemberships.find((membership) => membership.chatRoomId === roomId)
+        const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
         if (membership) {
           this.userMemberships.splice(this.userMemberships.indexOf(membership), 1)
         }
@@ -416,11 +458,12 @@ export default defineComponent({
     },
 
     changeRoom(roomId: string, roomName: string) {
-      if (!this.user) {
-        console.log("user not defined, esto no deberia pasar");
+      const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
+      if (!membership) {
+        console.log("Can not change room");
         return;
       }
-
+      this.currentMembership = membership
       this.roomId = roomId;
       this.io.socket.emit("event_leave", this.chatRoomName);
       this.messages = [];
@@ -428,23 +471,25 @@ export default defineComponent({
       this.chatRoomName = roomName;
     },
 
-    // async addUsersToChat(users: string[], chatName: string) {
-    //   try {
-    //     const room: any = await getChatRoomByNameReq(chatName)
-    //     inviteUsersReq(room.id, users)
-    //   }
-    //   catch (err) {
-    //     console.log("Can not join users to chat room");
-    //     return;
-    //   }
-    // },
-
     async createChatRoom(roomName: string, password: string, userNames: string[]) {
       let room: any
       try {
-        room = await (await getChatRoomReq(roomName, this.user?.id as string, password)).data
-        this.RoomsList.push(roomName)
+        room = await (await createChatRoomReq(roomName, this.user?.id as string, password)).data
       }
+      catch (err: any) {
+        console.log("Can not create chat room");
+        alert("Can not create chat room");
+        return;
+      }
+
+      try {
+        const membership = (await joinChatRoomReq(room.id, this.user?.id as string, password)).data
+        membership.chatRoomName = room.name
+        membership.chatRoomId = room.id
+        membership.userName = membership.user.username
+        this.userMemberships.push(membership)
+      }
+
       catch (err) {
         console.log("Can not create chat room");
       }
@@ -479,9 +524,47 @@ export default defineComponent({
           this.createdchatName = "";
           this.createdChatPassword = "";
           this.createdChatRequiresPassword = false;
-          this.createdChatAddParticipant = "";
+          this.addParticipant = "";
           this.createdChatParticipants = [];
         });
+      }
+    },
+
+    async updateManagedChat() {
+      this.modalChatAdmin = !this.modalChatAdmin;
+
+      this.manageChatParticipants = []
+
+      // get chat memberships
+      try {
+        this.managedChatMemberships = (await getChatRoomMembershipsReq(this.roomId)).data
+        // delete current user from list
+        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.user.id !== this.user?.id)
+        console.log(this.managedChatMemberships)
+      }
+      catch (err) {
+        console.log("Can not get chat room memberships");
+      }
+    },
+
+    async handleManageChat() {
+      // update current chat members
+      this.managedChatMemberships.forEach(async (membership) => {
+        await updateChatRoomMembershipsReq(membership.id, membership)
+      })
+
+      // add new members
+      try { // TODO: capturar error de usuario no encontrado -> el backend devería responder un 404
+        this.manageChatParticipants.forEach(async (username) => {
+          if (username !== this.user?.username && username !== "") {
+            const invitee = (await getUserByName(username)).data
+            console.log(invitee)
+            inviteUserReq(this.roomId, invitee.id)
+          }
+        })
+      } catch (error) {
+        console.log("Can not invite users to chat room: " + error);
+        alert("Can not invite users to chat room: " + error);
       }
     },
 
@@ -519,8 +602,6 @@ export default defineComponent({
       rgba(4, 8, 22, 0.804),
       rgb(249, 251, 255));
 }
-
-
 
 .chat-button {
   background: #3466cb;

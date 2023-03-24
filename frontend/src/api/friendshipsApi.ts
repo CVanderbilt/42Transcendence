@@ -1,5 +1,4 @@
 import { apiClient } from "./baseApi";
-import { IUserAPI } from "./user";
 
 const URL = "/friendships";
 

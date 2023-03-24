@@ -9,9 +9,7 @@ export interface ChatMembership {
     isOwner: boolean
     isAdmin: boolean
     isBanned: boolean
-    // bannedUntil: Date
     isMuted: boolean
-    // mutedUntil: Date
 }
 
 export interface ChatMsg {

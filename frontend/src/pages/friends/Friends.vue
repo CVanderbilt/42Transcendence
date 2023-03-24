@@ -39,7 +39,7 @@ import { useStore } from "vuex";
 import { key } from "../../store/store";
 import "@/style/styles.css";
 import { getFriendshipsRequest, IFriendship, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
-import { getChatRoomReq, inviteUsersReq } from "@/api/chatApi";
+import { createChatRoomReq, inviteUsersReq } from "@/api/chatApi";
 
 export default defineComponent({
   name: "Friends",
@@ -97,7 +97,7 @@ export default defineComponent({
 
       let room;
       try {
-        room = (await getChatRoomReq(chatRoomName, UUID, "", true)).data
+        room = (await createChatRoomReq(chatRoomName, UUID, "", true)).data
       } catch (err) {
         alert("Direct chat could not be created");
         console.log(err)

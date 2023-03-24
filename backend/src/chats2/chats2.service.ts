@@ -152,30 +152,10 @@ export class Chats2Service {
 
         const res = await this.chatMembershipsRepo.find({
             where: { user: { id: userId } },
-            relations: ['user', 'chatRoom'],
-            // select: ['id', 'isAdmin', 'isBanned', 'bannedUntil', 'isMuted', 'mutedUntil', 'chatRoom.id', 'user.id'] NOT WORKING 
+            relations: ['user', 'chatRoom'],            
         })
 
-        // transform the result into ChatMembershipDtos
-        var memberships = []
-        res.forEach(element => {
-            memberships.push({
-                id: element.id,
-                isAdmin: element.isAdmin,
-                isBanned: element.isBanned,
-                // bannedUntil: element.bannedUntil,
-                isMuted: element.isMuted,
-                // mutedUntil: element.mutedUntil,
-                chatRoomId: element.chatRoom.id,
-                userId: element.user.id,
-                chatRoomName: element.chatRoom.name,
-                userName: element.user.username
-            })
-            delete element.chatRoom
-            delete element.user
-        })
-
-        return memberships
+        return res
     }
 
     async updateMembership(id: number, data: ChatMembershipDto) {
