@@ -145,7 +145,7 @@
                 <label for="isBanned">Banned</label>
                 <input type="checkbox" v-model="item.isMuted" />
                 <label for="isMutted">Mutted</label>
-                <button v-if="currentMembership.isOwner" type="button" @click="removeChatMembership(item.id)">Remove</button>
+                <button type="button" @click="removeChatMembership(item.id)">Remove</button>
               </form>
             </div>
           </div>
