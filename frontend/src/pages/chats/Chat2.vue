@@ -81,6 +81,8 @@
         </main>
       </div>
     </div>
+
+    <!-- create chat -->
     <div>
       <b-modal id="modal-center" centered="true" v-model="modalShow" @ok="handleSubmitCreateChat()">
         <div class="mb-md-5 pb-9">
@@ -115,7 +117,7 @@
       </b-modal>
     </div>
 
-
+    <!-- manage chat -->  
     <div>
       <b-modal id="modal-center" centered="true" v-model="modalChatAdmin" @ok="handleManageChat()">
         <div class=" pb-9">
@@ -131,7 +133,7 @@
           <!-- manage participants -->
           <div>
             <h2>Current participants:</h2>
-            <div v-for="item in managedChatMemberships" v-bind:key="item">
+            <div v-for="item in managedChatMemberships" v-bind:key="item.id">
               <span>
                 {{ item.user.username }}
               </span>
@@ -143,6 +145,7 @@
                 <label for="isBanned">Banned</label>
                 <input type="checkbox" v-model="item.isMuted" />
                 <label for="isMutted">Mutted</label>
+                <button v-if="currentMembership.isOwner" type="button" @click="removeChatMembership(item.id)">Remove</button>
               </form>
             </div>
           </div>
@@ -176,7 +179,7 @@ import { useStore } from "vuex";
 import { key } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
-import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq } from "../../api/chatApi";
+import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq } from "../../api/chatApi";
 import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, getChatRoomReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "@/api/user";
@@ -191,9 +194,11 @@ export default defineComponent({
     let userMemberships: Membership[] = []
     var createdChatParticipants: string[] = []
     let userFriendships: IFriendship[] = []
-    var managedChatMemberships: any[] = []
+    var managedChatMemberships: Membership[] = []
+    var managedChatMemberships2remove: Membership[] = []
     var manageChatParticipants: string[] = []
     var currentMembership: Membership = {
+      id: "",
       chatRoom: {
         id: "",
         name: "",
@@ -232,6 +237,7 @@ export default defineComponent({
       banned: false,
       muted: false,
       managedChatMemberships: managedChatMemberships,
+      managedChatMemberships2remove : managedChatMemberships2remove,
       manageChatParticipants: manageChatParticipants,
       currentMembership,
     };
@@ -273,7 +279,6 @@ export default defineComponent({
     // get all user memberships
     try {
       this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
-      console.log(this.userMemberships)
     } catch {
       console.log("Error getting user memberships")
     }
@@ -540,7 +545,6 @@ export default defineComponent({
         this.managedChatMemberships = (await getChatRoomMembershipsReq(this.roomId)).data
         // delete current user from list
         this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.user.id !== this.user?.id)
-        console.log(this.managedChatMemberships)
       }
       catch (err) {
         console.log("Can not get chat room memberships");
@@ -558,13 +562,23 @@ export default defineComponent({
         this.manageChatParticipants.forEach(async (username) => {
           if (username !== this.user?.username && username !== "") {
             const invitee = (await getUserByName(username)).data
-            console.log(invitee)
             inviteUserReq(this.roomId, invitee.id)
           }
         })
       } catch (error) {
         console.log("Can not invite users to chat room: " + error);
         alert("Can not invite users to chat room: " + error);
+      }
+    },
+
+    async removeChatMembership(membershipId: string) {
+      alert("Removing user " + membershipId + " from chat room")
+      try {
+        await deleteChatRoomMembershipsReq(membershipId)
+        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.id !== membershipId)
+      } catch (error) {
+        console.log("Can not remove user from chat room: " + error);
+        alert("Can not remove user from chat room: " + error);
       }
     },
 

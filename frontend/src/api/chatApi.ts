@@ -23,6 +23,7 @@ export interface ChatRoom {
 }
 
 export interface Membership {
+    id: string
     user: Member
     isOwner?: boolean
     isAdmin?: boolean
@@ -32,7 +33,6 @@ export interface Membership {
     userName?: string
     chatRoom: ChatRoom
 }
-
 
 // export function makeid(length: number) { //TODO esto debería ser innecesario ya que se encarga el backend
 //     let result = '';
@@ -113,4 +113,8 @@ export async function getChatRoomMembershipsReq(roomId: string) {
 
 export async function updateChatRoomMembershipsReq(membershipId: string, data: Membership) {
     return apiClient.put(`${URL}/memberships/${membershipId}`, data)
+}
+
+export async function deleteChatRoomMembershipsReq(membershipId: string) {
+    return apiClient.delete(`${URL}/memberships/${membershipId}`)
 }

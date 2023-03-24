@@ -63,7 +63,7 @@ export class Chats2Controller {
     // leave chat room
     @Post('rooms/:id/leave')
     async leaveRoom(@Param('id') id: number, @Body() data: ChatMembershipDto) {
-        return this.chatsService.deleteMembership(id, data.userId)
+        return this.chatsService.leaveRoom(id, data.userId)
     }
 
     // get chat room members
@@ -82,6 +82,13 @@ export class Chats2Controller {
     @Put('memberships/:id')
     async updateMembership(@Param('id') id: number, @Body() data: ChatMembershipDto) {
         return this.chatsService.updateMembership(id, data)
+    }
+
+    // delete membership
+    @Delete('memberships/:id')
+    async deleteMembership(@Param('id') id: number) {
+        Logger.log(`delete membership ${id}`)
+        return this.chatsService.deleteMembership(id)
     }
 
     // get chat messages for room

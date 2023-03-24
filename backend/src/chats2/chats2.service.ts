@@ -163,7 +163,20 @@ export class Chats2Service {
         return this.chatMembershipsRepo.update({ id: id }, data)
     }
 
-    async deleteMembership(chatRoomId: number, userId: string) {
+    async deleteMembership(id: number) {
+        const membership = await this.chatMembershipsRepo.findOne({ where: { id: id }, relations: ['chatRoom'] })
+        const room = membership.chatRoom
+
+        const res = await this.chatMembershipsRepo.delete({ id: id })
+        // if the user is the last member of the room, delete the room
+        const memberships = await this.findChatRoomMembers(room.id)
+        if (memberships.length == 0) {
+            this.chatRoomsRepo.delete(room.id)
+        }
+        return res
+    }
+
+    async leaveRoom(chatRoomId: number, userId: string) {
         const res = await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId }, user: { id: userId } })
         // if the user is the last member of the room, delete the room
         const memberships = await this.findChatRoomMembers(chatRoomId)
