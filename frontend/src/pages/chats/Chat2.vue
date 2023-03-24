@@ -13,7 +13,7 @@
                 <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name" style="display: flex;">
                   <b-button v-on:click="joinRoom(item.chatRoom.name as string)"
                     style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
-                    {{ getNameDirectMessage(item.chatRoom.name as string) }}
+                    {{ item.chatRoom.name }}
                   </b-button>
 
                   <button v-if="item.chatRoom.name !== 'general'" @click="leaveRoom(item.chatRoom.id)">
@@ -25,7 +25,7 @@
 
               <div class="col-9 chat-column">
                 <div class="chat-header">
-                  {{ getNameDirectMessage(chatRoomName) }}
+                  {{ chatRoomName }}
                 </div>
 
                 <!-- ------------------ chat area ------------------ -->
@@ -255,13 +255,14 @@ export default defineComponent({
     };
   },
 
-  async mounted() {
+  async mounted() {    
+    this.chatRoomName = "general"; // default room
+    this.isAdmin = false;
+
     // get room from query
     if (this.$route.query.name !== undefined) {
       this.chatRoomName = this.$route.query.name as string;
-    } else {
-      this.chatRoomName = "general";
-      this.isAdmin = false;
+      console.log(this.chatRoomName)
     }
     // join room
     try {

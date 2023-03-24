@@ -89,7 +89,7 @@ export default defineComponent({
       names.sort();
 
       const chatRoomName =
-        "" + names[0] + "&" + names[1];
+        names[0] + "-" + names[1];
 
       const UUID = this.user?.id as string;
 
@@ -104,7 +104,8 @@ export default defineComponent({
         return
       }
       try {
-        inviteUsersReq(room.id, friendId)
+        const res = await inviteUsersReq(room.id, friendId)
+        console.log(res)
       } catch (err) {
         alert("User could not be invited to chat");
         console.log(err)
