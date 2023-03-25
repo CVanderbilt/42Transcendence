@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatRoomEntity, ChatMembershipEntity, ChatMsgEntity } from './chatEntities.entity';
@@ -37,6 +37,22 @@ export class Chats2Service {
         })
 
         return room
+    }
+
+    async updateChatRoomPassword(roomId: number, password: string) {
+        const room = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
+        if (!room) {
+            return null
+        }
+        if (password == "") {
+            room.password = null
+            room.isPrivate = false
+        }
+        else{
+            room.password = bcrypt.hashSync(password, 10)
+            room.isPrivate = true
+        }
+        return await this.chatRoomsRepo.save(room)
     }
 
     findAllChatRooms(): Promise<ChatRoom[]> {
@@ -84,13 +100,17 @@ export class Chats2Service {
         this.joinChatRoom(generalChat.id, membership)
     }
 
-    async joinChatRoom(id: number, data: JoinChatRoomDto): Promise<ChatMembership> {
-
+    async joinChatRoom(roomId: number, data: JoinChatRoomDto): Promise<ChatMembership> {
+        // check whether the room exists
+        const roomExists = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
+        if (!roomExists) {
+            throw new NotFoundException('Room does not exist')
+        }
         // find if the user is already a member of the room
         const userMembership = await this.chatMembershipsRepo.find({
             where: {
                 user: { id: data.userId },
-                chatRoom: { id: id }
+                chatRoom: { id: roomId }
             }
         })
         if (userMembership.length > 0) {
@@ -102,20 +122,20 @@ export class Chats2Service {
         }
 
         // if the room is private, check the password
-        const room = await this.chatRoomsRepo.findOne({ where: { id: id } })
+        const room = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
         if (room.isPrivate) {
             if (!data.password) {
-                throw new Error('Password is required for this room')
+                throw new UnauthorizedException('Password is required for this room')
             }
             if (!bcrypt.compareSync(data.password, room.password)) {
-                throw new Error('Password is incorrect')
+                throw new UnauthorizedException('Password is incorrect')
             }
         }
 
         // create a new membership
         const user = await this.usersRepo.findOne({ where: { id: data.userId } });
         // if no other membership exists, make the user the owner
-        const memberships = await this.findChatRoomMembers(id)
+        const memberships = await this.findChatRoomMembers(roomId)
         let isOwner = false;
         let isAdmin = false;
         if (memberships.length == 0) {
@@ -136,8 +156,8 @@ export class Chats2Service {
         })
     }
 
-    async inviteUser(id: number, inviteeId: string) {
-        this.joinChatRoom(id, { userId: inviteeId })
+    async inviteUser(id: number, data: any) {
+        this.joinChatRoom(id, data)
     }
 
 

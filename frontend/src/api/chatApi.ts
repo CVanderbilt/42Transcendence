@@ -70,6 +70,10 @@ export async function createChatRoomReq(roomName: string, owner: string, passwor
     return apiClient.post(`${URL}/rooms`, room)
 }
 
+export async function updateChatRoomPasswordReq(roomId: string, password: string) {
+    return apiClient.post(`${URL}/rooms/${roomId}/password`, {password: password})
+}
+
 export async function getChatRoomsForUserReq(userId: string) {
     return apiClient.get(`${URL}/rooms/${userId}`);
 }

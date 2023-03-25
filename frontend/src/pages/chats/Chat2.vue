@@ -11,7 +11,7 @@
               <!-- ------------------ chats list ------------------ -->
               <div class="col chats-list">
                 <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name" style="display: flex;">
-                  <b-button v-on:click="joinRoom(item.chatRoom.name as string)"
+                  <b-button v-on:click="changeRoom(item.chatRoom.id, item.chatRoom.name)"
                     style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                     {{ item.chatRoom.name }}
                   </b-button>
@@ -55,7 +55,7 @@
                     <input type="username" id="typeusernameX" v-on:keyup.enter="sendMessage()" v-model="message"
                       class="chat-input" />
                     <b-button class="chat-button" v-on:click="sendMessage()">Send message</b-button>
-                    <b-button v-if="isAdmin === true" class="chat-button" @click="updateManagedChat()"
+                    <b-button v-if="currentMembership.isAdmin === true" class="chat-button" @click="updateManagedChat()"
                       style="margin-left: 10px">Manage chat</b-button>
                   </div>
                   <div v-else>
@@ -66,14 +66,14 @@
               </div>
             </div>
 
+            <!-- ------------------ search chat ------------------ -->
             <div class="form-outline form-white mb-4">
               <input type="username" id="typeusernameX" class="form-control form-control-lg" v-model="searchedChat"
                 placeholder="Chat name" />
-              <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Password"
-                v-model="searchedChatPassword" :disabled="!searchedChatRequiresPassword" />
+              <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Password" v-model="searchedChatPassword"  />
 
-              <b-button @click="searchRoom(searchedChat)">Search chat</b-button>
-              <input type="checkbox" v-model="searchedChatRequiresPassword" v-on:click="searchedChatPassword = ''" />
+              <b-button 
+                @click="joinRoom(searchedChat, searchedChatPassword); searchedChatPassword = ''; ">Search chat</b-button>
             </div>
             <b-button @click="modalShow = !modalShow">Create Chat</b-button>
 
@@ -117,25 +117,22 @@
       </b-modal>
     </div>
 
-    <!-- manage chat -->  
+    <!-- manage chat -->
     <div>
       <b-modal id="modal-center" centered="true" v-model="modalChatAdmin" @ok="handleManageChat()">
         <div class=" pb-9">
           <h2 class="fw-bold text-uppercase">{{ 'Manage chat ' + chatRoomName }}</h2>
 
-          <!-- <div class="form-outline form-white mb-2">
-            <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Type your new password"
-              v-model="createdChatPassword" :disabled="!createdChatRequiresPassword" />
-            <label class="form-label" for="typeEmailX">Password needed? </label>
-            <input type="checkbox" v-model="createdChatRequiresPassword" />
-          </div> -->
+          <!-- manage password -->
+          <div class="form-outline form-white mb-2">
+            <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Type your new password" v-model="managedChatPassword"/>
+          </div>
 
           <!-- manage participants -->
-          <div>
-            <h2>Current participants:</h2>
-            <div v-for="item in managedChatMemberships" v-bind:key="item.id">
+          <div id="participants-list">
+            <div class="participant-list-item" v-for="item in managedChatMemberships" v-bind:key="item.id">
               <span>
-                {{ item.user.username }}
+                <h4> {{ item.user.username }}</h4>
               </span>
               <span v-if="item.isOwner">Owner</span>
               <form v-if="!item.isOwner">
@@ -145,7 +142,8 @@
                 <label for="isBanned">Banned</label>
                 <input type="checkbox" v-model="item.isMuted" />
                 <label for="isMutted">Mutted</label>
-                <button type="button" @click="removeChatMembership(item.id)">Remove</button>
+                <b-button style="background-color: brown;" type="button"
+                  @click="removeChatMembership(item.id)">Kick</b-button>
               </form>
             </div>
           </div>
@@ -179,12 +177,13 @@ import { useStore } from "vuex";
 import { key } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
-import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq } from "../../api/chatApi";
-import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, getChatRoomReq, } from "../../api/chatApi";
+import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq } from "../../api/chatApi";
+import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "@/api/user";
 import { getFriendshipsRequest } from "@/api/friendshipsApi";
 import { IFriendship } from "@/api/friendshipsApi";
+import { AxiosError } from "axios";
 
 export default defineComponent({
   name: "Chat2",
@@ -195,7 +194,6 @@ export default defineComponent({
     var createdChatParticipants: string[] = []
     let userFriendships: IFriendship[] = []
     var managedChatMemberships: Membership[] = []
-    var managedChatMemberships2remove: Membership[] = []
     var manageChatParticipants: string[] = []
     var currentMembership: Membership = {
       id: "",
@@ -237,9 +235,10 @@ export default defineComponent({
       banned: false,
       muted: false,
       managedChatMemberships: managedChatMemberships,
-      managedChatMemberships2remove : managedChatMemberships2remove,
       manageChatParticipants: manageChatParticipants,
       currentMembership,
+      managedChatPassword: "",
+      managedChatRequiresPassword: false,
     };
   },
 
@@ -255,7 +254,7 @@ export default defineComponent({
     };
   },
 
-  async mounted() {    
+  async mounted() {
     this.chatRoomName = "general"; // default room
     this.isAdmin = false;
 
@@ -363,7 +362,7 @@ export default defineComponent({
       }
     },
 
-    async searchRoom(room2join: string) {
+    async joinRoom(room2join: string, password = "") {
       if (room2join === "") {
         console.log("Empty room name");
         return;
@@ -377,73 +376,16 @@ export default defineComponent({
       }
 
       try {
-        const membership = (await joinChatRoomReq(room.id, this.user?.id as string)).data // returns membership even if user is already a member of the room
-        membership.chatRoomName = room.name
-        membership.chatRoomId = room.id
-        membership.userName = this.user?.username as string
-        this.userMemberships.push(membership)
-      }
-      catch (err: any) {
-        if (err.stattus === 404)
-          console.log("Wrong password");
-        else
-          console.log("Can not join room");
+        const resp = await joinChatRoomReq(room.id, this.user?.id as string, password) // returns membership even if user is already a member of the room
+        this.isAdmin = resp.data.isAdmin
+        if (!this.userMemberships.find((membership) => membership.chatRoom.id === room.id)) {
+          this.userMemberships.push(resp.data)
+        }
+      } catch (error: any) {
+        const mensajeError = (error).response?.data?.message
+        alert("Error joining the room: " + (mensajeError || "Unknown error")); // Utilizar mensaje de error personalizado o un mensaje predeterminado
         return;
       }
-
-      // try to get messages
-      try {
-        getChatRoomMessagesReq(room.id).then((response) => {
-          for (var i in response.data) {
-            this.messages.push(response.data[i]);
-          }
-        })
-      }
-      catch (err) {
-        console.log("Can not get messages");
-      }
-
-      // change chat
-      this.changeRoom(room.id, room.name);
-    },
-
-    async joinRoom(room2join: string) {
-      if (room2join === "") {
-        console.log("Empty room name");
-        return;
-      }
-
-      const room = (await getChatRoomByNameReq(room2join)).data
-      if (!room) {
-        console.log("Room not found")
-        alert("Room not found")
-        return
-      }
-
-      try {
-        const resp = joinChatRoomReq(room.id, this.user?.id as string) // returns membership even if user is already a member of the room
-        this.isAdmin = (await resp).data.isAdmin
-      }
-      catch (err: any) {
-        if (err.stattus === 404)
-          console.log("Wrong password");
-        else
-          console.log("Can not join room");
-        return;
-      }
-
-      // try to get messages
-      try {
-        getChatRoomMessagesReq(room.id).then((response) => {
-          for (var i in response.data) {
-            this.messages.push(response.data[i]);
-          }
-        })
-      }
-      catch (err) {
-        console.log("Can not get messages");
-      }
-
       // change chat
       this.changeRoom(room.id, room.name);
     },
@@ -475,6 +417,18 @@ export default defineComponent({
       this.messages = [];
       this.io.socket.emit("event_join", roomName);
       this.chatRoomName = roomName;
+
+      // try to get messages
+      try {
+        getChatRoomMessagesReq(roomId).then((response) => {
+          for (var i in response.data) {
+            this.messages.push(response.data[i]);
+          }
+        })
+      }
+      catch (err) {
+        console.log("Can not get messages");
+      }
     },
 
     async createChatRoom(roomName: string, password: string, userNames: string[]) {
@@ -538,9 +492,7 @@ export default defineComponent({
 
     async updateManagedChat() {
       this.modalChatAdmin = !this.modalChatAdmin;
-
       this.manageChatParticipants = []
-
       // get chat memberships
       try {
         this.managedChatMemberships = (await getChatRoomMembershipsReq(this.roomId)).data
@@ -553,6 +505,17 @@ export default defineComponent({
     },
 
     async handleManageChat() {
+      // update password      
+      if (this.managedChatRequiresPassword) {
+        if (this.managedChatPassword === "") {
+          alert("Password cannot be empty");
+          return;
+        }
+        await updateChatRoomPasswordReq(this.roomId, this.managedChatPassword)
+      } else {
+        await updateChatRoomPasswordReq(this.roomId, "")
+      }
+
       // update current chat members
       this.managedChatMemberships.forEach(async (membership) => {
         await updateChatRoomMembershipsReq(membership.id, membership)
@@ -573,7 +536,6 @@ export default defineComponent({
     },
 
     async removeChatMembership(membershipId: string) {
-      alert("Removing user " + membershipId + " from chat room")
       try {
         await deleteChatRoomMembershipsReq(membershipId)
         this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.id !== membershipId)
@@ -616,6 +578,24 @@ export default defineComponent({
   background: linear-gradient(to right,
       rgba(4, 8, 22, 0.804),
       rgb(249, 251, 255));
+}
+
+#modal-center label {
+  margin: 0 5px;
+}
+
+#modal-center form button {
+  margin: 0 15px;
+}
+
+#modal-center #participants-list {
+  margin-bottom: 30px;
+}
+
+.participant-list-item {
+  margin: 5px 0;
+  border-radius: 5px;
+  border: solid 1px #d1d1d1;
 }
 
 .chat-button {

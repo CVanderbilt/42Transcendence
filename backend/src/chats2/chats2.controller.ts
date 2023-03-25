@@ -42,14 +42,19 @@ export class Chats2Controller {
         }
     }
 
+    // update chat password
+    @Post('rooms/:roomId/password')  
+    async updatePassword(@Param('roomId') roomId: number, @Body() data: any) {
+        return this.chatsService.updateChatRoomPassword(roomId, data.password)
+    }
+
     // join chat room
     @Post('rooms/:roomId/join')
     async joinRoom(@Param('roomId') roomId: number, @Body() data: JoinChatRoomDto): Promise<ChatMembership> {
         try {
             const res = await this.chatsService.joinChatRoom(roomId, data)
             return res
-        }
-        catch (error) {
+        } catch (error) {
             Logger.error(error)
         }
     }
@@ -57,7 +62,7 @@ export class Chats2Controller {
     // invite users to chat room
     @Post('rooms/:roomId/invite')
     async inviteUsers(@Param('roomId') roomId: number, @Body() data: any) {
-        return this.chatsService.inviteUser(roomId, data.userId)
+        return this.chatsService.inviteUser(roomId, data)
     }
 
     // leave chat room
