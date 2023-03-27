@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { User } from './user.interface';
 import * as bcrypt from 'bcrypt';
 import { Chats2Service } from 'src/chats2/chats2.service';
-
+import * as joi from 'joi'
 
 @Injectable()
 export class UsersService {
@@ -16,6 +16,7 @@ export class UsersService {
     ) { }
 
     async createUser(user: User): Promise<User> {
+        this.validate(user)
         const newUser = this.usersRepo.save(user)
         this.chatsService.joinUser2GeneralChat(user.id)
         return newUser
@@ -67,5 +68,25 @@ export class UsersService {
         const user = await this.usersRepo.findOneBy({ id : userId })
         user.twofaSecret = secret
         user.save()
+    }
+
+    validate(user: User): joi.ValidationResult {
+        const schema = joi.object({
+            id: joi.string(),
+            email: joi.string().email(),
+            password: joi.string(),
+            username: joi.string().required(),
+            is2fa: joi.boolean(),
+            twofaSecret: joi.string(),
+        });
+
+        const result = schema.validate(user);
+
+        if (result.error !== undefined) {
+            console.log(result.error);
+            throw new HttpException(result.error.message, HttpStatus.BAD_REQUEST);
+        }
+            
+        return result;
     }
 }
