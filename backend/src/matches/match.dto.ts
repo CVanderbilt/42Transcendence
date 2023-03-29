@@ -1,12 +1,13 @@
 export interface MatchDto {
-    id: number
+    id: string
     user: string
     opponent: string
-    game?: string
     playerScore: number
     opponentScore: number
     winner?: string
     powerups?: string
+    state?: string
+    type?: string
     isFinished: boolean
     createdAt: Date
 }

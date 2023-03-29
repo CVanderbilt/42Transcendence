@@ -180,9 +180,9 @@ import { useSocketIO } from "../../main";
 import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq } from "../../api/chatApi";
 import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
-import { getUserByName } from "@/api/user";
-import { getFriendshipsRequest } from "@/api/friendshipsApi";
-import { IFriendship } from "@/api/friendshipsApi";
+import { getUserByName } from "../../api/user";
+import { getFriendshipsRequest } from "../../api/friendshipsApi";
+import { IFriendship } from "../../api/friendshipsApi";
 import { AxiosError } from "axios";
 
 export default defineComponent({

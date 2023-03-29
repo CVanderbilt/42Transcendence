@@ -5,7 +5,7 @@ import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColu
 @Entity('match')
 export class MatchEntity extends BaseEntity{
     @PrimaryGeneratedColumn()
-    id: number
+    id: string
 
     @ManyToOne(type => UserEntity)
     @JoinColumn()
@@ -14,10 +14,6 @@ export class MatchEntity extends BaseEntity{
     @ManyToOne(type => UserEntity)
     @JoinColumn()
     opponent: UserEntity
-
-    @ManyToOne(type => GameEntity)
-    @JoinColumn()
-    game: GameEntity
 
     @Column({ default: 0})
     playerScore: number
@@ -31,6 +27,12 @@ export class MatchEntity extends BaseEntity{
 
     @Column({ default: ""})
     powerups: string
+
+    @Column({ default: "Pending opponent"})
+    state: string
+
+    @Column({ default: "Friendly"})
+    type: string
 
     @Column({ default: false})
     isFinished: boolean

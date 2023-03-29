@@ -23,6 +23,7 @@ export default defineComponent({
     const io = gameSocketIO();
     const user = store.state.user;
     return {
+      room: "",
       io,
       user,
       canvas: null,
@@ -45,11 +46,17 @@ export default defineComponent({
       leftUserScore: 0,
       rightUserScore: 0,
       leftUserName: "",
-      rightUserName: ""
+      rightUserName: "",
+      playing: false
     };
   },
   mounted(): void {
-    this.io.socket.emit("event_join_game", {room: "sala1", username: this.user.username});
+    if (this.$route.query.id !== undefined) {
+      this.room = this.$route.query.id
+      this.io.socket.emit("event_join_game", {room: this.$route.query.id, username: this.user.username});
+    }
+    
+
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
     this.leftPaddleY = (this.canvas.height - this.leftPaddleH) / 2;
@@ -74,6 +81,9 @@ export default defineComponent({
       this.leftUserName = player1name;
       this.leftUserScore = player1score;
       this.rightUserScore = player2score;
+      if(this.leftUserScore == 5 || this.rightUserScore == 5){
+        this.$router.push("/endGame?id=" + this.room);
+      }
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.beginPath();
       this.ctx.arc(ballX, ballY, 10, 0, Math.PI * 2);
@@ -103,13 +113,13 @@ export default defineComponent({
       if (e.key == "Down" || e.key == "ArrowDown") {
         if (this.leftUserDownPressed == false){
         this.io.socket.emit("move", {
-          room: "sala1", username: this.user.username, movement: "down", type: "press"
+          room: this.room, username: this.user.username, movement: "down", type: "press"
         });
       }
       } else if (e.key == "Up" || e.key == "ArrowUp") {
         if (this.leftUserUpPressed == false){
         this.io.socket.emit("move", {
-          room: "sala1", username: this.user.username, movement: "up", type: "press"
+          room: this.room, username: this.user.username, movement: "up", type: "press"
         });
       }
       }
@@ -117,11 +127,11 @@ export default defineComponent({
     keyUpHandler(e: KeyboardEvent): void {
       if (e.key == "Up" || e.key == "ArrowUp") {
         this.io.socket.emit("move", {
-          room: "sala1", username: this.user.username, movement: "up", type: "release"
+          room: this.room, username: this.user.username, movement: "up", type: "release"
         });
       } else if (e.key == "Down" || e.key == "ArrowDown") {
         this.io.socket.emit("move", {
-          room: "sala1", username: this.user.username, movement: "down", type: "release"
+          room: this.room, username: this.user.username, movement: "down", type: "release"
         });
       }
     }

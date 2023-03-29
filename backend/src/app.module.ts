@@ -11,6 +11,7 @@ import { FriendshipsModule } from './friendships/friendships.module';
 import { GamesModule } from './games/games.module';
 import { MatchesModule } from './matches/matches.module';
 import { Chats2Module } from './chats2/chats2.module';
+import { GameModule } from './gameSocket/game.module';
 import { AuthModule } from './auth/auth.module';
 
 @Module({

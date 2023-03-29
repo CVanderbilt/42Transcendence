@@ -7,6 +7,7 @@ import Settings from './pages/settings/Settings.vue'
 import Home from './pages/home/Home.vue'
 import Chat2 from './pages/chats/Chat2.vue'
 import Game from './pages/game/Game.vue'
+import Matchmaking from './pages/matchmaking/MatchMaking.vue'
 import QrValidation from './pages/2fa/Qr.vue'
 import Friends from './pages/friends/Friends.vue'
 import BootstrapVue3 from 'bootstrap-vue-3'
@@ -17,6 +18,7 @@ import 'bootstrap-vue-3/dist/bootstrap-vue-3.css'
 import { store, key } from './store/store'
 import io from 'socket.io-client';
 import User from './components/User.vue'
+import EndGame from './pages/endGame/endGame.vue'
 
 const routes = [
     { path: '/', name: "home", component: Home, meta: { requiresAuth: true } },
@@ -28,6 +30,8 @@ const routes = [
     { path: '/game', name: "game", component: Game, meta: { requiresAuth: true } },
     { path: '/qr', name: "qr", component: QrValidation, meta: { requiresAuth: true } },
     { path: '/friends', name: "friends", component: Friends, meta: { requiresAuth: true } },
+    { path: '/matchmaking', name: "matchmaking", component: Matchmaking, meta: { requiresAuth: true } },
+    { path: '/endgame', name: "endGame", component: EndGame, meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({
