@@ -87,7 +87,7 @@ export async function getChatRoomMessagesReq(roomId: string) {
     return apiClient.get(`${URL}/messages/${roomId}`)
 }
 
-export async function joinChatRoomReq(roomId: string, userId: string, password = "") {
+export async function joinChatRoomReq(roomId: string, userId: string, password?: string) {
     return apiClient.post(`${URL}/rooms/${roomId}/join`, { userId, password })
 }
 

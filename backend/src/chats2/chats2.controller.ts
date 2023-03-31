@@ -1,7 +1,9 @@
 import { Body, Controller, Delete, Get, Logger, Param, Post, Put } from '@nestjs/common';
+import { validateInput } from 'src/utils/utils';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { ChatMembership, ChatRoom } from './chats.interface';
 import { Chats2Service } from './chats2.service';
+import * as Joi from 'joi'
 
 @Controller('chats')
 export class Chats2Controller {
@@ -34,6 +36,12 @@ export class Chats2Controller {
     // new chat room
     @Post('rooms')
     async create(@Body() dto: ChatRoomDto): Promise<ChatRoom> {
+        validateInput(Joi.object({
+            password: Joi.string().required(),
+            name: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
+            isPrivate: Joi.boolean,
+            isDirect: Joi.boolean
+        }), dto);
         try {
             const res = await this.chatsService.getChatRoom(dto)
             return res
@@ -51,6 +59,10 @@ export class Chats2Controller {
     // join chat room
     @Post('rooms/:roomId/join')
     async joinRoom(@Param('roomId') roomId: number, @Body() data: JoinChatRoomDto): Promise<ChatMembership> {
+        validateInput(Joi.object({
+            userId: Joi.string().guid().required(),
+            password: Joi.string()
+        }), data);
         try {
             const res = await this.chatsService.joinChatRoom(roomId, data)
             return res
@@ -68,6 +80,9 @@ export class Chats2Controller {
     // leave chat room
     @Post('rooms/:id/leave')
     async leaveRoom(@Param('id') id: number, @Body() data: ChatMembershipDto) {
+        validateInput(Joi.object({
+            userId: Joi.string().guid().required(),
+        }), data);
         return this.chatsService.leaveRoom(id, data.userId)
     }
 
@@ -86,6 +101,13 @@ export class Chats2Controller {
     // update membership
     @Put('memberships/:id')
     async updateMembership(@Param('id') id: number, @Body() data: ChatMembershipDto) {
+        validateInput(Joi.object({
+            userId: Joi.string().guid().required(),
+            isOwner: Joi.boolean(),
+            isAdmin: Joi.boolean(),
+            isBanend: Joi.boolean(),
+            isMuted: Joi.boolean()
+        }), data);
         return this.chatsService.updateMembership(id, data)
     }
 
@@ -105,6 +127,13 @@ export class Chats2Controller {
     // post chat message for room
     @Post('/messages/:roomId')
     async postRoomMessage(@Param('roomId') roomId: number, @Body() msg: ChatMsgDto) {
+        validateInput(Joi.object({
+            senderId: Joi.string().guid().required(),
+            chatRoomId: Joi.number().required(),
+            content: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
+            senderName: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
+            createdAt: Joi.string().isoDate(), // todo: revisar a lo mejor no funciona correctamente
+        }), msg);
         return this.chatsService.createChatRoomMessage(msg)
     }
 }
