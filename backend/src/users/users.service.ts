@@ -16,7 +16,6 @@ export class UsersService {
     ) { }
 
     async createUser(user: User): Promise<User> {
-        this.validate(user)
         const newUser = this.usersRepo.save(user)
         this.chatsService.joinUser2GeneralChat(user.id)
         return newUser
@@ -68,25 +67,5 @@ export class UsersService {
         const user = await this.usersRepo.findOneBy({ id : userId })
         user.twofaSecret = secret
         user.save()
-    }
-
-    validate(user: User): joi.ValidationResult {
-        const schema = joi.object({
-            id: joi.string(),
-            email: joi.string().email(),
-            password: joi.string(),
-            username: joi.string().required(),
-            is2fa: joi.boolean(),
-            twofaSecret: joi.string(),
-        });
-
-        const result = schema.validate(user);
-
-        if (result.error !== undefined) {
-            console.log(result.error);
-            throw new HttpException(result.error.message, HttpStatus.BAD_REQUEST);
-        }
-            
-        return result;
     }
 }
