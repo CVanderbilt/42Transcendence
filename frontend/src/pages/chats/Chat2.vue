@@ -119,9 +119,11 @@
           <h2 class="fw-bold text-uppercase">{{ 'Manage chat ' + chatRoomName }}</h2>
 
           <!-- manage password -->
-          <div class="form-outline form-white mb-2">
+          <div v-if="currentMembership.isOwner" class="form-outline form-white mb-2">
             <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Type your new password"
-              v-model="managedChatPassword" />
+              v-model="managedChatPassword" :disabled="!managedChatRequiresPassword" />
+            <label class="form-label" for="typeEmailX">Password needed? </label>
+            <input type="checkbox" v-model="managedChatRequiresPassword" />
           </div>
 
           <!-- manage participants -->
@@ -325,6 +327,9 @@ export default defineComponent({
     },
 
     sendMessage() {
+      if (this.currentMembership.isMuted)
+        return;
+        
       if (this.message !== "") {
         if (!this.user) {
           console.error("user not defined, esto no deberia pasar");
@@ -349,7 +354,7 @@ export default defineComponent({
           postChatMessageReq(this.roomId, outMessage)
         }
         catch (err: any) {
-          alert("Error sending the message. Try again later");
+          alert("Error posting the message. Try again later");
         }
 
         this.message = "";
@@ -371,7 +376,9 @@ export default defineComponent({
       }
 
       try {
+        console.log("joining room")
         const resp = await joinChatRoomReq(room.id, this.user?.id as string, password) // returns membership even if user is already a member of the room
+        console.log(resp.data)
         this.isAdmin = resp.data.isAdmin
         if (!this.userMemberships.find((membership) => membership.chatRoom.id === room.id)) {
           this.userMemberships.push(resp.data)
@@ -403,7 +410,8 @@ export default defineComponent({
       this.changeRoom(generalChat.chatRoom.id, "general")
     },
 
-    changeRoom(roomId: string, roomName: string) {
+    async changeRoom(roomId: string, roomName: string) {
+      this.userMemberships = (await getUserMembershipsReq(this.user?.id as string)).data
       const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
       if (!membership) {
         console.log("Can not change room");
@@ -491,11 +499,16 @@ export default defineComponent({
     async updateManagedChat() {
       this.modalChatAdmin = !this.modalChatAdmin;
       this.manageChatParticipants = []
+      this.managedChatPassword = ""
       // get chat memberships
       try {
         this.managedChatMemberships = (await getChatRoomMembershipsReq(this.roomId)).data
         // delete current user from list
         this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.user.id !== this.user?.id)
+        const room = (await getChatRoomByNameReq(this.chatRoomName)).data
+        if (room) {
+          this.managedChatRequiresPassword = room.isPrivate          
+        }
       }
       catch (err) {
         console.log("Can not get chat room memberships");
@@ -506,8 +519,6 @@ export default defineComponent({
       // update password      
       if (this.managedChatPassword !== "") {
         await updateChatRoomPasswordReq(this.roomId, this.managedChatPassword)
-      } else {
-        await updateChatRoomPasswordReq(this.roomId, "")
       }
 
       // update current chat members

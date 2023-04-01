@@ -6,6 +6,7 @@ import { ChatRoom, ChatMembership, ChatMsg } from './chats.interface';
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from 'src/users/user.entity';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
+import { User } from 'src/users/user.interface';
 
 @Injectable()
 export class Chats2Service {
@@ -39,11 +40,25 @@ export class Chats2Service {
         return room
     }
 
-    async updateChatRoomPassword(roomId: number, password: string) {
+    async updateChatRoomPassword(user: User, roomId: number, password: string) {
+        // check user belongs to the room and is owner
+        const userMembership = await this.chatMembershipsRepo.find({
+            where: {
+                user: { id: user.id },
+                chatRoom: { id: roomId },
+                isOwner: true,
+            }
+        })
+
+        if (userMembership.length == 0) {
+            throw new UnauthorizedException()
+        }
+
         const room = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
         if (!room) {
-            return null
+            return new NotFoundException()
         }
+
         if (password == "") {
             room.password = null
             room.isPrivate = false
@@ -52,6 +67,7 @@ export class Chats2Service {
             room.password = bcrypt.hashSync(password, 10)
             room.isPrivate = true
         }
+        
         return await this.chatRoomsRepo.save(room)
     }
 
@@ -156,7 +172,20 @@ export class Chats2Service {
         })
     }
 
-    async inviteUser(id: number, data: any) {
+    async inviteUser(inviter: User, id: number, data: any) {
+        // check user belongs to the room and is not banned
+        const userMembership = await this.chatMembershipsRepo.find({
+            where: {
+                user: { id: inviter.id },
+                chatRoom: { id: id },
+                isBanned: false,
+            }
+        })
+
+        if (userMembership.length == 0) {
+            throw new UnauthorizedException('You are not a member of this room')
+        }
+
         this.joinChatRoom(id, data)
     }
 

@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Jwt2faAuthGuard } from 'src/auth/jwt-2fa-auth.guard';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { ChatMembership, ChatRoom } from './chats.interface';
 import { Chats2Service } from './chats2.service';
@@ -34,35 +35,31 @@ export class Chats2Controller {
     // new chat room
     @Post('rooms')
     async create(@Body() dto: ChatRoomDto): Promise<ChatRoom> {
-        try {
-            const res = await this.chatsService.getChatRoom(dto)
-            return res
-        } catch (error) {
-            Logger.error(error)
-        }
+        const res = await this.chatsService.getChatRoom(dto)
+        return res
     }
 
     // update chat password
-    @Post('rooms/:roomId/password')  
-    async updatePassword(@Param('roomId') roomId: number, @Body() data: any) {
-        return this.chatsService.updateChatRoomPassword(roomId, data.password)
+    @Post('rooms/:roomId/password')
+    @UseGuards(Jwt2faAuthGuard)
+    async updatePassword(@Req() req: any, @Param('roomId') roomId: number, @Body() data: any) {
+        const user = req.user
+        return this.chatsService.updateChatRoomPassword(user, roomId, data.password)
     }
 
     // join chat room
     @Post('rooms/:roomId/join')
     async joinRoom(@Param('roomId') roomId: number, @Body() data: JoinChatRoomDto): Promise<ChatMembership> {
-        try {
-            const res = await this.chatsService.joinChatRoom(roomId, data)
-            return res
-        } catch (error) {
-            Logger.error(error)
-        }
+        const res = await this.chatsService.joinChatRoom(roomId, data)
+        return res
     }
 
     // invite users to chat room
     @Post('rooms/:roomId/invite')
-    async inviteUsers(@Param('roomId') roomId: number, @Body() data: any) {
-        return this.chatsService.inviteUser(roomId, data)
+    @UseGuards(Jwt2faAuthGuard)
+    async inviteUsers(@Req() req: any, @Param('roomId') roomId: number, @Body() data: any) {
+        const user = req.user
+        return this.chatsService.inviteUser(user, roomId, data)
     }
 
     // leave chat room
