@@ -15,11 +15,7 @@
                     style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                     {{ item.chatRoom.name }}
                   </b-button>
-
-                  <button v-if="item.chatRoom.name !== 'general'" @click="leaveRoom(item.chatRoom.id)">
-                    x
-                  </button>
-
+                  <button v-if="item.chatRoom.name !== 'general'" @click="leaveRoom(item.chatRoom.id)"> x </button>
                 </div>
               </div>
 
@@ -70,10 +66,11 @@
             <div class="form-outline form-white mb-4">
               <input type="username" id="typeusernameX" class="form-control form-control-lg" v-model="searchedChat"
                 placeholder="Chat name" />
-              <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Password" v-model="searchedChatPassword"  />
+              <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Password"
+                v-model="searchedChatPassword" />
 
-              <b-button 
-                @click="joinRoom(searchedChat, searchedChatPassword); searchedChatPassword = ''; ">Search chat</b-button>
+              <b-button @click="joinRoom(searchedChat, searchedChatPassword); searchedChatPassword = ''; ">Search
+                chat</b-button>
             </div>
             <b-button @click="modalShow = !modalShow">Create Chat</b-button>
 
@@ -108,9 +105,7 @@
           </div>
           <label class="form-label" for="typePasswordX">Participants:</label>
           <div v-for="item in createdChatParticipants" v-bind:key="item">
-            <a style="text-align: right">
-              {{ item }}
-            </a>
+            <a style="text-align: right"> {{ item }} </a>
           </div>
           <div class="form-outline form-white"></div>
         </div>
@@ -125,7 +120,8 @@
 
           <!-- manage password -->
           <div class="form-outline form-white mb-2">
-            <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Type your new password" v-model="managedChatPassword"/>
+            <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Type your new password"
+              v-model="managedChatPassword" />
           </div>
 
           <!-- manage participants -->
@@ -183,7 +179,6 @@ import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "@/api/user";
 import { getFriendshipsRequest } from "@/api/friendshipsApi";
 import { IFriendship } from "@/api/friendshipsApi";
-import { AxiosError } from "axios";
 
 export default defineComponent({
   name: "Chat2",
@@ -382,8 +377,8 @@ export default defineComponent({
           this.userMemberships.push(resp.data)
         }
       } catch (error: any) {
-        const mensajeError = (error).response?.data?.message
-        alert("Error joining the room: " + (mensajeError || "Unknown error")); // Utilizar mensaje de error personalizado o un mensaje predeterminado
+        const errorMsg = (error).response?.data?.message
+        alert("Error joining the room: " + (errorMsg || "Unknown error"));
         return;
       }
       // change chat
@@ -393,16 +388,19 @@ export default defineComponent({
     async leaveRoom(roomId: any) {
       try {
         leaveChatRoomReq(roomId, this.user?.id as string)
-        const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
-        if (membership) {
-          this.userMemberships.splice(this.userMemberships.indexOf(membership), 1)
-        }
-        // change to general chat
-        const generalChat: any = this.userMemberships.find((membership) => membership.chatRoomName === "general")
-        this.changeRoom(generalChat.chatRoomId, "general")
-      } catch (err) {
-        console.log("Can not leave room");
+      } catch (error: any) {
+        const errorMsg = (error).response?.data?.message
+        alert("Error leaving the room: " + (errorMsg || "Unknown error"));
+        // return
       }
+      // remove membership
+      const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
+      if (membership) {
+        this.userMemberships.splice(this.userMemberships.indexOf(membership), 1)
+      }
+      // change to general chat
+      const generalChat : any = this.userMemberships.find((membership) => membership.chatRoom.name === "general")
+      this.changeRoom(generalChat.chatRoom.id, "general")
     },
 
     changeRoom(roomId: string, roomName: string) {
@@ -506,11 +504,7 @@ export default defineComponent({
 
     async handleManageChat() {
       // update password      
-      if (this.managedChatRequiresPassword) {
-        if (this.managedChatPassword === "") {
-          alert("Password cannot be empty");
-          return;
-        }
+      if (this.managedChatPassword !== "") {
         await updateChatRoomPasswordReq(this.roomId, this.managedChatPassword)
       } else {
         await updateChatRoomPasswordReq(this.roomId, "")
