@@ -74,6 +74,10 @@ export class Chats2Controller {
     // invite users to chat room
     @Post('rooms/:roomId/invite')
     async inviteUsers(@Param('roomId') roomId: number, @Body() data: any) {
+        validateInput(Joi.object({
+            userId: Joi.string().guid().required(),
+            password: Joi.string().required()
+        }), data);
         return this.chatsService.inviteUser(roomId, data)
     }
 
