@@ -1,12 +1,14 @@
 import { apiClient } from "./baseApi";
 
 const URL = "/users";
+const IMAGE_URL = "/image"
 
 export interface IUserAPI {
-    id?: string,
-    username: string,
-    is2fa: boolean,
-    // pic : string, // TODO: add pic
+    email?: string
+    password?: string
+    username: string
+    is2fa?: boolean
+    twofaSecret?: string // todo: no estoy seguro
 }
 
 
@@ -31,4 +33,19 @@ export async function updateUserChats(id: string, options: string){
     return apiClient.put(`${URL}/${id}`, options)
 }
 
-export { updateUser, getUserById, getUserByName }
+async function getImage(id: string) {
+    return apiClient.get(`${URL}/${id}${IMAGE_URL}`)
+}
+
+async function putImage(id: string, image: File) {
+    const formData = new FormData();
+    formData.append('file', image, 'file');
+
+    return apiClient.put(`${URL}/${id}${IMAGE_URL}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        },
+    });
+}
+
+export { updateUser, getUserById, getUserByName, getImage, putImage }

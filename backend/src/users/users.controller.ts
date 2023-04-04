@@ -1,8 +1,14 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { UsersService as UsersService } from './users.service';
 import { User } from './user.interface';
+import { Multer } from 'multer';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Readable } from 'typeorm/platform/PlatformTools';
+var fs  = require('fs'),
+path    = require('path'),
+url     = require('url');
 import { validateInput } from 'src/utils/utils';
 import * as Joi from 'joi';
 
@@ -41,9 +47,9 @@ export class UsersController {
     @Put(':id')
     update(@Body() user: User, @Param('id') id: string): Promise<UpdateResult> {
         validateInput(Joi.object({
-            email: Joi.string().email().required(),
-            password: Joi.string().required(),
-            login42: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
+            email: Joi.string().email(),
+            password: Joi.string(),
+            login42: Joi.string().regex(/^[a-zA-Z0-9-_]+$/),
             username: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
             is2fa: Joi.boolean(), //todo: revisar que pasa si is2fa está pero twofaSecret no
             twofaSecret: Joi.boolean(),
@@ -54,5 +60,21 @@ export class UsersController {
     @Delete(':id')
     delete(@Param('id') id: string): Promise<DeleteResult> {
         return this.usersService.deleteUser(id)
+    }
+
+    @Get(':id/image')
+        async getImageById(@Res({ passthrough: false }) response: Response, @Param('id') id: string) {
+        const image = await this.usersService.getFileById(id);
+        const stream = !image ?
+            fs.createReadStream(path.join(process.cwd(), 'public/noPictureProfile.png')) :
+            Readable.from(image);
+        
+        stream.pipe(response);
+    }
+
+    @Put(':id/image')
+    @UseInterceptors(FileInterceptor('file'))
+    async setImage(@Param('id') id: string, @UploadedFile() file: Multer.File) {
+        return this.usersService.uploadDatabaseFile(file.buffer, id)
     }
 }

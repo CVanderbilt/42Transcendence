@@ -14,4 +14,6 @@ export class User {
     defeats?: number
     achievements?: string
     createdAt?: Date
+
+    image?: Uint8Array;
 }

@@ -1,10 +1,11 @@
-//import { createHash } from "crypto";
+import { API_END_POINT } from "@/config";
+import { store } from "@/store/store";
 
-//import { createHash } from "";
+export function generateImageURL(): string {
+  if (!store.state.user) {
+    console.error("no hay id y esta intentando modificar, no debería ni pasar");
+    return "";
+  }
 
-export function hashPassword(password: string):string {
-  /*const hash = createHash('sha256');
-  hash.update(password);
-  return hash.digest('hex');*/
-  return "hola"
+  return `${API_END_POINT}/users/${store.state.user.id}/image`;
 }
