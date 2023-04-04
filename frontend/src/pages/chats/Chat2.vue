@@ -362,7 +362,7 @@ export default defineComponent({
       }
     },
 
-    async joinRoom(room2join: string, password = "") {
+    async joinRoom(room2join: string, password?: string) {
       if (room2join === "") {
         console.log("Empty room name");
         return;
