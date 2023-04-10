@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Jwt2faAuthGuard } from 'src/auth/jwt-2fa-auth.guard';
 import { validateInput } from 'src/utils/utils';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { ChatMembership, ChatRoom } from './chats.interface';
@@ -51,9 +52,11 @@ export class Chats2Controller {
     }
 
     // update chat password
-    @Post('rooms/:roomId/password')  
-    async updatePassword(@Param('roomId') roomId: number, @Body() data: any) {
-        return this.chatsService.updateChatRoomPassword(roomId, data.password)
+    @Post('rooms/:roomId/password')
+    @UseGuards(Jwt2faAuthGuard)
+    async updatePassword(@Req() req: any, @Param('roomId') roomId: number, @Body() data: any) {
+        const user = req.user
+        return this.chatsService.updateChatRoomPassword(user, roomId, data.password)
     }
 
     // join chat room
@@ -73,12 +76,14 @@ export class Chats2Controller {
 
     // invite users to chat room
     @Post('rooms/:roomId/invite')
-    async inviteUsers(@Param('roomId') roomId: number, @Body() data: any) {
+    @UseGuards(Jwt2faAuthGuard)
+    async inviteUsers(@Req() req: any, @Param('roomId') roomId: number, @Body() data: any) {
         validateInput(Joi.object({
             userId: Joi.string().guid().required(),
             password: Joi.string().required()
         }), data);
-        return this.chatsService.inviteUser(roomId, data)
+        const user = req.user
+        return this.chatsService.inviteUser(user, roomId, data)
     }
 
     // leave chat room

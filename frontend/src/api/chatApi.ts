@@ -20,6 +20,7 @@ export interface ChatRoom {
     name: string,
     password?: string,
     isDirect?: boolean,
+    isPrivate?: boolean,
 }
 
 export interface Membership {
@@ -32,6 +33,8 @@ export interface Membership {
     chatRoomName?: string
     userName?: string
     chatRoom: ChatRoom
+    bannedUntil?: Date
+    mutedUntil?: Date
 }
 
 // export function makeid(length: number) { //TODO esto debería ser innecesario ya que se encarga el backend
@@ -78,7 +81,6 @@ export async function getChatRoomsForUserReq(userId: string) {
     return apiClient.get(`${URL}/rooms/${userId}`);
 }
 
-
 export async function getChatRoomByNameReq(name: string) {
     return apiClient.get(`${URL}/rooms/name/${name}`)
 }
@@ -92,8 +94,6 @@ export async function joinChatRoomReq(roomId: string, userId: string, password?:
 }
 
 export async function inviteUsersReq(roomID: string, userId: string) {
-    console.log("inviting user: " + userId + " to room: " + roomID)
-    
     return apiClient.post(`${URL}/rooms/${roomID}/invite`, { userId })
 }
 
@@ -102,7 +102,6 @@ export async function postChatMessageReq(roomId: string, message: ChatMessage) {
 }
 
 export async function leaveChatRoomReq(roomId: string, userId: string) {
-    alert("leaving room: " + roomId + " user: " + userId + "")
     return apiClient.post(`${URL}/rooms/${roomId}/leave`, { userId })
 }
 

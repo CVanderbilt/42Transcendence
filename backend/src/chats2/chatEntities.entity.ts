@@ -48,6 +48,12 @@ export class ChatMembershipEntity extends BaseEntity{
     
     @Column({default: false})
     isMuted: boolean
+
+    @Column({default: null})
+    bannedUntil: Date
+
+    @Column({default: null})
+    mutedUntil: Date
 }
 
 @Entity('chatMsg')
