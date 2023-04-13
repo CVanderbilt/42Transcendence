@@ -37,12 +37,12 @@ export class Chats2Controller {
     // new chat room
     @Post('rooms')
     async create(@Body() dto: ChatRoomDto): Promise<ChatRoom> {
-        validateInput(Joi.object({
-            password: Joi.string().required(),
-            name: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
-            isPrivate: Joi.boolean,
-            isDirect: Joi.boolean
-        }), dto);
+        // validateInput(Joi.object({
+        //     password: Joi.string().required(), // Eliminar is required porque puede haber salas sin password
+        //     name: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(), // todo: revisar a lo mejor no funciona correctamente
+        //     isPrivate: Joi.boolean, // todo: revisar a lo mejor no funciona correctamente
+        //     isDirect: Joi.boolean // todo: revisar a lo mejor no funciona correctamente
+        // }), dto);
         try {
             const res = await this.chatsService.getChatRoom(dto)
             return res
@@ -62,10 +62,10 @@ export class Chats2Controller {
     // join chat room
     @Post('rooms/:roomId/join')
     async joinRoom(@Param('roomId') roomId: number, @Body() data: JoinChatRoomDto): Promise<ChatMembership> {
-        validateInput(Joi.object({
-            userId: Joi.string().guid().required(),
-            password: Joi.string()
-        }), data);
+        // validateInput(Joi.object({
+        //     userId: Joi.string().guid().required(),
+        //     password: Joi.string().required()
+        // }), data);
         try {
             const res = await this.chatsService.joinChatRoom(roomId, data)
             return res
@@ -78,10 +78,10 @@ export class Chats2Controller {
     @Post('rooms/:roomId/invite')
     @UseGuards(Jwt2faAuthGuard)
     async inviteUsers(@Req() req: any, @Param('roomId') roomId: number, @Body() data: any) {
-        validateInput(Joi.object({
-            userId: Joi.string().guid().required(),
-            password: Joi.string().required()
-        }), data);
+        // validateInput(Joi.object({
+        //     userId: Joi.string().guid().required(),
+        //     password: Joi.string().required() // eliminar required porque puede haber salas sin password
+        // }), data);
         const user = req.user
         return this.chatsService.inviteUser(user, roomId, data)
     }
@@ -98,7 +98,8 @@ export class Chats2Controller {
     // get chat room members
     @Get('rooms/:id/members')
     async findRoomMembers(@Param('id') id: number): Promise<ChatMembership[]> {
-        return await (this.chatsService.findChatRoomMembers(id))
+        const res = await (this.chatsService.findChatRoomMembers(id))
+        return res
     }
 
     // get user memberships
@@ -110,13 +111,13 @@ export class Chats2Controller {
     // update membership
     @Put('memberships/:id')
     async updateMembership(@Param('id') id: number, @Body() data: ChatMembershipDto) {
-        validateInput(Joi.object({
-            userId: Joi.string().guid().required(),
-            isOwner: Joi.boolean(),
-            isAdmin: Joi.boolean(),
-            isBanend: Joi.boolean(),
-            isMuted: Joi.boolean()
-        }), data);
+        // validateInput(Joi.object({
+        //     userId: Joi.string().guid().required(),
+        //     isOwner: Joi.boolean(),
+        //     isAdmin: Joi.boolean(),
+        //     isBanend: Joi.boolean(),
+        //     isMuted: Joi.boolean()
+        // }), data);
         return this.chatsService.updateMembership(id, data)
     }
 
@@ -140,7 +141,7 @@ export class Chats2Controller {
             senderId: Joi.string().guid().required(),
             chatRoomId: Joi.number().required(),
             content: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
-            senderName: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
+            // senderName: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
             createdAt: Joi.string().isoDate(), // todo: revisar a lo mejor no funciona correctamente
         }), msg);
         return this.chatsService.createChatRoomMessage(msg)

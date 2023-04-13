@@ -1,5 +1,6 @@
+import { Logger } from "@nestjs/common";
 import { UserEntity } from "src/users/user.entity";
-import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Timestamp } from "typeorm";
 
 @Entity('chatRoom')
 export class ChatRoomEntity extends BaseEntity{
@@ -42,7 +43,7 @@ export class ChatMembershipEntity extends BaseEntity{
 
     @Column({default: false})
     isAdmin: boolean
-    
+
     @Column({default: false})
     isBanned: boolean
     

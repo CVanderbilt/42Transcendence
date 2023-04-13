@@ -63,11 +63,11 @@ export class Chats2Service {
             room.password = null
             room.isPrivate = false
         }
-        else{
+        else {
             room.password = bcrypt.hashSync(password, 10)
             room.isPrivate = true
         }
-        
+
         return await this.chatRoomsRepo.save(room)
     }
 
@@ -191,17 +191,47 @@ export class Chats2Service {
 
 
     findChatRoomMembers(id: number): Promise<ChatMembership[]> {
-        return this.chatMembershipsRepo.find({
+        const res = this.chatMembershipsRepo.find({
             where: { chatRoom: { id: id } },
             relations: ['user', 'chatRoom']
         })
+
+        // update isBanned and isMutted fields for each member depending on the date
+        res.then(memberships => {
+            memberships.forEach(membership => {
+                if (membership.bannedUntil < new Date()) {
+                    membership.isBanned = false
+                    this.chatMembershipsRepo.save(membership)
+                }
+                if (membership.mutedUntil < new Date()) {
+                    membership.isMuted = false
+                    this.chatMembershipsRepo.save(membership)
+                }
+            })
+        })
+
+        return res
     }
 
     async findUserMemberships(userId: string): Promise<ChatMembership[]> {
 
-        const res = await this.chatMembershipsRepo.find({
+        const res = this.chatMembershipsRepo.find({
             where: { user: { id: userId } },
-            relations: ['user', 'chatRoom'],            
+            relations: ['user', 'chatRoom'],
+        })
+
+        // update isBanned and isMutted fields for each member depending on the date
+        res.then(memberships => {
+            memberships.forEach(membership => {
+                if (membership.bannedUntil < new Date()) {
+                    membership.isBanned = false
+                    this.chatMembershipsRepo.save(membership)
+                }
+                if (membership.mutedUntil < new Date()) {
+                    membership.isMuted = false
+                    this.chatMembershipsRepo.save(membership)
+                }
+            })
         })
 
         return res
@@ -209,7 +239,8 @@ export class Chats2Service {
 
     async updateMembership(id: number, data: ChatMembershipDto) {
         delete data.chatRoomId
-        return this.chatMembershipsRepo.update({ id: id }, data)
+        const res = this.chatMembershipsRepo.update({ id: id }, data)
+        return res
     }
 
     async deleteMembership(id: number) {
@@ -238,6 +269,18 @@ export class Chats2Service {
     async createChatRoomMessage(msg: ChatMsgDto): Promise<ChatMsg> {
         const sender = await this.usersRepo.findOne({ where: { id: msg.senderId } });
         const room = await this.chatRoomsRepo.findOne({ where: { id: msg.chatRoomId } });
+        const membership = await this.chatMembershipsRepo.find({
+            where: {
+                user: { id: msg.senderId },
+                chatRoom: { id: msg.chatRoomId },
+                isBanned: false,
+                isMuted: false,
+            }
+        })
+        if (!membership) {
+            throw new UnauthorizedException('You are not allowed to post messages in this room')
+        }
+        
         const postedMsg = await this.chatMsgsRepo.save({
             sender: sender,
             chatRoom: room,

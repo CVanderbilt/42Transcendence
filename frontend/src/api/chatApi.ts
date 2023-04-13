@@ -33,8 +33,8 @@ export interface Membership {
     chatRoomName?: string
     userName?: string
     chatRoom: ChatRoom
-    bannedUntil?: Date
-    mutedUntil?: Date
+    bannedUntil?: any
+    mutedUntil?: any
 }
 
 // export function makeid(length: number) { //TODO esto debería ser innecesario ya que se encarga el backend

@@ -136,10 +136,21 @@
               <form v-if="!item.isOwner">
                 <input type="checkbox" v-model="item.isAdmin" />
                 <label for="isAdmin">Admin</label>
+
                 <input type="checkbox" v-model="item.isBanned" />
                 <label for="isBanned">Banned</label>
+                <div v-if="item.isBanned">
+                  <input type="datetime-local" step="60" v-model="item.bannedUntil" />
+                  <label for="bannedUntil">Banned until</label>
+                </div>
+
                 <input type="checkbox" v-model="item.isMuted" />
                 <label for="isMutted">Mutted</label>
+                <div v-if="item.isMuted">
+                  <input type="datetime-local" step="60" v-model="item.mutedUntil" />
+                  <label for="mutedUntil">Muted until</label>
+                </div>
+
                 <b-button style="background-color: brown;" type="button"
                   @click="removeChatMembership(item.id)">Kick</b-button>
               </form>
@@ -181,6 +192,8 @@ import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "../../api/user";
 import { getFriendshipsRequest } from "../../api/friendshipsApi";
 import { IFriendship } from "../../api/friendshipsApi";
+import moment from 'moment';
+import 'moment-timezone';
 
 export default defineComponent({
   name: "Chat2",
@@ -236,6 +249,8 @@ export default defineComponent({
       currentMembership,
       managedChatPassword: "",
       managedChatRequiresPassword: false,
+      managedBannedMinutes: 0,
+      managedMutedMinutes: 0,
     };
   },
 
@@ -326,10 +341,28 @@ export default defineComponent({
       return true
     },
 
-    sendMessage() {
-      if (this.currentMembership.isMuted)
+    async sendMessage() {
+      // get all user memberships
+      try {
+        this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
+      } catch {
+        console.log("Error getting user memberships")
+      }
+      // update current membership
+      const membership = this.userMemberships.find((membership: any) => membership.chatRoom.name === this.chatRoomName)
+      if (membership !== undefined) {
+        this.currentMembership = membership
+      }
+      else {
+        console.error("membership not found");
         return;
-        
+      }
+
+      if (this.currentMembership.isMuted || this.currentMembership.isBanned)
+      {
+        return;
+      }
+
       if (this.message !== "") {
         if (!this.user) {
           console.error("user not defined, esto no deberia pasar");
@@ -406,7 +439,7 @@ export default defineComponent({
         this.userMemberships.splice(this.userMemberships.indexOf(membership), 1)
       }
       // change to general chat
-      const generalChat : any = this.userMemberships.find((membership) => membership.chatRoom.name === "general")
+      const generalChat: any = this.userMemberships.find((membership) => membership.chatRoom.name === "general")
       this.changeRoom(generalChat.chatRoom.id, "general")
     },
 
@@ -505,9 +538,24 @@ export default defineComponent({
         this.managedChatMemberships = (await getChatRoomMembershipsReq(this.roomId)).data
         // delete current user from list
         this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.user.id !== this.user?.id)
+        // transform date to string and remove z at the end so it can be parsed by datepicker
+        this.managedChatMemberships.forEach((membership) => {
+          if (membership.bannedUntil) {
+            const date = moment(membership.bannedUntil).tz('UTC');
+            const localDate = date.clone().tz(moment.tz.guess())
+            const localDateTimeString = localDate.format('YYYY-MM-DDTHH:mm');
+            membership.bannedUntil = localDateTimeString;
+          }
+          if (membership.mutedUntil) {
+            const date = moment(membership.mutedUntil).tz('UTC');
+            const localDate = date.clone().tz(moment.tz.guess())
+            const localDateTimeString = localDate.format('YYYY-MM-DDTHH:mm');
+            membership.mutedUntil = localDateTimeString;
+          }
+        })
         const room = (await getChatRoomByNameReq(this.chatRoomName)).data
         if (room) {
-          this.managedChatRequiresPassword = room.isPrivate          
+          this.managedChatRequiresPassword = room.isPrivate
         }
       }
       catch (err) {
