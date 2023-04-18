@@ -57,9 +57,6 @@ export default defineComponent({
     modifyProfileRoute() {
       this.$router.push("/settings");
     },
-    getImgURL(profilePicture: string) {
-      return require(`@/assets/noPictureProfile.png`);
-    },
   },
 });
 </script>

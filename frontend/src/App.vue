@@ -39,7 +39,7 @@
               <a class="nav-link" >{{ user.username }}</a>
             </li>
             <img
-              :src="getImgURL()"
+              :src="generateImageURL()"
               class="rounded-circle"
               height="40
                 "
@@ -79,6 +79,7 @@ import { key, store } from "./store/store";
 import { BDropdown, BDropdownItem, BDropdownDivider } from "bootstrap-vue-3";
 import { RouterView } from "vue-router";
 import { getUserByName } from "./api/user";
+import { generateImageURL } from "./utils/utils";
 declare var require: any;
 
 export default defineComponent({
@@ -111,9 +112,7 @@ export default defineComponent({
     modifyProfileRoute() {
       this.$router.push("/settings");
     },
-    getImgURL() {
-      return require(`@/assets/noPictureProfile.png`);
-    },
+    generateImageURL,
     logOut() {
       this.$router.push("/login");
       store.commit("changeUser", undefined)

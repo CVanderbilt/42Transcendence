@@ -90,9 +90,6 @@ export default defineComponent({
     modifyProfileRoute() {
       this.$router.push("/settings");
     },
-    getImgURL(profilePicture: string) {
-      return require(`@/assets/noPictureProfile.png`);
-    },
     async enterCompetitiveMatch(){
       const matchData = await enterCompetitiveGameApi(this.user?.id as string)
       console.log(matchData.data.id)

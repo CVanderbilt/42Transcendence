@@ -17,7 +17,7 @@
                   "
                 >
                   <img
-                    :src="getImgURL(profilePicture)"
+                    :src="generateImageURL()"
                     height="200"
                     style="border-radius: 50%"
                   />
@@ -75,6 +75,7 @@ import { getUserById } from "../api/user";
 import axios from "axios";
 import { createChatRoomReq, getChatRoomReq, inviteUsersReq } from "@/api/chatApi";
 import { getFriendshipsRequest, makeFriendshipRequest, unfriendRequest } from "@/api/friendshipsApi";
+import { generateImageURL } from "@/utils/utils";
 
 declare var require: any;
 
@@ -126,10 +127,7 @@ export default defineComponent({
         console.log(err)
       }
     },
-    getImgURL(profilePicture: string) {
-      return require(`@/assets/noPictureProfile.png`);
-    },
-
+    generateImageURL,
     getUserInfo(uuid: string) {
       getUserById(uuid)
         .then((response) => {
