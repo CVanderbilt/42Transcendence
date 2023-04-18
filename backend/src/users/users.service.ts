@@ -87,6 +87,8 @@ export class UsersService {
 
     async uploadDatabaseFile(dataBuffer: Buffer, id: string) {
         const user = await this.usersRepo.findOneBy({ id: id })
+        if (!user)
+            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
         user.image = dataBuffer;
         user.save();
     }

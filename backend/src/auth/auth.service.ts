@@ -11,6 +11,8 @@ import { ChatMembershipDto, ChatRoomDto } from 'src/chats2/chats.dto';
 import { Chats2Service } from 'src/chats2/chats2.service';
 import * as bcrypt from 'bcrypt';
 import { Logger2 } from 'src/utils/Logger2';
+import { generateRandomSquaresImage } from 'src/utils/utils';
+const PNG = require('pngjs').PNG;
 
 
 @Injectable()
@@ -38,6 +40,10 @@ export class AuthService {
         }
 
         const user : User = await this.usersService.createUser(userDto)
+        
+        const png = generateRandomSquaresImage();
+        const buffer = PNG.sync.write(png);
+        await this.usersService.uploadDatabaseFile(buffer, user.id);
     }
 
     async loginWithEmail(login: LoginEmailDto) {
