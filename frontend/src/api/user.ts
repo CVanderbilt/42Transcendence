@@ -52,4 +52,12 @@ async function getAllUsers() {
     return (await apiClient.get(`${URL}`)).data
 }
 
-export { updateUser, getUserById, getUserByName, getImage, putImage, getAllUsers }
+async function banUser(id: string) {
+    apiClient.post(`${URL}/${id}/ban`)
+}
+
+async function allowUser(id: string) {
+    apiClient.post(`${URL}/${id}/allow`)
+}
+
+export { updateUser, getUserById, getUserByName, getImage, putImage, getAllUsers, banUser, allowUser }

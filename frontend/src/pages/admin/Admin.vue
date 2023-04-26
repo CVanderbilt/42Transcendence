@@ -10,7 +10,7 @@
             <div class="user-row" v-for="user in userList" :key="user.id">
               <div class="user-name">{{ user.username }}</div>
               <div class="user-id">{{ user.id }}</div>
-              <button class="ban-button" @click="banUser(user)">Ban</button>
+              <button class="ban-button" @click="banUserAction(user)">Ban</button>
             </div>
           </div>
         </div>
@@ -25,12 +25,12 @@
               <div class="chatname">{{ chat.name }}</div>
               <div class="chatban-box">
                 <div class="chatban">
-                  <input type="text" placeholder="userName">
-                    <button class="ban">Ban</button>
-                    <button class="allow">Allow</button>
+                  <input type="text" placeholder="userName" v-model="chat.userName">
+                  <button class="ban" @click="banUserInChatAction(chat)">Ban</button>
+                  <button class="allow" @click="allowUserInChatAction(chat)">Allow</button>
                 </div>
               </div>
-              <button class="chatdestroy">Destroy</button>
+              <button class="chatdestroy" @click="destroyChat(chat)">Destroy</button>
             </div>
           </div>
         </div>
@@ -41,25 +41,54 @@
 <script lang="ts">
 import { IUser } from '@/store/store';
 import { defineComponent } from 'vue';
-import { getAllUsers } from '@/api/user'
+import { getAllUsers, banUser, allowUser } from '@/api/user'
 import { ChatRoom, getAllChatRoomsReq } from '@/api/chatApi';
+
+/*
+  TODO:
+    - Añadir boton de dar/quitar privilegios de administrador
+    - Añadir algo para poder dar/quitar privilegios sobre un chat
+    - Añadir logica para que con los usuarios baneados las letras aparezcan en rojo y
+      el botón de ban se cambie por un botón de allow (verde y que llame al método allow)
+    - Lógica del backend
+*/
+
+interface ChatRoomRow extends ChatRoom {
+  userName: string
+}
 
 export default defineComponent({
   data() {
     const userlist: IUser[] = []
-    const chatList: ChatRoom[] = []
-    let selection: "USERS" | "CHATS" = "USERS"
+    const chatList: ChatRoomRow[] = []
     return {
       userList: userlist,
       chatList: chatList,
-      selection
     }
   },
   
   methods: {
-    banUser(user: IUser) {
+    banUserAction(user: IUser) {
       console.log(`Banning user ${user.id}`);
+      banUser(user.id)
     },
+    allowUserAction(user: IUser) {
+      console.log(`Allowing user ${user.id}`);
+      allowUser(user.id)
+    },
+    banUserInChatAction(chat: ChatRoomRow) {
+      if (chat.userName) {
+        console.log(`Banning user: ${chat.userName} in chat: ${chat.name}`)
+      }
+    },
+    allowUserInChatAction(chat: ChatRoomRow) {
+      if (chat.userName) {
+        console.log(`Allowing user: ${chat.userName} in chat: ${chat.name}`)
+      }
+    },
+    destroyChat(chat: ChatRoomRow) {
+      console.log(`destroying chat: ${chat.name}`)
+    }
   },
   
   mounted() {
@@ -69,7 +98,7 @@ export default defineComponent({
       .then(list => this.userList = list)
       .catch(() => alert("Unhandled error when fetching all users for admin page"))
     getAllChatRoomsReq()
-      .then(list => this.chatList = list)
+      .then(list => { this.chatList = list; console.log(list); console.log(this.chatList) })
       .catch(() => alert("Unhandled error when fetching all chats for admin page"))
   },
 })

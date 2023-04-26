@@ -28,6 +28,20 @@ export class UsersController {
         return this.usersService.createUser(user)
     }
 
+    @Post(':id/ban')
+    async banUser(@Param('id') id: string): Promise<void> {
+        // lógica para banear un usuario
+        const user = await this.usersService.findOneById(id)
+        console.log("Baneando usuario: " + user.username)
+    }
+
+    @Post(':id/allow')
+    async allowUser(@Param('id') id: string): Promise<void> {
+        // lógica para allow un usuario
+        const user = await this.usersService.findOneById(id)
+        console.log("Alloweando usuario: " + user.username)
+    }
+
     // @UseGuards(JwtAuthGuard)
     @Get()
     async findAll(): Promise<User[]> {
