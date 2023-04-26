@@ -48,4 +48,8 @@ async function putImage(id: string, image: File) {
     });
 }
 
-export { updateUser, getUserById, getUserByName, getImage, putImage }
+async function getAllUsers() {
+    return (await apiClient.get(`${URL}`)).data
+}
+
+export { updateUser, getUserById, getUserByName, getImage, putImage, getAllUsers }

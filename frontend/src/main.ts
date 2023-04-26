@@ -19,6 +19,7 @@ import { store, key } from './store/store'
 import io from 'socket.io-client';
 import User from './components/User.vue'
 import EndGame from './pages/endGame/endGame.vue'
+import Admin from './pages/admin/Admin.vue'
 
 const routes = [
     { path: '/', name: "home", component: Home, meta: { requiresAuth: true } },
@@ -31,7 +32,8 @@ const routes = [
     { path: '/qr', name: "qr", component: QrValidation, meta: { requiresAuth: true } },
     { path: '/friends', name: "friends", component: Friends, meta: { requiresAuth: true } },
     { path: '/matchmaking', name: "matchmaking", component: Matchmaking, meta: { requiresAuth: true } },
-    { path: '/endgame', name: "endGame", component: EndGame, meta: { requiresAuth: true } }
+    { path: '/endgame', name: "endGame", component: EndGame, meta: { requiresAuth: true } },
+    { path: '/admin', name: "adminPage", component: Admin, meta: { requiresAuth: true, requiresAdmin: true } }
 ]
 
 const router = createRouter({
@@ -57,6 +59,14 @@ router.beforeEach((to, from, next) => {
         }
         else {
             next()
+        }
+    }
+    else if (to.matched.some(route =>route.meta.requiresAdmin)) {
+        if (store.state.user?.isAdmin) {
+            next()
+        }
+        else {
+            next('/')
         }
     }
     else {

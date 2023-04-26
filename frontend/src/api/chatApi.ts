@@ -51,14 +51,8 @@ export interface Membership {
 
 // ----------------------------------------------
 
-export async function getChatRoomReq(roomName: string, password = "") {
-
-    const room: any = {
-        name: roomName,
-        password: password,
-    }
-
-    return apiClient.get(`${URL}/rooms`, room)
+export async function getAllChatRoomsReq() {
+    return (await apiClient.get(`${URL}/rooms`)).data
 }
 
 export async function createChatRoomReq(roomName: string, owner: string, password = "", isDirect = false) {

@@ -73,7 +73,7 @@ import { useStore, mapActions } from "vuex";
 import { key, store } from "../store/store";
 import { getUserById } from "../api/user";
 import axios from "axios";
-import { createChatRoomReq, getChatRoomReq, inviteUsersReq } from "@/api/chatApi";
+import { createChatRoomReq, inviteUsersReq } from "@/api/chatApi";
 import { getFriendshipsRequest, makeFriendshipRequest, unfriendRequest } from "@/api/friendshipsApi";
 import { generateImageURL } from "@/utils/utils";
 

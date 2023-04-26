@@ -1,256 +1,267 @@
 <template>
-  <section class="vh-100 gradient-custom">
-    <div class="container py-5 h-100">
-      <div class="row d-flex justify-content-center align-items-center h-100">
-        <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-          <div class="card bg-dark text-white" style="border-radius: 1rem">
-            <div class="card-body p-5 text-center">
-              <div class="mb-md-5 mt-md-4 pb-9">
-                <div class="
-                                                              d-flex
-                                                              justify-content-center
-                                                              text-center
-                                                              mt-4
-                                                              mb-5
-                                                              pt-1
-                                                            ">
-                  <img src="@/assets/logo.png" height="90" />
+    <div class="admin-page">
+      <div class="mainCont" style="align-content: center;">
+        <div class="users-list">
+          <div class="users-list-header">
+            <div class="user-name">User Name</div>
+            <div class="user-id">User ID</div>
+          </div>
+          <div class="users-list-body" ref="usersList">
+            <div class="user-row" v-for="user in userList" :key="user.id">
+              <div class="user-name">{{ user.username }}</div>
+              <div class="user-id">{{ user.id }}</div>
+              <button class="ban-button" @click="banUser(user)">Ban</button>
+            </div>
+          </div>
+        </div>
+        <div class="chats-list">
+          <div class="chat-list-header">
+            <div class="chatname">Chat Name</div>
+              <div class="chatname">Ban</div>
+              <div class="chatname">Destroy</div>
+          </div>
+          <div class="chat-list-body">
+            <div class="chat-row" v-for="chat in chatList" :key="chat.id">
+              <div class="chatname">{{ chat.name }}</div>
+              <div class="chatban-box">
+                <div class="chatban">
+                  <input type="text" placeholder="userName">
+                    <button class="ban">Ban</button>
+                    <button class="allow">Allow</button>
                 </div>
-                <h2 class="fw-bold mb-2 text-uppercase">FT_TRANSCENDENCE</h2>
-                <p class="text-white-50 mb-5">
-                  Please enter your login and password
-                </p>
-
-                <div class="form-outline form-white mb-4">
-                  <input type="email" id="emailX" class="form-control form-control-lg" v-on:keyup.enter="validateLogin()"
-                    v-model="email" />
-                  <label class="form-label" for="emailX">Email</label>
-                </div>
-
-                <div class="form-outline form-white mb-4">
-                  <input type="password" id="typePasswordX" class="form-control form-control-lg"
-                    v-on:keyup.enter="validateLogin()" v-model="password" />
-                  <label class="form-label" for="typePasswordX">Password</label>
-                </div>
-
-                <div v-if="is2faCodeRequired.status === false">
-                  <p class="small mb-5 pb-lg-2">
-                    <a class="text-white-50" v-bind:href="login42page">Login with 42 user</a>
-                  </p>
-                </div>
-                <div v-if="is2faCodeRequired.status === true">
-                  <form @submit.prevent="submitCode">
-                    <div class="form-group">
-                      <label for="code">Enter the code from your app:</label>
-                      <input type="text" class="form-control" id="code" v-model="twoFactorCode" />
-                    </div>
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                  </form>
-                </div>
-
-                <button class="btn btn-outline-light btn-lg px-5" type="submit" v-on:click="validateLogin()">
-                  Login
-                </button>
               </div>
-
-              <div>
-                <p class="mb-0">
-                  Don't have an account?
-                  <a href="/signUp" class="text-white-50 fw-bold">Sign Up</a>
-                </p>
-              </div>
-
+              <button class="chatdestroy">Destroy</button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </section>
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive } from "vue";
-import { IUser, store } from "../../store/store";
-import { AUTHENTICATE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";
-import { apiClient } from "@/api/baseApi";
-import { elogin, get42Token } from "@/api/auth";
+import { IUser } from '@/store/store';
+import { defineComponent } from 'vue';
+import { getAllUsers } from '@/api/user'
+import { ChatRoom, getAllChatRoomsReq } from '@/api/chatApi';
 
 export default defineComponent({
-  name: "Login",
   data() {
+    const userlist: IUser[] = []
+    const chatList: ChatRoom[] = []
+    let selection: "USERS" | "CHATS" = "USERS"
     return {
-      username: "",
-      email: "",
-      password: "",
-      code: "",
-      login42page: LOGIN_42_URL,
-      is2faEnabled: false,
-      twoFactorCode: ""
-    };
-  },
-  async mounted() {
-    // comprueba si ya hay un token válido
-    await this.tokenLogin()
-
-    // comprueba si hay un codigo en la url
-    if (this.$route.query.code) {
-      console.log("existe code: " + this.$route.query.code)
-      this.code = this.$route.query.code as string
-      await this.getToken(this.code)
-      await this.tokenLogin()
+      userList: userlist,
+      chatList: chatList,
+      selection
     }
   },
-
-  setup() {
-    const reactiveIs2fa = reactive({
-      status: false
-    })
-
-    return {
-      is2faCodeRequired: reactiveIs2fa,
-    }
-  },
-
+  
   methods: {
-    validateLogin() {
-      const loginData = {
-        email: this.email,
-        password: this.password
-      };
-      elogin(loginData)
-        .then((response) => {
-          if (response.status === 200) {
-            const user: IUser = {
-              id: response.data.userId,
-              username: response.data.name,
-              email: response.data.email,
-              password: response.data.password,
-              pic: response.data.pic,
-              is2fa: response.data.is2fa,
-              isAdmin: true
-            }
-            store.commit("changeUser", user)
-
-            localStorage.setItem("token", response.data.token)
-            console.log("regular token: " + localStorage.getItem("token"))
-
-            this.$router.push("/");
-          }
-          else {
-            throw ("usuario o contraseña incorrecta")
-          }
-        })
-        .catch((error) => {
-          alert("usuario o contraseña incorrectos");
-          console.log(error);
-        });
+    banUser(user: IUser) {
+      console.log(`Banning user ${user.id}`);
     },
-
-  // Cambia el codigo de 42 por el JWT token y los datos de usuario
-  async getToken(code: string) {
-    console.log("Adquiriendo token con login de 42")
-    var bodyFormData = new FormData();
-    bodyFormData.append("code", code);
-    try {
-      const response = await get42Token(code)
-
-      if (response.status !== 201) {
-        console.log("Failed logging in with server: " + response.status)
-        return
-      }
-
-      localStorage.setItem("token", response.data.token)
-      console.log("regular token: " + localStorage.getItem("token"))
-
-      this.is2faCodeRequired.status = response.data.is2fa
-      console.log("is2faCodeRequired.status: " + this.is2faCodeRequired.status)
-
-      console.log("userId: " + response.data.userId);
-
-      const user: IUser = {
-        id: response.data.userId,
-        email: "",
-        password: "",
-        username: response.data.name,
-        pic: response.data.pic,
-        is2fa: response.data.is2fa,
-        isAdmin: true,
-      }
-      store.commit("changeUser", user)
-    }
-    catch (error) {
-      console.log("Get token: " + error)
-    }
   },
-
-  // Si existe token pedimos los datos de usuario al servidor y los guardamos
-  async tokenLogin() {
-    // comprueba si ya hay un token en el local storage y si es valido
-    console.log(localStorage.getItem("token"))
-    if (localStorage.getItem("token") === null) {
-      console.log("Token login: No token found")
-      return
-    }
-
-    try {
-      await apiClient.get("/auth/me").then((response) => {
-        if (response.status === 401) {
-          console.log("Token login: Invalid token")
-          return
-        }
-        if (response.status !== 200) {
-          console.log("Token login: Error getting user data")
-          return
-        }
-        console.log("You are in")
-        this.$router.push("/")
-      })
-    }
-    catch (error) {
-      console.log("Token login: " + error)
-    }
+  
+  mounted() {
+    const usersList = this.$refs.usersList as HTMLElement;
+    usersList.style.height = `${window.innerHeight - usersList.offsetTop}px`;
+    getAllUsers()
+      .then(list => this.userList = list)
+      .catch(() => alert("Unhandled error when fetching all users for admin page"))
+    getAllChatRoomsReq()
+      .then(list => this.chatList = list)
+      .catch(() => alert("Unhandled error when fetching all chats for admin page"))
   },
-
-  async submitCode() {
-    console.log("submitCode: " + this.twoFactorCode + "")
-    try {
-
-      //Validate the user's code and redirect them to the appropriate page
-      const response = await apiClient.post(AUTHENTICATE_2FA_ENDPOINT + "/" + this.twoFactorCode)
-      if (response.status === 200) {
-        localStorage.setItem("token", response.data.token)
-        this.tokenLogin()
-      }
-    } catch (error: any) {
-      if (error.response.status === 401) {
-        alert('Invalid code, please try again.')
-      }
-      else {
-        alert('Something went wrong, please try again.')
-      }
-      console.log(error.name + ": " + error.message)
-    }
-  },
-},
-
-
-});
+})
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
+  
 <style scoped>
-.gradient-custom {
-  /* fallback for old browsers */
-  background: #3609da;
-
-  /* Chrome 10-25, Safari 5.1-6 */
-  background: -webkit-linear-gradient(to right,
-      rgba(4, 8, 22, 0.804),
-      rgb(193, 209, 237));
-
-  /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-  background: linear-gradient(to right,
-      rgba(4, 8, 22, 0.804),
-      rgb(193, 209, 237));
+:root {
+    align-items: center;
 }
+.mainCont {
+    height: 80vh;
+    width: 99%;
+    justify-content: center;
+    display: flex;
+    flex-wrap: nowrap;
+}
+.admin-page {
+  display: block;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: #787878;
+  height: 100vh;
+}
+
+.users-list {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+  width: 50%;
+  background-color: #ccc;
+  height: 80%;
+}
+  
+.users-list-header {
+  display: flex;
+  align-items: center;
+  justify-items: center;
+  height: 40px;
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.user-name {
+    flex-basis: 33.33%;
+}
+.user-id {
+    flex-basis: 33.33;
+}
+.ban-button {
+  flex-basis: 11.11%;
+  text-align: center;
+}
+  
+.user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 50px;
+  width: 1000
+}
+
+.users-list-body {
+  height: 200px; /* set a fixed height */
+  overflow: auto; /* enable overflow scrolling */
+}
+
+.admin-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 20px;
+}
+
+.users-list {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+  align-content: center;
+}
+
+.user-name {
+    width: fit-content;
+    justify-content: center;
+}
+.user-id {
+    width: fit-content;
+    justify-content: center;
+}
+.ban-button {
+  width: fit-content;
+  text-align: center;
+  padding: 10px;
+}
+
+.ban-button {
+  color: #fff;
+  background-color: #d9534f;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.ban-button:hover {
+  background-color: #c9302c;
+}
+
+.chat-list-header {
+  display: flex;
+  align-items: center;
+  justify-items: center;
+  height: 40px;
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.chat-list-body {
+  /*overflow: scroll;
+  align-items: center;
+  justify-items: center;*/
+  position: absolute; /* needed to set height */
+  top: 40px; /* height of the .chat-list-header */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow-y: auto; /* allow vertical scrolling */
+}
+
+.chat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.chatname {
+  flex: 1;
+  margin-right: 10px;
+}
+
+.chatban {
+  display: flex;
+  margin-right: 10px;
+  flex-wrap: nowrap;
+}
+
+.chatban input {
+  margin-right: 10px;
+  padding: 5px;
+}
+
+.chatban button {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.chatban button.allow {
+  background-color: green;
+}
+
+.chatdestroy {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.chats-list {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 50%;
+  background-color: #ccc;
+  height: 80%;
+  position: relative;
+  overflow: hidden; /* hide overflowing content */
+}
+
+.chatban-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-right: 10px;
+} 
+
 </style>

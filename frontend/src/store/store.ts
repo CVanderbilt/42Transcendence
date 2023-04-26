@@ -10,6 +10,7 @@ export interface IUser {
   password: string,
   pic: string,
   is2fa: boolean,
+  isAdmin: boolean
 }
 
 // define your typings for the store state
