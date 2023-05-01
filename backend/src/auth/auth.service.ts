@@ -37,6 +37,7 @@ export class AuthService {
             email: data.email,
             username: data.username,
             password: hashed,
+            isBanned: false,
         }
 
         const user : User = await this.usersService.createUser(userDto)
@@ -133,6 +134,7 @@ export class AuthService {
             const newUserData: User = {
                 login42: login42,
                 username: name,
+                isBanned: false,
             }
             user = await this.usersService.createUser(newUserData)
         }

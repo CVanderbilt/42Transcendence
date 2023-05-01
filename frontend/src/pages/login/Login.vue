@@ -127,7 +127,8 @@ export default defineComponent({
               password: response.data.password,
               pic: response.data.pic,
               is2fa: response.data.is2fa,
-              isAdmin: true
+              isAdmin: true,
+              isBanned: response.data.isBanned
             }
             store.commit("changeUser", user)
 
@@ -175,6 +176,7 @@ export default defineComponent({
         pic: response.data.pic,
         is2fa: response.data.is2fa,
         isAdmin: true,
+        isBanned: response.data.isBanned
       }
       store.commit("changeUser", user)
     }
