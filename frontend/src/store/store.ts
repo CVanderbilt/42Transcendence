@@ -11,6 +11,7 @@ export interface IUser {
   pic: string,
   is2fa: boolean,
   isAdmin: boolean
+  isBanned: boolean
 }
 
 // define your typings for the store state

@@ -41,4 +41,7 @@ export class UserEntity extends BaseEntity {
 
     @Column({ type: 'bytea', nullable: true })
     image: Uint8Array;
+
+    @Column({ default: false })
+    isBanned: boolean;
 }

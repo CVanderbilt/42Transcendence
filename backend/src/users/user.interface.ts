@@ -16,4 +16,5 @@ export class User {
     createdAt?: Date
 
     image?: Uint8Array;
+    isBanned: boolean;
 }

@@ -10,7 +10,8 @@
             <div class="user-row" v-for="user in userList" :key="user.id">
               <div class="user-name">{{ user.username }}</div>
               <div class="user-id">{{ user.id }}</div>
-              <button class="ban-button" @click="banUserAction(user)">Ban</button>
+              <button class="allow-button" v-if="user.isBanned" @click="allowUserAction(user)">Allow</button>
+              <button class="ban-button" v-if="!user.isBanned" @click="banUserAction(user)">Ban</button>
             </div>
           </div>
         </div>
@@ -206,6 +207,20 @@ export default defineComponent({
 
 .ban-button:hover {
   background-color: #c9302c;
+}
+.allow-button {
+  width: fit-content;
+  text-align: center;
+  padding: 10px;
+}
+
+.allow-button {
+  color: #fff;
+  background-color: green;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
 }
 
 .chat-list-header {
