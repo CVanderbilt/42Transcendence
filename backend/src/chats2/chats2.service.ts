@@ -243,6 +243,20 @@ export class Chats2Service {
         return res
     }
 
+    async getUserChatMembership(userId: string, chatRoomId: number) {
+        return await this.chatMembershipsRepo.findOne( { where: {
+            user: { id: userId },
+            chatRoom: { id: chatRoomId }
+        }})
+    }
+
+    async setIsBanned(userId: string, chatRoomId: number, isBanned: boolean) {
+        const membership = await this.getUserChatMembership(userId, chatRoomId)
+
+        membership.isBanned = isBanned;
+        membership.save();
+    }
+
     async deleteMembership(id: number) {
         const membership = await this.chatMembershipsRepo.findOne({ where: { id: id }, relations: ['chatRoom'] })
         const room = membership.chatRoom

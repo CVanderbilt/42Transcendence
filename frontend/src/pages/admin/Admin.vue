@@ -46,7 +46,7 @@
 import { IUser } from '@/store/store';
 import { defineComponent } from 'vue';
 import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'
-import { ChatRoom, deleteChatRoom, getAllChatRoomsReq } from '@/api/chatApi';
+import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, getAllChatRoomsReq } from '@/api/chatApi';
 
 /*
   TODO:
@@ -87,11 +87,13 @@ export default defineComponent({
     banUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
         console.log(`Banning user: ${chat.userName} in chat: ${chat.name}`)
+        banUserFromChat(chat.userName, chat.id)
       }
     },
     allowUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
         console.log(`Allowing user: ${chat.userName} in chat: ${chat.name}`)
+        allowUserFromChat(chat.userName, chat.id)
       }
     },
     destroyChat(chat: ChatRoomRow) {

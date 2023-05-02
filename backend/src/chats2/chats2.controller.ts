@@ -1,14 +1,15 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { Jwt2faAuthGuard } from 'src/auth/jwt-2fa-auth.guard';
 import { validateInput } from 'src/utils/utils';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { ChatMembership, ChatRoom } from './chats.interface';
 import { Chats2Service } from './chats2.service';
 import * as Joi from 'joi'
+import { UsersService } from 'src/users/users.service';
 
 @Controller('chats')
 export class Chats2Controller {
-    constructor(private chatsService: Chats2Service) { }
+    constructor(private chatsService: Chats2Service, private usersService: UsersService) { }
 
     // get chat rooms
     @Get('rooms')
@@ -113,6 +114,23 @@ export class Chats2Controller {
         return await (this.chatsService.findUserMemberships(userId))
     }
 
+    @Post('memberships/ban')
+    async banUser(@Body() input: { userName: string, roomId: number }) {
+        const user = await this.usersService.findOneByName(input.userName);
+
+        if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+
+        this.chatsService.setIsBanned(user.id, input.roomId, true);
+    }
+
+    @Post('memberships/allow')
+    async allowUser(@Body() input: { userName: string, roomId: number }) {
+        const user = await this.usersService.findOneByName(input.userName);
+
+        if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+
+        this.chatsService.setIsBanned(user.id, input.roomId, false);
+    }
     // update membership
     @Put('memberships/:id')
     async updateMembership(@Param('id') id: number, @Body() data: ChatMembershipDto) {

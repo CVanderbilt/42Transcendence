@@ -4,6 +4,7 @@ import { Chats2Controller } from './chats2.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChatMembershipEntity, ChatMsgEntity, ChatRoomEntity } from './chatEntities.entity';
 import { UserEntity } from 'src/users/user.entity';
+import { UsersService } from 'src/users/users.service';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { UserEntity } from 'src/users/user.entity';
       UserEntity,
     ]),
   ],
-  providers: [Chats2Service],
+  providers: [Chats2Service, UsersService],
   controllers: [Chats2Controller],
   exports: [
     TypeOrmModule.forFeature([

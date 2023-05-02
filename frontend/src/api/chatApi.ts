@@ -119,3 +119,11 @@ export async function updateChatRoomMembershipsReq(membershipId: string, data: M
 export async function deleteChatRoomMembershipsReq(membershipId: string) {
     return apiClient.delete(`${URL}/memberships/${membershipId}`)
 }
+
+export async function banUserFromChat(userName: string, roomId: string) {
+    return apiClient.post(`${URL}/memberships/ban`, {userName, roomId})
+}
+
+export async function allowUserFromChat(userName: string, roomId: string) {
+    return apiClient.post(`${URL}/memberships/allow`, {userName, roomId})
+}
