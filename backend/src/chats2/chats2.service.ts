@@ -267,7 +267,8 @@ export class Chats2Service {
     }
 
     async deleteRoom(chatRoomId: number) {
-        const res = await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId }})
+        await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId }})
+        await this.chatMsgsRepo.delete({ chatRoom: { id: chatRoomId }})
         this.chatRoomsRepo.delete(chatRoomId);
     }
 

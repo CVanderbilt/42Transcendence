@@ -51,9 +51,6 @@ import { ChatRoom, deleteChatRoom, getAllChatRoomsReq } from '@/api/chatApi';
 /*
   TODO:
     - Añadir algo para poder dar/quitar privilegios sobre un chat
-    - Añadir logica para que con los usuarios baneados las letras aparezcan en rojo y
-      el botón de ban se cambie por un botón de allow (verde y que llame al método allow)
-    - Lógica del backend
 */
 
 interface ChatRoomRow extends ChatRoom {
