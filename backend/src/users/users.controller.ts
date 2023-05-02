@@ -30,16 +30,12 @@ export class UsersController {
 
     @Post(':id/ban')
     async banUser(@Param('id') id: string): Promise<void> {
-        // lógica para banear un usuario
-        const user = await this.usersService.findOneById(id)
-        console.log("Baneando usuario: " + user.username)
+        this.usersService.setUserIsBanned(id, true);
     }
-
+    
     @Post(':id/allow')
     async allowUser(@Param('id') id: string): Promise<void> {
-        // lógica para allow un usuario
-        const user = await this.usersService.findOneById(id)
-        console.log("Alloweando usuario: " + user.username)
+        this.usersService.setUserIsBanned(id, false);
     }
 
     @Post(':id/promote')

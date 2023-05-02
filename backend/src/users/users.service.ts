@@ -93,6 +93,14 @@ export class UsersService {
         user.save();
     }
 
+    async setUserIsBanned(id: string, isBanned: boolean) {
+        const user = await this.usersRepo.findOneBy({ id: id })
+        if (!user)
+            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+        user.isBanned = isBanned;
+        user.save();
+    }
+
     async setUserAdmin(id: string, isAdmin: boolean) {
         const user = await this.usersRepo.findOneBy({ id: id })
         if (!user)
