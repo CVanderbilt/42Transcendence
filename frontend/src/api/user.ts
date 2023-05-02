@@ -16,16 +16,16 @@ export interface IUserAPI {
 //     return apiClient.post(URL, {...options, chats: [{name: "general", role: "user"}]});
 // } // Esto sucede automáticamente en el backend cuando un usuario se registra
 
-async function updateUser(id: string, options: IUserAPI) {    
+export async function updateUser(id: string, options: IUserAPI) {    
     alert(`will update user ${id} !!!`)
     return apiClient.put(`${URL}/${id}`, options);
 }
 
-async function getUserById(id: string) {
+export async function getUserById(id: string) {
     return apiClient.get(`${URL}/${id}`)
 }
 
-async function getUserByName(username: string) {
+export async function getUserByName(username: string) {
     return apiClient.get(`${URL}/name/${username}`)
 }
 
@@ -33,11 +33,11 @@ export async function updateUserChats(id: string, options: string){
     return apiClient.put(`${URL}/${id}`, options)
 }
 
-async function getImage(id: string) {
+export async function getImage(id: string) {
     return apiClient.get(`${URL}/${id}${IMAGE_URL}`)
 }
 
-async function putImage(id: string, image: File) {
+export async function putImage(id: string, image: File) {
     const formData = new FormData();
     formData.append('file', image, 'file');
 
@@ -48,16 +48,22 @@ async function putImage(id: string, image: File) {
     });
 }
 
-async function getAllUsers() {
+export async function getAllUsers() {
     return (await apiClient.get(`${URL}`)).data
 }
 
-async function banUser(id: string) {
+export async function banUser(id: string) {
     apiClient.post(`${URL}/${id}/ban`)
 }
 
-async function allowUser(id: string) {
+export async function allowUser(id: string) {
     apiClient.post(`${URL}/${id}/allow`)
 }
 
-export { updateUser, getUserById, getUserByName, getImage, putImage, getAllUsers, banUser, allowUser }
+export async function promoteUser(id: string) {
+    apiClient.post(`${URL}/${id}/promote`)
+}
+
+export async function demoteUser(id: string) {
+    apiClient.post(`${URL}/${id}/demote`)
+}

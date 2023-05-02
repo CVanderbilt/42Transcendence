@@ -92,4 +92,12 @@ export class UsersService {
         user.image = dataBuffer;
         user.save();
     }
+
+    async setUserAdmin(id: string, isAdmin: boolean) {
+        const user = await this.usersRepo.findOneBy({ id: id })
+        if (!user)
+            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+        user.isAdmin = isAdmin;
+        user.save();
+    }
 }

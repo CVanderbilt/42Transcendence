@@ -17,4 +17,5 @@ export class User {
 
     image?: Uint8Array;
     isBanned: boolean;
+    isAdmin: boolean;
 }

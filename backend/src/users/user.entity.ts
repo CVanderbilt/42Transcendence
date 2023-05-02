@@ -44,4 +44,7 @@ export class UserEntity extends BaseEntity {
 
     @Column({ default: false })
     isBanned: boolean;
+
+    @Column({ default: false })
+    isAdmin: boolean;
 }

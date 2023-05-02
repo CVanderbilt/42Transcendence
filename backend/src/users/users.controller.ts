@@ -42,6 +42,15 @@ export class UsersController {
         console.log("Alloweando usuario: " + user.username)
     }
 
+    @Post(':id/promote')
+    async promoteUser(@Param('id') id: string): Promise<void> {
+        this.usersService.setUserAdmin(id, true);
+    }
+    
+    @Post(':id/demote')
+    async demoteUser(@Param('id') id: string): Promise<void> {
+        this.usersService.setUserAdmin(id, false);
+    }
     // @UseGuards(JwtAuthGuard)
     @Get()
     async findAll(): Promise<User[]> {

@@ -12,6 +12,9 @@
               <div class="user-id">{{ user.id }}</div>
               <button class="allow-button" v-if="user.isBanned" @click="allowUserAction(user)">Allow</button>
               <button class="ban-button" v-if="!user.isBanned" @click="banUserAction(user)">Ban</button>
+              <button class="allow-button" v-if="!user.isAdmin" @click="promoteUserAction(user)">Promote</button>
+              <button class="ban-button" v-if="user.isAdmin" @click="demoteUserAction(user)">Demote</button>
+
             </div>
           </div>
         </div>
@@ -42,12 +45,11 @@
 <script lang="ts">
 import { IUser } from '@/store/store';
 import { defineComponent } from 'vue';
-import { getAllUsers, banUser, allowUser } from '@/api/user'
+import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'
 import { ChatRoom, deleteChatRoom, getAllChatRoomsReq } from '@/api/chatApi';
 
 /*
   TODO:
-    - Añadir boton de dar/quitar privilegios de administrador
     - Añadir algo para poder dar/quitar privilegios sobre un chat
     - Añadir logica para que con los usuarios baneados las letras aparezcan en rojo y
       el botón de ban se cambie por un botón de allow (verde y que llame al método allow)
@@ -69,6 +71,14 @@ export default defineComponent({
   },
   
   methods: {
+    promoteUserAction(user: IUser) {
+      console.log(`Promoting user ${user.id}`);
+      promoteUser(user.id)
+    },
+    demoteUserAction(user: IUser) {
+      console.log(`Demoting user ${user.id}`);
+      demoteUser(user.id)
+    },
     banUserAction(user: IUser) {
       console.log(`Banning user ${user.id}`);
       banUser(user.id)
