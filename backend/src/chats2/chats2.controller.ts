@@ -86,6 +86,11 @@ export class Chats2Controller {
         return this.chatsService.inviteUser(user, roomId, data)
     }
 
+    @Delete('rooms/:id')
+    async deleteRoom(@Param('id') id: number) {
+        this.chatsService.deleteRoom(id)
+    }
+
     // leave chat room
     @Post('rooms/:id/leave')
     async leaveRoom(@Param('id') id: number, @Body() data: ChatMembershipDto) {

@@ -43,7 +43,7 @@
 import { IUser } from '@/store/store';
 import { defineComponent } from 'vue';
 import { getAllUsers, banUser, allowUser } from '@/api/user'
-import { ChatRoom, getAllChatRoomsReq } from '@/api/chatApi';
+import { ChatRoom, deleteChatRoom, getAllChatRoomsReq } from '@/api/chatApi';
 
 /*
   TODO:
@@ -88,7 +88,7 @@ export default defineComponent({
       }
     },
     destroyChat(chat: ChatRoomRow) {
-      console.log(`destroying chat: ${chat.name}`)
+      deleteChatRoom(chat.id);
     }
   },
   

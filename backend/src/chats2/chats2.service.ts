@@ -266,6 +266,11 @@ export class Chats2Service {
         return res
     }
 
+    async deleteRoom(chatRoomId: number) {
+        const res = await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId }})
+        this.chatRoomsRepo.delete(chatRoomId);
+    }
+
     async createChatRoomMessage(msg: ChatMsgDto): Promise<ChatMsg> {
         const sender = await this.usersRepo.findOne({ where: { id: msg.senderId } });
         const room = await this.chatRoomsRepo.findOne({ where: { id: msg.chatRoomId } });

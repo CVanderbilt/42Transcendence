@@ -99,6 +99,10 @@ export async function leaveChatRoomReq(roomId: string, userId: string) {
     return apiClient.post(`${URL}/rooms/${roomId}/leave`, { userId })
 }
 
+export async function deleteChatRoom(roomId: string) {
+    return apiClient.delete(`${URL}/rooms/${roomId}`)
+}
+
 // memberships
 export async function getUserMembershipsReq(userId: string) {
     return (await apiClient.get(`${URL}/memberships/user/${userId}`))
