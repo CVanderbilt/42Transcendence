@@ -127,3 +127,11 @@ export async function banUserFromChat(userName: string, roomId: string) {
 export async function allowUserFromChat(userName: string, roomId: string) {
     return apiClient.post(`${URL}/memberships/allow`, {userName, roomId})
 }
+
+export async function promoteUserInChat(userName: string, roomId: string) {
+    return apiClient.post(`${URL}/memberships/promote`, {userName, roomId})
+}
+
+export async function demoteUserInChat(userName: string, roomId: string) {
+    return apiClient.post(`${URL}/memberships/demote`, {userName, roomId})
+}

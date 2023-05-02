@@ -14,7 +14,6 @@
               <button class="ban-button" v-if="!user.isBanned" @click="banUserAction(user)">Ban</button>
               <button class="allow-button" v-if="!user.isAdmin" @click="promoteUserAction(user)">Promote</button>
               <button class="ban-button" v-if="user.isAdmin" @click="demoteUserAction(user)">Demote</button>
-
             </div>
           </div>
         </div>
@@ -32,6 +31,8 @@
                   <input type="text" placeholder="userName" v-model="chat.userName">
                   <button class="ban" @click="banUserInChatAction(chat)">Ban</button>
                   <button class="allow" @click="allowUserInChatAction(chat)">Allow</button>
+                  <button class="ban" @click="banUserInChatAction(chat)">Promote</button>
+                  <button class="allow" @click="allowUserInChatAction(chat)">Demote</button>
                 </div>
               </div>
               <button class="chatdestroy" @click="destroyChat(chat)">Destroy</button>
@@ -46,12 +47,7 @@
 import { IUser } from '@/store/store';
 import { defineComponent } from 'vue';
 import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'
-import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, getAllChatRoomsReq } from '@/api/chatApi';
-
-/*
-  TODO:
-    - Añadir algo para poder dar/quitar privilegios sobre un chat
-*/
+import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, demoteUserInChat, getAllChatRoomsReq, promoteUserInChat } from '@/api/chatApi';
 
 interface ChatRoomRow extends ChatRoom {
   userName: string
@@ -94,6 +90,16 @@ export default defineComponent({
       if (chat.userName) {
         console.log(`Allowing user: ${chat.userName} in chat: ${chat.name}`)
         allowUserFromChat(chat.userName, chat.id)
+      }
+    },
+    promoteUserInChatAction(chat: ChatRoomRow) {
+      if (chat.userName) {
+        promoteUserInChat(chat.userName, chat.id)
+      }
+    },
+    demoteUserInChatAction(chat: ChatRoomRow) {
+      if (chat.userName) {
+        demoteUserInChat(chat.userName, chat.id)
       }
     },
     destroyChat(chat: ChatRoomRow) {

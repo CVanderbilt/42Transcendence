@@ -131,6 +131,25 @@ export class Chats2Controller {
 
         this.chatsService.setIsBanned(user.id, input.roomId, false);
     }
+    
+    @Post('memberhsips/promote')
+    async promoteUser(@Body() input: { userName: string, roomId: number }) {
+        const user = await this.usersService.findOneByName(input.userName);
+        
+        if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+
+        this.chatsService.setIsAdmin(user.id, input.roomId, true);
+    }
+
+    @Post('memberhsips/promote')
+    async demoteUser(@Body() input: { userName: string, roomId: number }) {
+        const user = await this.usersService.findOneByName(input.userName);
+        
+        if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+
+        this.chatsService.setIsAdmin(user.id, input.roomId, false);
+    }
+
     // update membership
     @Put('memberships/:id')
     async updateMembership(@Param('id') id: number, @Body() data: ChatMembershipDto) {

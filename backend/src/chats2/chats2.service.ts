@@ -257,6 +257,13 @@ export class Chats2Service {
         membership.save();
     }
 
+    async setIsAdmin(userId: string, chatRoomId: number, isAdmin: boolean) {
+        const membership = await this.getUserChatMembership(userId, chatRoomId)
+
+        membership.isBanned = isAdmin;
+        membership.save();
+    }
+
     async deleteMembership(id: number) {
         const membership = await this.chatMembershipsRepo.findOne({ where: { id: id }, relations: ['chatRoom'] })
         const room = membership.chatRoom
