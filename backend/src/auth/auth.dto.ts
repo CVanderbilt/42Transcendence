@@ -32,6 +32,7 @@ export class LoginResDto {
     pic: string
     token: string
     is2fa: boolean
+    role: string
 }
 
 export class Signin2faDto {

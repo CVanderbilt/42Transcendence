@@ -45,6 +45,6 @@ export class UserEntity extends BaseEntity {
     @Column({ default: false })
     isBanned: boolean;
 
-    @Column({ default: false })
-    isAdmin: boolean;
+    @Column({ nullable: false, default: "CUSTOMER" })
+    role: string;
 }

@@ -10,7 +10,7 @@ export interface IUser {
   password: string,
   pic: string,
   is2fa: boolean,
-  isAdmin: boolean
+  role: string,
   isBanned: boolean
 }
 

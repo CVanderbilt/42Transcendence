@@ -33,7 +33,7 @@ const routes = [
     { path: '/friends', name: "friends", component: Friends, meta: { requiresAuth: true } },
     { path: '/matchmaking', name: "matchmaking", component: Matchmaking, meta: { requiresAuth: true } },
     { path: '/endgame', name: "endGame", component: EndGame, meta: { requiresAuth: true } },
-    { path: '/admin', name: "adminPage", component: Admin, meta: { requiresAuth: true, requiresAdmin: true } }
+    { path: '/admin', name: "adminPage", component: Admin, meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({
@@ -59,14 +59,6 @@ router.beforeEach((to, from, next) => {
         }
         else {
             next()
-        }
-    }
-    else if (to.matched.some(route =>route.meta.requiresAdmin)) {
-        if (store.state.user?.isAdmin) {
-            next()
-        }
-        else {
-            next('/')
         }
     }
     else {

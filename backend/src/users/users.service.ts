@@ -97,15 +97,48 @@ export class UsersService {
         const user = await this.usersRepo.findOneBy({ id: id })
         if (!user)
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+        if (this.isAdmin(user) || this.isOwner(user))
+            throw new HttpException("CANT_BAN_PRIVILEGED_USERS", HttpStatus.FORBIDDEN)
         user.isBanned = isBanned;
         user.save();
     }
 
-    async setUserAdmin(id: string, isAdmin: boolean) {
-        const user = await this.usersRepo.findOneBy({ id: id })
+    async setUserAsAdmin(id: string) {
+        const user = await this.usersRepo.findOneBy({ id })
         if (!user)
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
-        user.isAdmin = isAdmin;
+        if (this.isOwner(user))
+            throw new HttpException("CANT_SET_OWNER_AS_ADMIN", HttpStatus.FORBIDDEN)
+        user.role = "ADMIN";
         user.save();
     }
+
+    async setUserAsCustomer(id: string) {
+        const user = await this.usersRepo.findOneBy({ id })
+        if (!user)
+            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+        if (this.isOwner(user))
+            throw new HttpException("CANT_SET_OWNER_AS_CUSTOMER", HttpStatus.FORBIDDEN)
+        user.role = "CUSTOMER";
+        user.save();
+    }
+
+    async setUserAsOwner(id: string, previousOwnerId: string) {
+        const user = await this.usersRepo.findOneBy({ id })
+        const previousOwner = await this.usersRepo.findOneBy({ id: previousOwnerId })
+
+        if (!user)
+            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+        if (this.isOwner(previousOwner))
+            throw new HttpException("ONLY_OWNER_CAN_CHANGE_OWNERSHIP", HttpStatus.FORBIDDEN);
+
+        user.role = "OWNER"
+        previousOwner.role = "ADMIN"
+
+        user.save();
+        previousOwner.save();
+    }
+
+    isOwner(user: UserEntity | User) { return user.role === "OWNER" }
+    isAdmin(user: UserEntity | User) { return user.role === "ADMIN" }
 }

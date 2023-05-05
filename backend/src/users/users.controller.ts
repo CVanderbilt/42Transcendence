@@ -3,7 +3,6 @@ import { DeleteResult, UpdateResult } from 'typeorm';
 import { UsersService as UsersService } from './users.service';
 import { User } from './user.interface';
 import { Multer } from 'multer';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Readable } from 'typeorm/platform/PlatformTools';
 var fs  = require('fs'),
@@ -11,6 +10,7 @@ path    = require('path'),
 url     = require('url');
 import { validateInput } from 'src/utils/utils';
 import * as Joi from 'joi';
+import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
 
 @Controller('users')
 export class UsersController {
@@ -33,6 +33,7 @@ export class UsersController {
         this.usersService.setUserIsBanned(id, true);
     }
     
+    @UseGuards(JwtAdminGuard)
     @Post(':id/allow')
     async allowUser(@Param('id') id: string): Promise<void> {
         this.usersService.setUserIsBanned(id, false);
@@ -40,12 +41,12 @@ export class UsersController {
 
     @Post(':id/promote')
     async promoteUser(@Param('id') id: string): Promise<void> {
-        this.usersService.setUserAdmin(id, true);
+        this.usersService.setUserAsAdmin(id);
     }
     
     @Post(':id/demote')
     async demoteUser(@Param('id') id: string): Promise<void> {
-        this.usersService.setUserAdmin(id, false);
+        this.usersService.setUserAsCustomer(id);
     }
     // @UseGuards(JwtAuthGuard)
     @Get()

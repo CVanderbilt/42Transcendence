@@ -38,7 +38,7 @@ export class AuthService {
             username: data.username,
             password: hashed,
             isBanned: false,
-            isAdmin: false,
+            role: "CUSTOMER",
         }
 
         const user : User = await this.usersService.createUser(userDto)
@@ -67,6 +67,7 @@ export class AuthService {
         const payload = {
             userId: user.id,
             email: user.email,
+            role: user.role,
         }
 
         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
@@ -77,6 +78,7 @@ export class AuthService {
             "pic": pic,
             "token": token,
             "is2fa": user.is2fa,
+            "role": user.role,
         }
 
         return res
@@ -136,7 +138,7 @@ export class AuthService {
                 login42: login42,
                 username: name,
                 isBanned: false,
-                isAdmin: false,
+                role: "CUSTOMER",
             }
             user = await this.usersService.createUser(newUserData)
         }
@@ -154,6 +156,7 @@ export class AuthService {
             "pic": pic,
             "token": token,
             "is2fa": user.is2fa,
+            "role": user.role,
         }
 
         return res

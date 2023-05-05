@@ -12,8 +12,8 @@
               <div class="user-id">{{ user.id }}</div>
               <button class="allow-button" v-if="user.isBanned" @click="allowUserAction(user)">Allow</button>
               <button class="ban-button" v-if="!user.isBanned" @click="banUserAction(user)">Ban</button>
-              <button class="allow-button" v-if="!user.isAdmin" @click="promoteUserAction(user)">Promote</button>
-              <button class="ban-button" v-if="user.isAdmin" @click="demoteUserAction(user)">Demote</button>
+              <button class="allow-button" v-if="!hasAdminRights(user)" @click="promoteUserAction(user)">Promote</button>
+              <button class="ban-button" v-if="hasAdminRights(user)" @click="demoteUserAction(user)">Demote</button>
             </div>
           </div>
         </div>
@@ -44,7 +44,7 @@
 </template>
 
 <script lang="ts">
-import { IUser } from '@/store/store';
+import { IUser, store } from '@/store/store';
 import { defineComponent } from 'vue';
 import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'
 import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, demoteUserInChat, getAllChatRoomsReq, promoteUserInChat } from '@/api/chatApi';
@@ -104,10 +104,15 @@ export default defineComponent({
     },
     destroyChat(chat: ChatRoomRow) {
       deleteChatRoom(chat.id);
+    },
+    hasAdminRights(user: IUser) {
+      return user.role === "ADMIN" || user.role === "OWNER"
     }
   },
   
   mounted() {
+    if (!store.state.user || !this.hasAdminRights(store.state.user))
+      this.$router.push("/");
     const usersList = this.$refs.usersList as HTMLElement;
     usersList.style.height = `${window.innerHeight - usersList.offsetTop}px`;
     getAllUsers()
