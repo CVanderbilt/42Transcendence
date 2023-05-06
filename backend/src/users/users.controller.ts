@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, Logger, Param, Post, Put, Req, Res, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { UsersService as UsersService } from './users.service';
 import { User } from './user.interface';
@@ -8,7 +8,7 @@ import { Readable } from 'typeorm/platform/PlatformTools';
 var fs  = require('fs'),
 path    = require('path'),
 url     = require('url');
-import { validateInput } from 'src/utils/utils';
+import { getAuthToken, validateInput } from 'src/utils/utils';
 import * as Joi from 'joi';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
 
@@ -28,6 +28,7 @@ export class UsersController {
         return this.usersService.createUser(user)
     }
 
+    @UseGuards(JwtAdminGuard)
     @Post(':id/ban')
     async banUser(@Param('id') id: string): Promise<void> {
         this.usersService.setUserIsBanned(id, true);
@@ -39,14 +40,16 @@ export class UsersController {
         this.usersService.setUserIsBanned(id, false);
     }
 
+    @UseGuards(JwtAdminGuard)
     @Post(':id/promote')
     async promoteUser(@Param('id') id: string): Promise<void> {
         this.usersService.setUserAsAdmin(id);
     }
     
+    @UseGuards(JwtAdminGuard)
     @Post(':id/demote')
     async demoteUser(@Param('id') id: string): Promise<void> {
-        this.usersService.setUserAsCustomer(id);
+        await this.usersService.setUserAsCustomer(id);
     }
     // @UseGuards(JwtAuthGuard)
     @Get()
@@ -64,8 +67,9 @@ export class UsersController {
         return this.usersService.findOneById(id)
     }
 
+    // admins y el propio usuario a modificar
     @Put(':id')
-    update(@Body() user: User, @Param('id') id: string): Promise<UpdateResult> {
+    async update(@Body() user: User, @Param('id') id: string, @Req() request: Request): Promise<UpdateResult> {
         validateInput(Joi.object({
             email: Joi.string().email(),
             password: Joi.string(),
@@ -74,7 +78,10 @@ export class UsersController {
             is2fa: Joi.boolean(), //todo: revisar que pasa si is2fa está pero twofaSecret no
             twofaSecret: Joi.boolean(),
         }), user);
-        return this.usersService.updateUser(id, user)
+        const token = getAuthToken(request)
+        if (token.canModifyUser(token, await this.usersService.findOneById(id)))
+            return this.usersService.updateUser(id, user)
+        throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to modify user ${id}`)
     }
 
     @Delete(':id')

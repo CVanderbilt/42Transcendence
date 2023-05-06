@@ -1,7 +1,9 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as Joi from 'joi';
 const fs = require('fs');
 const { PNG } = require('pngjs');
+import * as jwt from 'jsonwebtoken';
+import { User } from 'src/users/user.interface';
 
 export function validateInput(schema: Joi.ObjectSchema<any>, toValidate: any) {
   const validation = schema.validate(toValidate);
@@ -70,4 +72,34 @@ export function generateRandomSquaresImage() {
   }
 
   return image
+}
+
+export function getAuthToken(request) {
+  const authHeader = request.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    throw new NotFoundException('Token not found');
+  try {
+    const token = request.headers.authorization.split(' ')[1];
+    const decodedToken = jwt.verify(token, process.env.JWT_KEY) as { [key: string]: any, role: string, userId: string, email: string };
+    console.log("decoded token:")
+    console.log(decodedToken)
+    const ret = {
+      role: decodedToken.role,
+      userId: decodedToken.userId,
+      email: decodedToken.email,
+      canModifyUser: (token, user: User): boolean => {
+        if (token.userId === user.id)
+          return true;
+        if (user.role === "OWNER")
+          return false;
+        if (token.role === "ADMIN" || token.role === "OWNER")
+          return true;
+        return false;
+      }
+    };
+    console.log(ret)
+    return ret;
+  } catch (err) {
+    throw new UnauthorizedException('Invalid token');
+  }
 }

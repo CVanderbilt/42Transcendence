@@ -13,6 +13,8 @@ import { MatchesModule } from './matches/matches.module';
 import { Chats2Module } from './chats2/chats2.module';
 import { GameModule } from './gameSocket/game.module';
 import { AuthModule } from './auth/auth.module';
+import { APP_FILTER } from '@nestjs/core';
+import { GlobalExceptionFilter } from './GlobalExceptionFilter';
 
 @Module({
   imports: [
@@ -35,6 +37,13 @@ import { AuthModule } from './auth/auth.module';
     Chats2Module,
     AuthModule,
   ],
-  providers: [ChatGateway, GameGateway],
+  providers: [
+    ChatGateway,
+    GameGateway,
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    }
+  ],
 })
 export class AppModule {}

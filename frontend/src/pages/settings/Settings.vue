@@ -83,7 +83,7 @@ import { generateImageURL } from "@/utils/utils";
 import { IUserAPI, putImage, updateUser } from "@/api/user";
 
 declare var require: any;
-
+//todo: que cuando se modifique el usuario se recarge la informacion del usuario (la imagen se tiene que volver a descargar y el store.user tiene que actualizarse)
 export default defineComponent({
   name: "Settings",
   setup() {

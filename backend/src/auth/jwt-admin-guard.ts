@@ -1,25 +1,24 @@
 import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import * as jwt from 'jsonwebtoken';
+import { getAuthToken } from 'src/utils/utils';
 
 @Injectable()
 export class JwtAdminGuard extends AuthGuard('jwt') {
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      try {
-        const role = this.validateToken(token);
-        console.log("validating role: " + role)
-        if ((role === 'ADMIN' || role === 'OWNER')) {
-          return super.canActivate(context);
-        }
-      } catch (err) {
-        throw new UnauthorizedException('Invalid token');
-      }
+    let token;
+
+    try {
+      token = getAuthToken(request);
+    } catch (error) {
+      throw error
     }
-    throw new UnauthorizedException('Token not found');
+    
+    if ((token.role === 'ADMIN' || token.role === 'OWNER')) {
+      return super.canActivate(context);
+    }
+    throw new UnauthorizedException('Role not allowed')
   }
   
   handleRequest(err, userInToken, info) {
