@@ -2,40 +2,47 @@
     <div class="admin-page">
       <div class="mainCont" style="align-content: center;">
         <div class="users-list">
-          <div class="users-list-header">
-            <div class="user-name">User Name</div>
-            <div class="user-id">User ID</div>
-          </div>
-          <div class="users-list-body" ref="usersList">
-            <div class="user-row" v-for="user in userList" :key="user.id">
-              <div class="user-name">{{ user.username }}</div>
-              <div class="user-id">{{ user.id }}</div>
-              <button class="allow-button" v-if="user.isBanned" @click="allowUserAction(user)">Allow</button>
-              <button class="ban-button" v-if="!user.isBanned" @click="banUserAction(user)">Ban</button>
-              <button class="allow-button" v-if="!hasAdminRights(user)" @click="promoteUserAction(user)">Promote</button>
-              <button class="ban-button" v-if="hasAdminRights(user)" @click="demoteUserAction(user)">Demote</button>
+          <h5 class="table-header"> Manage users </h5>
+          <div class="list-body" ref="usersList">
+            <div class="list-row" v-for="user in userList" :key="user.id">
+              <div class="list-row-content">
+                <div class="list-attribute-name">{{ user.username }}</div>
+                <div class="list-attribute-name">{{ user.id }}</div>
+                <div class="manage">
+                  <div class="list-attribute-box">
+                    <button class="allow" v-if="user.isBanned" @click="allowUserAction(user)">Allow</button>
+                    <button class="ban" v-if="!user.isBanned" @click="banUserAction(user)">Ban</button>
+                    <button class="allow" v-if="!hasAdminRights(user)" @click="promoteUserAction(user)">Promote</button>
+                    <button class="ban" v-if="hasAdminRights(user)" @click="demoteUserAction(user)">Demote</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
         <div class="chats-list">
-          <div class="chat-list-header">
-            <div class="chatname">Chat Name</div>
-              <div class="chatname">Ban</div>
-              <div class="chatname">Destroy</div>
-          </div>
-          <div class="chat-list-body">
-            <div class="chat-row" v-for="chat in chatList" :key="chat.id">
-              <div class="chatname">{{ chat.name }}</div>
-              <div class="chatban-box">
-                <div class="chatban">
-                  <input type="text" placeholder="userName" v-model="chat.userName">
-                  <button class="ban" @click="banUserInChatAction(chat)">Ban</button>
-                  <button class="allow" @click="allowUserInChatAction(chat)">Allow</button>
-                  <button class="ban" @click="banUserInChatAction(chat)">Promote</button>
-                  <button class="allow" @click="allowUserInChatAction(chat)">Demote</button>
-                </div>
+          <h5 class="table-header"> Manage chats </h5>
+          <div class="list-body">
+            <div class="list-row" v-for="chat in chatList" :key="chat.id">
+              <div class="list-row-header">
+                <b class="list-attribute-name">{{ chat.name }}</b>
               </div>
-              <button class="chatdestroy" @click="destroyChat(chat)">Destroy</button>
+              <div class="list-row-content">
+                <div class="list-attribute-box">
+                  <div class="manage">
+                    <input class="list-attribute-input" type="text" placeholder="userName" v-model="chat.userName">
+                    <div class="list-attribute-box">
+                      <button class="ban" @click="banUserInChatAction(chat)">Ban</button>
+                      <button class="allow" @click="allowUserInChatAction(chat)">Allow</button>
+                    </div>
+                    <div class="list-attribute-box">
+                      <button class="allow" @click="banUserInChatAction(chat)">Promote</button>
+                      <button class="ban" @click="allowUserInChatAction(chat)">Demote</button>
+                    </div>
+                  </div>
+                </div>
+                <button class="chatdestroy" @click="destroyChat(chat)">Destroy</button>
+              </div>
             </div>
           </div>
         </div>
@@ -52,7 +59,11 @@ import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, demoteUse
 interface ChatRoomRow extends ChatRoom {
   userName: string
 }
-
+//todo:
+// - hacer que list-row-header no scrollee con el contenido de la lista si no hace falta, debería ser estático
+// - updatear pagina de chats para aceptar una query con el nombre/id del chat, al entrar si el usuario pertenece al chat, el chat es público o el usuario es un admin entra en el chat y puede participar/leer
+// - clikc en chatname redirige a chat, los admins pueden "see al chat channels without joinning", es decir entrar en un chat
+// - add notification system for succesful and failed actions -> top banner que aparece en rojo o verde
 export default defineComponent({
   data() {
     const userlist: IUser[] = []
@@ -145,48 +156,6 @@ export default defineComponent({
   height: 100vh;
 }
 
-.users-list {
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  overflow: hidden;
-  width: 50%;
-  background-color: #ccc;
-  height: 80%;
-}
-  
-.users-list-header {
-  display: flex;
-  align-items: center;
-  justify-items: center;
-  height: 40px;
-  background-color: #f2f2f2;
-  font-weight: bold;
-}
-
-.user-name {
-    flex-basis: 33.33%;
-}
-.user-id {
-    flex-basis: 33.33;
-}
-.ban-button {
-  flex-basis: 11.11%;
-  text-align: center;
-}
-  
-.user-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 50px;
-  width: 1000
-}
-
-.users-list-body {
-  height: 200px; /* set a fixed height */
-  overflow: auto; /* enable overflow scrolling */
-}
-
 .admin-page {
   display: flex;
   justify-content: center;
@@ -198,64 +167,20 @@ export default defineComponent({
 .users-list {
   border: 1px solid #ccc;
   border-radius: 5px;
-  overflow: hidden;
-  align-content: center;
+  width: 50%;
+  background-color: #ccc;
+  height: 80%;
+  position: relative;
+  overflow: hidden; /* hide overflowing content */
 }
 
-.user-name {
-    width: fit-content;
-    justify-content: center;
-}
-.user-id {
-    width: fit-content;
-    justify-content: center;
-}
-.ban-button {
-  width: fit-content;
-  text-align: center;
-  padding: 10px;
-}
-
-.ban-button {
-  color: #fff;
-  background-color: #d9534f;
-  border: none;
-  border-radius: 5px;
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-.ban-button:hover {
-  background-color: #c9302c;
-}
-.allow-button {
-  width: fit-content;
-  text-align: center;
-  padding: 10px;
-}
-
-.allow-button {
-  color: #fff;
-  background-color: green;
-  border: none;
-  border-radius: 5px;
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-.chat-list-header {
+.table-header {
   display: flex;
-  align-items: center;
-  justify-items: center;
-  height: 40px;
-  background-color: #f2f2f2;
-  font-weight: bold;
+  justify-content: center;
+  width: 100%
 }
 
-.chat-list-body {
-  /*overflow: scroll;
-  align-items: center;
-  justify-items: center;*/
+.list-body {
   position: absolute; /* needed to set height */
   top: 40px; /* height of the .chat-list-header */
   bottom: 0;
@@ -264,39 +189,68 @@ export default defineComponent({
   overflow-y: auto; /* allow vertical scrolling */
 }
 
-.chat-row {
+.list-row {
+  display: grid;
+  grid-template-rows: auto 1fr; /* define two rows, one for header and one for content */
+  width: 100%;
+  height: fit-content;
+  border: 1px solid black;
+  overflow-x: auto;
+}
+
+.list-row-content {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* each subgrid has three columns */
+  grid-gap: 5px; /* optional gap between subgrid items */
+  width: fit-content;
+}
+
+.list-row-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  width: 100%;
 }
 
-.chatname {
-  flex: 1;
-  margin-right: 10px;
+.list-attribute-name {
+  width:100%;
+  height: fit-content;
+  white-space: nowrap; /* prevent text from wrapping */
+  overflow: scroll;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
-.chatban {
+.list-attribute-input {
+  width: 20ch;
+  height: 4ch;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.manage {
   display: flex;
   margin-right: 10px;
   flex-wrap: nowrap;
 }
 
-.chatban input {
+.manage input {
   margin-right: 10px;
   padding: 5px;
 }
 
-.chatban button {
+.manage button.ban {
   background-color: red;
   color: white;
   border: none;
   padding: 5px 10px;
   cursor: pointer;
+  width: 10ch;
 }
 
-.chatban button.allow {
+.manage button.allow {
   background-color: green;
+  width: 10ch;
 }
 
 .chatdestroy {
@@ -305,6 +259,10 @@ export default defineComponent({
   border: none;
   padding: 5px 10px;
   cursor: pointer;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+  height: fit-content;
 }
 
 .chats-list {
@@ -317,7 +275,7 @@ export default defineComponent({
   overflow: hidden; /* hide overflowing content */
 }
 
-.chatban-box {
+.list-attribute-box {
   display: flex;
   flex-direction: column;
   justify-content: center;
