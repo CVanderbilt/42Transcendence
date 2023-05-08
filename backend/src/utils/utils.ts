@@ -87,7 +87,7 @@ export function getAuthToken(request) {
       role: decodedToken.role,
       userId: decodedToken.userId,
       email: decodedToken.email,
-      canModifyUser: (token, user: User): boolean => {
+      hasRightsOverUser: (token, user: User): boolean => {
         if (token.userId === user.id)
           return true;
         if (user.role === "OWNER")

@@ -79,7 +79,7 @@ export class UsersController {
             twofaSecret: Joi.boolean(),
         }), user);
         const token = getAuthToken(request)
-        if (token.canModifyUser(token, await this.usersService.findOneById(id)))
+        if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
             return this.usersService.updateUser(id, user)
         throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to modify user ${id}`)
     }
