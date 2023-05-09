@@ -212,10 +212,12 @@ export default defineComponent({
 
 .list-attribute-name {
   width:100%;
+  min-width: 10ch;
   height: fit-content;
   white-space: nowrap; /* prevent text from wrapping */
   overflow: scroll;
   position: relative;
+  justify-self: center;
   top: 50%;
   transform: translateY(-50%);
 }
@@ -232,11 +234,13 @@ export default defineComponent({
   display: flex;
   margin-right: 10px;
   flex-wrap: nowrap;
+  justify-self: center;
 }
 
 .manage input {
   margin-right: 10px;
   padding: 5px;
+  justify-self: center;
 }
 
 .manage button.ban {
