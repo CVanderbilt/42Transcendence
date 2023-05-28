@@ -37,6 +37,7 @@ export class AuthController {
     }
     catch (cause) {
       Logger.log(cause)
+      throw cause
     }
   }
 

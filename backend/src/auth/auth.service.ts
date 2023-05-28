@@ -54,12 +54,12 @@ export class AuthService {
 
         const user = await this.usersService.findByEmail(login.email)
         if (!user) {
-            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+            throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.NOT_FOUND)
         }
 
         const passCheck = await bcrypt.compare(login.password, user.password)
         if (!passCheck) {
-            throw new HttpException("INCORRECT_PASSWORD", HttpStatus.FORBIDDEN)
+            throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.FORBIDDEN)
         }
 
         const pic : string = "" // TODO: get generic pic?

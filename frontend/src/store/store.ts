@@ -20,6 +20,7 @@ export interface State {
   chats:  [{ name: string, role: string, isBanned: boolean, isMuted: boolean}]
   socket: any
   user?: IUser
+  notification: { message: string, isError: boolean }
 }
 
 // define injection key
@@ -29,9 +30,16 @@ export const store = createStore<State>({
     apiCode: "",
     chats: [{ name: "general", role: "user", isBanned: false, isMuted: false}],
     socket: null,
+    notification: { message: "message", isError: false}
   },
 
   mutations: {
+    setNotification(state, { message, isError }) {
+      state.notification = {
+        message,
+        isError,
+      }
+    },
     removeChats(state){
       state.chats = [{ name: "general", role: "user", isBanned: false, isMuted: false}]
     },

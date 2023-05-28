@@ -74,6 +74,7 @@ import { IUser, store } from "../../store/store";
 import { AUTHENTICATE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";
 import { apiClient } from "@/api/baseApi";
 import { elogin, get42Token } from "@/api/auth";
+import { publishNotification } from "@/utils/utils";
 
 export default defineComponent({
   name: "Login",
@@ -119,7 +120,6 @@ export default defineComponent({
       };
       elogin(loginData)
         .then((response) => {
-          if (response.status === 200) {
             const user: IUser = {
               id: response.data.userId,
               username: response.data.name,
@@ -135,16 +135,9 @@ export default defineComponent({
             localStorage.setItem("token", response.data.token)
             console.log("regular token: " + localStorage.getItem("token"))
 
+            publishNotification("succesfully logged in", false)
             this.$router.push("/");
-          }
-          else {
-            throw ("usuario o contraseña incorrecta")
-          }
         })
-        .catch((error) => {
-          alert("usuario o contraseña incorrectos");
-          console.log(error);
-        });
     },
 
   // Cambia el codigo de 42 por el JWT token y los datos de usuario

@@ -195,13 +195,13 @@ export default defineComponent({
   width: 100%;
   height: fit-content;
   border: 1px solid black;
-  overflow-x: auto;
+  overflow-x: scroll;
 }
 
 .list-row-content {
   display: grid;
   grid-template-columns: repeat(3, 1fr); /* each subgrid has three columns */
-  grid-gap: 5px; /* optional gap between subgrid items */
+  gap: 5px;
   width: fit-content;
 }
 

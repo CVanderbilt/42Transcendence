@@ -68,12 +68,15 @@
     </nav>
     <router-view />
   </div>
+  <notification-banner/>
+
 </template>
 
 <script lang="ts">
 import { computed, defineComponent } from "vue";
 import Home from "./pages/home/Home.vue";
 import Login from "./pages/login/Login.vue";
+import NotificationBanner from "./components/NotificationBanner.vue"
 import { useStore } from "vuex";
 import { key, store } from "./store/store";
 import { BDropdown, BDropdownItem, BDropdownDivider } from "bootstrap-vue-3";
@@ -92,12 +95,21 @@ export default defineComponent({
       user
     };
   },
+  created() {
+    this.notificationMessage = "message";
+    this.isError = false;
+},
   data() {
-    return {searchUsername: ""};
+    return {
+      searchUsername: "",
+      notificationMessage: '',
+      isError: false
+    };
   },
   components: {
     Home,
     Login,
+    NotificationBanner
   },
   methods: {
     searchFriend(username: string){ //todo: update para usar apis
@@ -117,7 +129,6 @@ export default defineComponent({
       this.$router.push("/login");
       store.commit("changeUser", undefined)
       localStorage.removeItem("token");
-      
     },
   }
 });

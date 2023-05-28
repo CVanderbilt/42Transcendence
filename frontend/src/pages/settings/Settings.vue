@@ -79,7 +79,7 @@
 import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
 import { key, store } from "../../store/store";
-import { generateImageURL } from "@/utils/utils";
+import { generateImageURL, publishNotification } from "@/utils/utils";
 import { IUserAPI, putImage, updateUser } from "@/api/user";
 
 declare var require: any;
@@ -117,7 +117,8 @@ export default defineComponent({
       }
       alert("update user info: " + this.options.username);
 
-      updateUser(store.state.user.id, this.options);
+      updateUser(store.state.user.id, this.options)
+      .then(() => { publishNotification("User updated", false) })
       console.log(this.selectedFile)
       if (this.selectedFile)
         putImage(store.state.user.id, this.selectedFile);

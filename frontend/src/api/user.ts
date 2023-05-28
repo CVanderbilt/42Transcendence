@@ -17,8 +17,7 @@ export interface IUserAPI {
 // } // Esto sucede automáticamente en el backend cuando un usuario se registra
 
 export async function updateUser(id: string, options: IUserAPI) {    
-    alert(`will update user ${id} !!!`)
-    return apiClient.put(`${URL}/${id}`, options);
+    return apiClient.put(`${URL}/${id}`, options)
 }
 
 export async function getUserById(id: string) {
