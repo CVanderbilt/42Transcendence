@@ -6,12 +6,8 @@ import { toFileStream } from 'qrcode';
 import { LoginResDto, EmailSignupDto, LoginEmailDto } from './auth.dto';
 import axios from 'axios';
 import { User } from 'src/users/user.interface';
-import { ChatMembership, ChatRoom } from 'src/chats2/chats.interface';
-import { ChatMembershipDto, ChatRoomDto } from 'src/chats2/chats.dto';
-import { Chats2Service } from 'src/chats2/chats2.service';
 import * as bcrypt from 'bcrypt';
-import { Logger2 } from 'src/utils/Logger2';
-import { generateRandomSquaresImage } from 'src/utils/utils';
+import { generateRandomSquaresImage, getAuthToken } from 'src/utils/utils';
 const PNG = require('pngjs').PNG;
 
 
@@ -21,6 +17,10 @@ export class AuthService {
         private readonly usersService: UsersService,
         private jwtService: JwtService,
     ) { }
+
+    async getUserById(id: string) : Promise<User> {
+        return await this.usersService.findOneById(id)
+    }
 
     // LOGIN WITH EMAIL -------------------------------------------------------------------
     async registerWithEmail(data: EmailSignupDto) {
@@ -52,7 +52,7 @@ export class AuthService {
         if (login === undefined)
             throw new HttpException("INVALID_DATA", HttpStatus.BAD_REQUEST)
 
-        const user = await this.usersService.findByEmail(login.email)
+        const user : User = await this.usersService.findByEmail(login.email)
         if (!user) {
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
         }
@@ -61,6 +61,8 @@ export class AuthService {
         if (!passCheck) {
             throw new HttpException("INCORRECT_PASSWORD", HttpStatus.FORBIDDEN)
         }
+
+        Logger.log("pass check ok")
 
         const pic : string = "" // TODO: get generic pic?
         
@@ -110,7 +112,7 @@ export class AuthService {
         
     }
 
-    async exchangeTokenForUserData(token: string): Promise<any> {
+    async exchange42TokenForUserData(token: string): Promise<any> {
         const res = axios({
             method: "get",
             url: "https://api.intra.42.fr/v2/me",
@@ -121,11 +123,10 @@ export class AuthService {
     }
     
 
-
     async signIn42(code: string): Promise<LoginResDto> {
         const accessData = await this.exchangeCodeForAccessData(code)
 
-        const me42 = await this.exchangeTokenForUserData(accessData.access_token)
+        const me42 = await this.exchange42TokenForUserData(accessData.access_token)
         const name = me42.first_name + " " + me42.last_name
         const login42 = me42.login
         const pic = me42.image.link
@@ -216,13 +217,14 @@ export class AuthService {
     // --------------------------------------------
 
     async me(req : any) : Promise<any>{
-        const token = req.headers.authorization?.replace('Bearer ', '');
+        const token = getAuthToken(req);
         if (token) {
             try {
-                const payload = await this.jwtService.verifyAsync(token, {
-                    secret: process.env.JWT_KEY,
-                });
-                return payload
+                const user = await this.usersService.findOneById(token.userId);
+                // const payload = await this.jwtService.verifyAsync(token, {
+                //     secret: process.env.JWT_KEY,
+                // });
+                return user
 
             } catch (err) {
                 console.log(err);

@@ -65,8 +65,8 @@ export class UsersService {
         return this.usersRepo.delete(id);
     }
 
-    async EnableTwofa(login42: string, value: boolean) {
-        const u = await this.usersRepo.findOneBy({ login42 : login42 })
+    async EnableTwofa(userId: string, value: boolean) {
+        const u = await this.usersRepo.findOneBy({ id : userId })
         u.is2fa = value
         u.save()
         return u.is2fa

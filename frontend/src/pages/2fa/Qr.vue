@@ -22,6 +22,7 @@
 
 import { apiClient } from '@/api/baseApi';
 import { ENABLE_2FA_ENDPOINT, QR_ENDPOINT } from '@/config';
+import { store } from '@/store/store';
 import { defineComponent } from 'vue';
 
 
@@ -38,9 +39,11 @@ export default defineComponent({
     },
     methods: {
         async getQRCode() {
+            console.log('Getting QR code');
             const response = await apiClient.get(QR_ENDPOINT, { responseType: 'blob' });
             const qrCodeUrl = URL.createObjectURL(response.data);
             this.qrCodeUrl = qrCodeUrl;
+            console.log('QR code URL: ' + qrCodeUrl);
         },
 
         async submitCode() {
@@ -49,6 +52,7 @@ export default defineComponent({
             const response = await apiClient.post(ENABLE_2FA_ENDPOINT + "/" + this.code);
             
             if (response.status === 200) {
+                store.commit('set2fa', true);
                 this.$router.push('/');
             } else {
                 alert('Invalid code, please try again.');

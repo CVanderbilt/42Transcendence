@@ -47,6 +47,16 @@ export const store = createStore<State>({
       console.log({user});
       console.log(state.user);
     },
+    changeUserName(state, userName: string) {
+      if (state.user) {
+        state.user.username = userName;
+      }
+    },
+    set2fa(state, is2fa: boolean) {
+      if (state.user) {
+        state.user.is2fa = is2fa;
+      }
+    }
   },
   actions: {
     connectSocket() {
