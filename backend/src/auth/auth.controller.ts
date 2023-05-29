@@ -44,11 +44,12 @@ export class AuthController {
 
   @Post('login')
   async login42(@Body() data: {code: string}) {
-    validateInput(Joi.object({
-      code: Joi.string().required(), //todo: a lo mejor -> Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required()
-    }), data);
+    // validateInput(Joi.object({
+    //   code: Joi.string().required(), //todo: a lo mejor -> Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required()
+    // }), data);
     try {
       const res = await this.authService.signIn42(data.code)
+      Logger.log(res)
       return res
     } catch (cause) {
         Logger.log(cause)
@@ -56,12 +57,11 @@ export class AuthController {
   }
 
   @Get('2fa/qr')
-  // @UseGuards(Jwt2faAuthGuard)
   async generateQr(@Req() req, @Res() response: Response) {    
-    console.log('generateQr')
+    Logger.log('generateQr')
+    Logger.log(response)
     const authToken = getAuthToken(req)
     const user : User = await this.authService.getUserById(authToken.userId)
-    console.log("user", user);
 
     //TODO esta validación no funciona, sospecho que es porque es cuando el login 42 es null. Necesitamos validar aquí el login 42 ???
     // // validando solo los campos de user que realmente se usan
@@ -104,12 +104,18 @@ export class AuthController {
   @HttpCode(200) // cambia el código por defecto que en post es 201
   @UseGuards(JwtAuthGuard)
   async authenticate(@Req() request, @Param('code') twoFactorCode: string) {
-    validateInput(Joi.object({
-      login42: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
-      id: Joi.string().guid().required()
-    }), request.user);
-    Logger.log("authenticate with 2fa code : " + twoFactorCode + " for user " + request.user.login42)
-    return this.authService.loginWith2fa(request.user.id, twoFactorCode);
+    //TODO: validar code son siempre 6 digitos
+    // validateInput(Joi.object({
+    // }), twoFactorCode);
+    try {
+      const authToken = getAuthToken(request)
+      const user : User = await this.authService.getUserById(authToken.userId)
+      Logger.log("authenticate with 2fa code : " + twoFactorCode + " for user " + user.username)
+      return this.authService.loginWith2fa(request.user.id, twoFactorCode);
+    }
+    catch (cause) {
+      Logger.log(cause)
+    }
   }
 
   @Get('/me')

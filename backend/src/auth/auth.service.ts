@@ -62,8 +62,6 @@ export class AuthService {
             throw new HttpException("INCORRECT_PASSWORD", HttpStatus.FORBIDDEN)
         }
 
-        Logger.log("pass check ok")
-
         const pic : string = "" // TODO: get generic pic?
         
         const payload = {
@@ -113,13 +111,16 @@ export class AuthService {
     }
 
     async exchange42TokenForUserData(token: string): Promise<any> {
+        Logger.log("exchange42TokenForUserData")
         const res = axios({
             method: "get",
             url: "https://api.intra.42.fr/v2/me",
             headers: { Authorization: "Bearer " + token },
         })
 
-        return (await res).data
+        const data = (await res).data
+        Logger.log(data)
+        return data
     }
     
 
