@@ -92,7 +92,7 @@ export class AuthController {
     //   id: Joi.string().guid().required()
     // }), user);
 
-    const isCodeValid = await this.authService.isTwoFactorAuthenticationCodeValid(user.id, twoFactorCode)
+    const isCodeValid = await this.authService.isTwoFactorAuthenticationCodeValid(user, twoFactorCode)
     if (!isCodeValid) {
       throw new UnauthorizedException('Wrong authentication code');
     }
@@ -109,9 +109,8 @@ export class AuthController {
     // }), twoFactorCode);
     try {
       const authToken = getAuthToken(request)
-      const user : User = await this.authService.getUserById(authToken.userId)
-      Logger.log("authenticate with 2fa code : " + twoFactorCode + " for user " + user.username)
-      return this.authService.loginWith2fa(request.user.id, twoFactorCode);
+      Logger.log("authenticate with 2fa code : " + twoFactorCode + " for user " + authToken.userId)
+      return this.authService.loginWith2fa(authToken.userId, twoFactorCode);
     }
     catch (cause) {
       Logger.log(cause)

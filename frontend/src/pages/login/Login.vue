@@ -10,26 +10,29 @@
                   <img src="@/assets/logo.png" height="90" />
                 </div>
                 <h2 class="fw-bold mb-2 text-uppercase">FT_TRANSCENDENCE</h2>
-                <p class="text-white-50 mb-5">
-                  Please enter your login and password
-                </p>
-
-                <div class="form-outline form-white mb-4">
-                  <input type="email" id="emailX" class="form-control form-control-lg" v-on:keyup.enter="validateLogin()"
-                    v-model="email" />
-                  <label class="form-label" for="emailX">Email</label>
-                </div>
-
-                <div class="form-outline form-white mb-4">
-                  <input type="password" id="typePasswordX" class="form-control form-control-lg"
-                    v-on:keyup.enter="validateLogin()" v-model="password" />
-                  <label class="form-label" for="typePasswordX">Password</label>
-                </div>
 
                 <div v-if="is2faCodeRequired.status === false">
-                  <p class="small mb-5 pb-lg-2">
-                    <a class="text-white-50" v-bind:href="login42page">Login with 42 user</a>
+                  <p class="text-white-50 mb-5">
+                    Please enter your login and password
                   </p>
+
+                  <div class="form-outline form-white mb-4">
+                    <input type="email" id="emailX" class="form-control form-control-lg"
+                      v-on:keyup.enter="validateLogin()" v-model="email" />
+                    <label class="form-label" for="emailX">Email</label>
+                  </div>
+
+                  <div class="form-outline form-white mb-4">
+                    <input type="password" id="typePasswordX" class="form-control form-control-lg"
+                      v-on:keyup.enter="validateLogin()" v-model="password" />
+                    <label class="form-label" for="typePasswordX">Password</label>
+                  </div>
+
+                  <div v-if="is2faCodeRequired.status === false">
+                    <button class="btn btn-outline-light btn-lg px-5" type="submit" v-on:click="validateLogin()">
+                      Login
+                    </button>
+                  </div>
                 </div>
 
                 <div v-if="is2faCodeRequired.status === true">
@@ -42,20 +45,19 @@
                   </form>
                 </div>
 
-                <div v-if="is2faCodeRequired.status === false">
-                  <button class="btn btn-outline-light btn-lg px-5" type="submit" v-on:click="validateLogin()">
-                    Login
-                  </button>
-                </div>
               </div>
 
               <div>
+                <div v-if="is2faCodeRequired.status === false">
+                  <p class="small mb-5 pb-lg-2">
+                    <a class="text-white-50" v-bind:href="login42page">Login with 42 user</a>
+                  </p>
+                </div>
                 <p class="mb-0">
                   Don't have an account?
                   <a href="/signUp" class="text-white-50 fw-bold">Sign Up</a>
                 </p>
               </div>
-
             </div>
           </div>
         </div>
@@ -116,25 +118,27 @@ export default defineComponent({
       elogin(loginData)
         .then((response) => {
           if (response.status === 200) {
-            const user: IUser = {
-              id: response.data.userId,
-              username: response.data.name,
-              email: response.data.email,
-              password: response.data.password,
-              pic: response.data.pic,
-              is2fa: response.data.is2fa,
-              role: response.data.role,
-              isBanned: response.data.isBanned
-            }
-            store.commit("changeUser", user)
 
-            localStorage.setItem("token", response.data.token)
-            console.log("regular token: " + localStorage.getItem("token"))
 
             if (response.data.is2fa) {
               this.is2faCodeRequired.status = true
             }
             else {
+              const user: IUser = {
+                id: response.data.userId,
+                username: response.data.name,
+                email: response.data.email,
+                password: response.data.password,
+                pic: response.data.pic,
+                is2fa: response.data.is2fa,
+                role: response.data.role,
+                isBanned: response.data.isBanned
+              }
+              store.commit("changeUser", user)
+
+              localStorage.setItem("token", response.data.token)
+              console.log("regular token: " + localStorage.getItem("token"))
+
               this.$router.push("/");
             }
           }
@@ -155,7 +159,7 @@ export default defineComponent({
       bodyFormData.append("code", code);
       try {
         const response = await get42Token(code)
-        console.log("response: " + {response})
+        console.log("response: " + { response })
 
         if (response.status !== 201) {
           console.log("Failed logging in with server: " + response.status)
@@ -222,6 +226,19 @@ export default defineComponent({
         //Validate the user's code and redirect them to the appropriate page
         const response = await apiClient.post(AUTHENTICATE_2FA_ENDPOINT + "/" + this.twoFactorCode)
         if (response.status === 200) {
+          const user: IUser = {
+            id: response.data.userId,
+            username: response.data.name,
+            email: response.data.email,
+            password: response.data.password,
+            pic: response.data.pic,
+            is2fa: response.data.is2fa,
+            role: response.data.role,
+            isBanned: response.data.isBanned
+          }
+          store.commit("changeUser", user)
+
+          console.log("2fa token: " + localStorage.getItem("token"))
           localStorage.setItem("token", response.data.token)
           this.tokenLogin()
         }

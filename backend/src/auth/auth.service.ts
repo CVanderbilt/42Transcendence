@@ -177,8 +177,7 @@ export class AuthService {
         return toFileStream(stream, otpauthUrl)
     }
 
-    public async isTwoFactorAuthenticationCodeValid(userId: string, code: string) {
-        const user = await this.usersService.findOneById(userId);
+    public async isTwoFactorAuthenticationCodeValid(user: User, code: string) {
         const isCodeValid = authenticator.verify({
             token: code,
             secret: user.twofaSecret,
@@ -195,7 +194,7 @@ export class AuthService {
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
         }
 
-        const isCodeValid = await this.isTwoFactorAuthenticationCodeValid(userId, code)
+        const isCodeValid = await this.isTwoFactorAuthenticationCodeValid(foundUser, code)
         if (!isCodeValid) {
             throw new UnauthorizedException('Wrong authentication code');
         }

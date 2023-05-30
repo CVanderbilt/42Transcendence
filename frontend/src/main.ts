@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import { createRouter, createWebHistory, useRoute } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import Login from './pages/login/Login.vue'
 import SignUp from './pages/signup/SignUp.vue'
 import Settings from './pages/settings/Settings.vue'

@@ -60,6 +60,7 @@
                   Change
                 </button>
               </div>
+              <button v-on:click="logOut()">Logout</button>
             </div>
           </div>
         </div>
@@ -141,7 +142,13 @@ export default defineComponent({
     uploadImage(event: Event) {
       const input = event.target as HTMLInputElement;
       this.selectedFile = input.files![0]
-    }
+    },
+
+    logOut() {
+      this.$router.push("/login");
+      store.commit("changeUser", undefined)
+      localStorage.removeItem("token");
+    },
   },
 });
 </script>
