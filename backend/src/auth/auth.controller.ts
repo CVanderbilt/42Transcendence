@@ -103,26 +103,18 @@ export class AuthController {
 
   @Post('2fa/authenticate/:code')
   @HttpCode(200) // cambia el código por defecto que en post es 201
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   async authenticate(@Req() request, @Param('code') twoFactorCode: string) {
     //TODO: validar code son siempre 6 digitos
-    // validateInput(Joi.object({
-    // }), twoFactorCode);
+    validateInput(Joi.object({
+      twoFactorCode: Joi.string().pattern(/^\d{6}$/).required()
+    }), {twoFactorCode});
     try {
       const authToken = getAuthToken(request)
-      Logger.log("authenticate with 2fa code : " + twoFactorCode + " for user " + authToken.userId)
-      return this.authService.loginWith2fa(authToken.userId, twoFactorCode);
+      return await this.authService.loginWith2fa(authToken.userId, twoFactorCode);
     }
-    catch (cause) {
-      Logger.log(cause)
+    catch (cause: any) {
+      throw cause
     }
-  }
-
-  @Get('/me')
-  @UseGuards(Jwt2faAuthGuard)
-  async me(@Req() req) : Promise<any> {
-    // no estoy muy seguro de como validar este input
-    const me = await this.authService.me(req);
-    return me;
   }
 }

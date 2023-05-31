@@ -29,7 +29,6 @@ export class LoginResDto {
     login42?: string
     email?: string
     name: string
-    pic: string
     token: string
     is2fa: boolean
     role: string

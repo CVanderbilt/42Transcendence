@@ -118,29 +118,26 @@ export default defineComponent({
       };
       elogin(loginData)
         .then((response) => {
+          localStorage.setItem("token", response.data.token)
+          console.log("guardando token: " + localStorage.getItem("token"))
 
-
-            if (response.data.is2fa) {
-              this.is2faCodeRequired.status = true
+          if (response.data.is2fa) {
+            this.is2faCodeRequired.status = true
+          }
+          else {
+            const user: IUser = {
+              id: response.data.userId,
+              username: response.data.name,
+              email: response.data.email,
+              password: response.data.password,
+              pic: response.data.pic,
+              is2fa: response.data.is2fa,
+              role: response.data.role,
+              isBanned: response.data.isBanned
             }
-            else {
-              const user: IUser = {
-                id: response.data.userId,
-                username: response.data.name,
-                email: response.data.email,
-                password: response.data.password,
-                pic: response.data.pic,
-                is2fa: response.data.is2fa,
-                role: response.data.role,
-                isBanned: response.data.isBanned
-              }
-              store.commit("changeUser", user)
-
-              localStorage.setItem("token", response.data.token)
-              console.log("regular token: " + localStorage.getItem("token"))
-
-              this.$router.push("/");
-            }
+            store.commit("changeUser", user)
+            this.$router.push("/");
+          }
         })
     },
 
@@ -149,38 +146,29 @@ export default defineComponent({
       console.log("Adquiriendo token con login de 42")
       var bodyFormData = new FormData();
       bodyFormData.append("code", code);
-      try {
-        const response = await get42Token(code)
-        console.log("response: " + { response })
+      get42Token(code)
+        .then((response) => {
+          localStorage.setItem("token", response.data.token)
+          console.log("guardando token: " + localStorage.getItem("token"))
 
-        if (response.status !== 201) {
-          console.log("Failed logging in with server: " + response.status)
-          return
-        }
-
-        localStorage.setItem("token", response.data.token)
-        console.log("regular token: " + localStorage.getItem("token"))
-
-        this.is2faCodeRequired.status = response.data.is2fa
-        console.log("is2faCodeRequired.status: " + this.is2faCodeRequired.status)
-
-        console.log("userId: " + response.data.userId);
-
-        const user: IUser = {
-          id: response.data.userId,
-          email: "",
-          password: "",
-          username: response.data.name,
-          pic: response.data.pic,
-          is2fa: response.data.is2fa,
-          role: response.data.role,
-          isBanned: response.data.isBanned
-        }
-        store.commit("changeUser", user)
-      }
-      catch (error) {
-        console.log("Get token: " + error)
-      }
+          if (response.data.is2fa) {
+            this.is2faCodeRequired.status = true
+          }
+          else {
+            const user: IUser = {
+              id: response.data.userId,
+              username: response.data.name,
+              email: response.data.email,
+              password: response.data.password,
+              pic: response.data.pic,
+              is2fa: response.data.is2fa,
+              role: response.data.role,
+              isBanned: response.data.isBanned
+            }
+            store.commit("changeUser", user)
+            this.$router.push("/");
+          }
+        })
     },
 
     // Si existe token pedimos los datos de usuario al servidor y los guardamos
@@ -192,29 +180,28 @@ export default defineComponent({
         return
       }
 
-      try {
-        await apiClient.get("/auth/me").then((response) => {
-          if (response.status === 401) {
-            console.log("Token login: Invalid token")
-            return
-          }
-          if (response.status !== 200) {
-            console.log("Token login: Error getting user data")
-            return
-          }
-          console.log("You are in")
-          this.$router.push("/")
-        })
-      }
-      catch (error) {
-        console.log("Token login: " + error)
-      }
+      // try {
+      //   await apiClient.get("/auth/me").then((response) => {
+      //     if (response.status === 401) {
+      //       console.log("Token login: Invalid token")
+      //       return
+      //     }
+      //     if (response.status !== 200) {
+      //       console.log("Token login: Error getting user data")
+      //       return
+      //     }
+      //     console.log("You are in")
+      //     this.$router.push("/")
+      //   })
+      // }
+      // catch (error) {
+      //   console.log("Token login: " + error)
+      // }
     },
 
     async submit2faCode() {
       console.log("submitCode: " + this.twoFactorCode + "")
       try {
-
         //Validate the user's code and redirect them to the appropriate page
         const response = await apiClient.post(AUTHENTICATE_2FA_ENDPOINT + "/" + this.twoFactorCode)
         if (response.status === 200) {
@@ -222,17 +209,19 @@ export default defineComponent({
             id: response.data.userId,
             username: response.data.name,
             email: response.data.email,
-            password: response.data.password,
+            password: "",
             pic: response.data.pic,
             is2fa: response.data.is2fa,
             role: response.data.role,
             isBanned: response.data.isBanned
           }
-          store.commit("changeUser", user)
 
           console.log("2fa token: " + localStorage.getItem("token"))
           localStorage.setItem("token", response.data.token)
-          this.tokenLogin()
+          
+          store.commit("changeUser", user)
+          console.log(localStorage.getItem("user"))
+          this.$router.push("/");
         }
       } catch (error: any) {
         if (error.response.status === 401) {

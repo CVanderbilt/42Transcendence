@@ -67,7 +67,10 @@ export class AuthService {
         const payload = {
             userId: user.id,
             email: user.email,
+            name: user.username,
             role: user.role,
+            isTwoFactorAuthenticationEnabled: !!user.is2fa,
+            isTwoFactorAuthenticated: false,
         }
 
         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
@@ -75,7 +78,6 @@ export class AuthService {
             "userId": user.id,
             "email": user.email,
             "name": user.username,
-            "pic": pic,
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
@@ -147,15 +149,18 @@ export class AuthService {
 
         const payload = {
             userId: user.id,
-            accessData42: accessData,
+            email: user.email,
+            name: user.username,
+            role: user.role,
+            isTwoFactorAuthenticationEnabled: false,
+            isTwoFactorAuthenticated: false,
         }
 
         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
         const res : LoginResDto = {
             "userId": user.id,
-            "login42": login42,
-            "name": name,
-            "pic": pic,
+            "email": user.email,
+            "name": user.username,
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
@@ -185,51 +190,69 @@ export class AuthService {
         return isCodeValid
     }
 
-    async loginWith2fa(userId: string, code: string) {
+    async loginWith2fa(userId: string, code: string) : Promise<LoginResDto> {
+      Logger.log("login2fa")
+
         if (userId === undefined)
             throw new HttpException("USER_NOT_FOUND", HttpStatus.BAD_REQUEST)
 
-        const foundUser = await this.usersService.findOneById(userId)
-        if (!foundUser) {
+        const user = await this.usersService.findOneById(userId)
+        if (!user) {
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
         }
 
-        const isCodeValid = await this.isTwoFactorAuthenticationCodeValid(foundUser, code)
+        const isCodeValid = await this.isTwoFactorAuthenticationCodeValid(user, code)
         if (!isCodeValid) {
-            throw new UnauthorizedException('Wrong authentication code');
+            throw new HttpException("INVALID_CODE", HttpStatus.FORBIDDEN)
         }
 
         const payload = {
-            login42: foundUser.login42,
-            name: foundUser.username,
-            isTwoFactorAuthenticationEnabled: !!foundUser.is2fa,
+            userId: user.id,
+            email: user.email,
+            role: user.role,
+            name: user.username,
+            isTwoFactorAuthenticationEnabled: !!user.is2fa,
             isTwoFactorAuthenticated: true,
         };
 
-        const data = {
-            login42: foundUser.login42,
-            token: this.jwtService.sign(payload, { secret: process.env.JWT_KEY }),
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
+        const res : LoginResDto = {
+            "userId": user.id,
+            "email": user.email,
+            "name": user.username,
+            "token": token,
+            "is2fa": user.is2fa,
+            "role": user.role,
         }
 
-        return data
+        return res
     }
 
     // --------------------------------------------
 
-    async me(req : any) : Promise<any>{
-        const token = getAuthToken(req);
-        if (token) {
-            try {
-                const user = await this.usersService.findOneById(token.userId);
-                // const payload = await this.jwtService.verifyAsync(token, {
-                //     secret: process.env.JWT_KEY,
-                // });
-                return user
+    // async me(req : any) : Promise<any>{
+    //     const token42 = getAuthToken(req, false);
 
-            } catch (err) {
-                console.log(err);
-            }
-        }
-    }
+    //     user = await this.usersService.findBy42Login(token42.)
+    //         const payload = {
+    //             userId: user.id,
+    //             email: user.email,
+    //             name: user.username,
+    //             role: user.role,
+    //             isTwoFactorAuthenticationEnabled: !!user.is2fa,
+    //             isTwoFactorAuthenticated: false,
+    //         }
+    
+    //         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
+    //         const res : LoginResDto = {
+    //             "userId": user.id,
+    //             "email": user.email,
+    //             "name": user.username,
+    //             "pic": pic,
+    //             "token": token,
+    //             "is2fa": user.is2fa,
+    //             "role": user.role,
+    //         }
+    // }
 }
 

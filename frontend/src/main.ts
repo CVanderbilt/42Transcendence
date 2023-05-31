@@ -46,13 +46,14 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   console.log('enruta')
   if (to.matched.some((route) => route.meta.requiresAuth)) {
-    if (!store.state.user && to.matched.some((route) => route.meta.requiresAuth)) {
+    
+    if (!localStorage.getItem('token') && to.matched.some((route) => route.meta.requiresAuth)) {
       next('/login')
     } else {
       next()
     }
   } else if (to.matched.some((route) => route.meta.onlyWithoutAuth)) {
-    if (store.state.user) {
+    if (localStorage.getItem('token')) {
       next('/')
     } else {
       next()
