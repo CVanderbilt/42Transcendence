@@ -5,10 +5,10 @@
 </template>
 
 <script lang="ts">
-import { ref } from 'vue';
+import { ref, defineComponent } from 'vue';
 import { store } from '@/store/store';
 
-export default {
+export default defineComponent({
   name: 'NotificationBanner',
   data() {
     return {
@@ -35,7 +35,7 @@ export default {
       }, 3000);
     },
   },
-};
+});
 </script>
 
 <style>

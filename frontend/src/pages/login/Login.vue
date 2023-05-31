@@ -6,40 +6,37 @@
           <div class="card bg-dark text-white" style="border-radius: 1rem">
             <div class="card-body p-5 text-center">
               <div class="mb-md-5 mt-md-4 pb-9">
-                <div class="
-                                                              d-flex
-                                                              justify-content-center
-                                                              text-center
-                                                              mt-4
-                                                              mb-5
-                                                              pt-1
-                                                            ">
+                <div class="d-flex justify-content-center text-center mt-4 mb-5 pt-1">
                   <img src="@/assets/logo.png" height="90" />
                 </div>
                 <h2 class="fw-bold mb-2 text-uppercase">FT_TRANSCENDENCE</h2>
-                <p class="text-white-50 mb-5">
-                  Please enter your login and password
-                </p>
-
-                <div class="form-outline form-white mb-4">
-                  <input type="email" id="emailX" class="form-control form-control-lg" v-on:keyup.enter="validateLogin()"
-                    v-model="email" />
-                  <label class="form-label" for="emailX">Email</label>
-                </div>
-
-                <div class="form-outline form-white mb-4">
-                  <input type="password" id="typePasswordX" class="form-control form-control-lg"
-                    v-on:keyup.enter="validateLogin()" v-model="password" />
-                  <label class="form-label" for="typePasswordX">Password</label>
-                </div>
 
                 <div v-if="is2faCodeRequired.status === false">
-                  <p class="small mb-5 pb-lg-2">
-                    <a class="text-white-50" v-bind:href="login42page">Login with 42 user</a>
+                  <p class="text-white-50 mb-5">
+                    Please enter your login and password
                   </p>
+
+                  <div class="form-outline form-white mb-4">
+                    <input type="email" id="emailX" class="form-control form-control-lg"
+                      v-on:keyup.enter="validateLogin()" v-model="email" />
+                    <label class="form-label" for="emailX">Email</label>
+                  </div>
+
+                  <div class="form-outline form-white mb-4">
+                    <input type="password" id="typePasswordX" class="form-control form-control-lg"
+                      v-on:keyup.enter="validateLogin()" v-model="password" />
+                    <label class="form-label" for="typePasswordX">Password</label>
+                  </div>
+
+                  <div v-if="is2faCodeRequired.status === false">
+                    <button class="btn btn-outline-light btn-lg px-5" type="submit" v-on:click="validateLogin()">
+                      Login
+                    </button>
+                  </div>
                 </div>
+
                 <div v-if="is2faCodeRequired.status === true">
-                  <form @submit.prevent="submitCode">
+                  <form @submit.prevent="submit2faCode">
                     <div class="form-group">
                       <label for="code">Enter the code from your app:</label>
                       <input type="text" class="form-control" id="code" v-model="twoFactorCode" />
@@ -48,18 +45,19 @@
                   </form>
                 </div>
 
-                <button class="btn btn-outline-light btn-lg px-5" type="submit" v-on:click="validateLogin()">
-                  Login
-                </button>
               </div>
 
               <div>
+                <div v-if="is2faCodeRequired.status === false">
+                  <p class="small mb-5 pb-lg-2">
+                    <a class="text-white-50" v-bind:href="login42page">Login with 42 user</a>
+                  </p>
+                </div>
                 <p class="mb-0">
                   Don't have an account?
                   <a href="/signUp" class="text-white-50 fw-bold">Sign Up</a>
                 </p>
               </div>
-
             </div>
           </div>
         </div>
@@ -120,113 +118,133 @@ export default defineComponent({
       };
       elogin(loginData)
         .then((response) => {
-            const user: IUser = {
-              id: response.data.userId,
-              username: response.data.name,
-              email: response.data.email,
-              password: response.data.password,
-              pic: response.data.pic,
-              is2fa: response.data.is2fa,
-              role: response.data.role,
-              isBanned: response.data.isBanned
+
+
+            if (response.data.is2fa) {
+              this.is2faCodeRequired.status = true
             }
-            store.commit("changeUser", user)
+            else {
+              const user: IUser = {
+                id: response.data.userId,
+                username: response.data.name,
+                email: response.data.email,
+                password: response.data.password,
+                pic: response.data.pic,
+                is2fa: response.data.is2fa,
+                role: response.data.role,
+                isBanned: response.data.isBanned
+              }
+              store.commit("changeUser", user)
 
-            localStorage.setItem("token", response.data.token)
-            console.log("regular token: " + localStorage.getItem("token"))
+              localStorage.setItem("token", response.data.token)
+              console.log("regular token: " + localStorage.getItem("token"))
 
-            publishNotification("succesfully logged in", false)
-            this.$router.push("/");
+              this.$router.push("/");
+            }
         })
     },
 
-  // Cambia el codigo de 42 por el JWT token y los datos de usuario
-  async getToken(code: string) {
-    console.log("Adquiriendo token con login de 42")
-    var bodyFormData = new FormData();
-    bodyFormData.append("code", code);
-    try {
-      const response = await get42Token(code)
+    // Cambia el codigo de 42 por el JWT token y los datos de usuario
+    async getToken(code: string) {
+      console.log("Adquiriendo token con login de 42")
+      var bodyFormData = new FormData();
+      bodyFormData.append("code", code);
+      try {
+        const response = await get42Token(code)
+        console.log("response: " + { response })
 
-      if (response.status !== 201) {
-        console.log("Failed logging in with server: " + response.status)
+        if (response.status !== 201) {
+          console.log("Failed logging in with server: " + response.status)
+          return
+        }
+
+        localStorage.setItem("token", response.data.token)
+        console.log("regular token: " + localStorage.getItem("token"))
+
+        this.is2faCodeRequired.status = response.data.is2fa
+        console.log("is2faCodeRequired.status: " + this.is2faCodeRequired.status)
+
+        console.log("userId: " + response.data.userId);
+
+        const user: IUser = {
+          id: response.data.userId,
+          email: "",
+          password: "",
+          username: response.data.name,
+          pic: response.data.pic,
+          is2fa: response.data.is2fa,
+          role: response.data.role,
+          isBanned: response.data.isBanned
+        }
+        store.commit("changeUser", user)
+      }
+      catch (error) {
+        console.log("Get token: " + error)
+      }
+    },
+
+    // Si existe token pedimos los datos de usuario al servidor y los guardamos
+    async tokenLogin() {
+      // comprueba si ya hay un token en el local storage y si es valido
+      console.log(localStorage.getItem("token"))
+      if (localStorage.getItem("token") === null) {
+        console.log("Token login: No token found")
         return
       }
 
-      localStorage.setItem("token", response.data.token)
-      console.log("regular token: " + localStorage.getItem("token"))
-
-      this.is2faCodeRequired.status = response.data.is2fa
-      console.log("is2faCodeRequired.status: " + this.is2faCodeRequired.status)
-
-      console.log("userId: " + response.data.userId);
-
-      const user: IUser = {
-        id: response.data.userId,
-        email: "",
-        password: "",
-        username: response.data.name,
-        pic: response.data.pic,
-        is2fa: response.data.is2fa,
-        role: response.data.role,
-        isBanned: response.data.isBanned
+      try {
+        await apiClient.get("/auth/me").then((response) => {
+          if (response.status === 401) {
+            console.log("Token login: Invalid token")
+            return
+          }
+          if (response.status !== 200) {
+            console.log("Token login: Error getting user data")
+            return
+          }
+          console.log("You are in")
+          this.$router.push("/")
+        })
       }
-      store.commit("changeUser", user)
-    }
-    catch (error) {
-      console.log("Get token: " + error)
-    }
-  },
+      catch (error) {
+        console.log("Token login: " + error)
+      }
+    },
 
-  // Si existe token pedimos los datos de usuario al servidor y los guardamos
-  async tokenLogin() {
-    // comprueba si ya hay un token en el local storage y si es valido
-    console.log(localStorage.getItem("token"))
-    if (localStorage.getItem("token") === null) {
-      console.log("Token login: No token found")
-      return
-    }
+    async submit2faCode() {
+      console.log("submitCode: " + this.twoFactorCode + "")
+      try {
 
-    try {
-      await apiClient.get("/auth/me").then((response) => {
-        if (response.status === 401) {
-          console.log("Token login: Invalid token")
-          return
+        //Validate the user's code and redirect them to the appropriate page
+        const response = await apiClient.post(AUTHENTICATE_2FA_ENDPOINT + "/" + this.twoFactorCode)
+        if (response.status === 200) {
+          const user: IUser = {
+            id: response.data.userId,
+            username: response.data.name,
+            email: response.data.email,
+            password: response.data.password,
+            pic: response.data.pic,
+            is2fa: response.data.is2fa,
+            role: response.data.role,
+            isBanned: response.data.isBanned
+          }
+          store.commit("changeUser", user)
+
+          console.log("2fa token: " + localStorage.getItem("token"))
+          localStorage.setItem("token", response.data.token)
+          this.tokenLogin()
         }
-        if (response.status !== 200) {
-          console.log("Token login: Error getting user data")
-          return
+      } catch (error: any) {
+        if (error.response.status === 401) {
+          alert('Invalid code, please try again.')
         }
-        console.log("You are in")
-        this.$router.push("/")
-      })
-    }
-    catch (error) {
-      console.log("Token login: " + error)
-    }
+        else {
+          alert('Something went wrong, please try again.')
+        }
+        console.log(error.name + ": " + error.message)
+      }
+    },
   },
-
-  async submitCode() {
-    console.log("submitCode: " + this.twoFactorCode + "")
-    try {
-
-      //Validate the user's code and redirect them to the appropriate page
-      const response = await apiClient.post(AUTHENTICATE_2FA_ENDPOINT + "/" + this.twoFactorCode)
-      if (response.status === 200) {
-        localStorage.setItem("token", response.data.token)
-        this.tokenLogin()
-      }
-    } catch (error: any) {
-      if (error.response.status === 401) {
-        alert('Invalid code, please try again.')
-      }
-      else {
-        alert('Something went wrong, please try again.')
-      }
-      console.log(error.name + ": " + error.message)
-    }
-  },
-},
 
 
 });
