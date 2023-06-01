@@ -10,18 +10,33 @@
             <div class="row chats-window">
               <!-- ------------------ chats list ------------------ -->
               <div class="col chats-list">
-                <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name" style="display: flex;">
+                <h6 style="color: white; margin-top: 30px;">Group chats</h6>
+                <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name" >
+                  <div v-if="!item.chatRoom.isDirect" style="display: flex;">
                   <b-button v-on:click="changeRoom(item.chatRoom.id, item.chatRoom.name)"
                     style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                     {{ item.chatRoom.name }}
                   </b-button>
                   <button v-if="item.chatRoom.name !== 'general'" @click="leaveRoom(item.chatRoom.id)"> x </button>
+                  </div>
+                </div>
+
+                <h6 style="color: white; margin-top: 30px;">Direct chats</h6>
+                <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name">
+                  <div v-if="item.chatRoom.isDirect" style="display: flex;">
+                    <b-button v-on:click="changeRoom(item.chatRoom.id, item.chatRoom.name)"
+                      style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
+                      {{ getNiceChatName(item.chatRoom) }}
+                    </b-button>
+                    <button v-if="item.chatRoom.name !== 'general'" @click="leaveRoom(item.chatRoom.id)"> x </button>
+                  </div>
+
                 </div>
               </div>
 
               <div class="col-9 chat-column">
                 <div class="chat-header">
-                  {{ chatRoomName }}
+                  {{ getNiceChatName(currentMembership.chatRoom) }}
                 </div>
 
                 <!-- ------------------ chat area ------------------ -->
@@ -69,7 +84,7 @@
               <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Password"
                 v-model="searchedChatPassword" />
 
-              <b-button @click="joinRoom(searchedChat, searchedChatPassword); searchedChatPassword = ''; ">Search
+              <b-button @click="joinRoom(searchedChat, searchedChatPassword); searchedChatPassword = '';">Search
                 chat</b-button>
             </div>
             <b-button @click="modalShow = !modalShow">Create Chat</b-button>
@@ -186,7 +201,7 @@ import { useStore } from "vuex";
 import { key } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
-import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq } from "../../api/chatApi";
+import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom } from "../../api/chatApi";
 import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "../../api/user";
@@ -324,11 +339,14 @@ export default defineComponent({
   },
 
   methods: {
-    getNameDirectMessage(name: string) {
-      if (name.split("¿")[0] === "directMessage") {
-        return name.split("¿")[1].includes(this.user?.username as string)
-          ? name.split("¿")[2]
-          : name.split("¿")[1];
+    getNiceChatName(chatRoom: ChatRoom) {
+      const name = chatRoom.name;
+      if (chatRoom.isDirect) {
+        if (name.split("¿")[0] === "directMessage") {
+          return name.split("¿")[1].includes(this.user?.username as string)
+            ? name.split("¿")[2]
+            : name.split("¿")[1];
+        }
       }
       return name;
     },
@@ -358,8 +376,7 @@ export default defineComponent({
         return;
       }
 
-      if (this.currentMembership.isMuted || this.currentMembership.isBanned)
-      {
+      if (this.currentMembership.isMuted || this.currentMembership.isBanned) {
         return;
       }
 
