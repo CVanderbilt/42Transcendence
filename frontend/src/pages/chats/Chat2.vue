@@ -316,7 +316,7 @@ export default defineComponent({
     }
 
     this.io.socket.offAny();
-    this.io.socket.on("new_message", (message, username) => {
+    this.io.socket.on("new_message", (message, username, ) => {
       const msg: ChatMessage = {
         content: message,
         senderName: username,
@@ -341,13 +341,13 @@ export default defineComponent({
   methods: {
     getNiceChatName(chatRoom: ChatRoom) {
       const name = chatRoom.name;
-      if (chatRoom.isDirect) {
-        if (name.split("¿")[0] === "directMessage") {
-          return name.split("¿")[1].includes(this.user?.username as string)
-            ? name.split("¿")[2]
-            : name.split("¿")[1];
-        }
-      }
+      // if (chatRoom.isDirect) {
+      //   if (name.split("¿")[0] === "directMessage") {
+      //     return name.split("¿")[1].includes(this.user?.username as string)
+      //       ? name.split("¿")[2]
+      //       : name.split("¿")[1];
+      //   }
+      // }
       return name;
     },
 
@@ -386,14 +386,17 @@ export default defineComponent({
           return;
         }
 
+        // send through socket
         const msg2emit = {
           room: this.chatRoomName,
           message: this.message,
           username: this.user.username,
+          roomId: this.roomId,
         }
 
         this.io.socket.emit("event_message", msg2emit)
 
+        // send through api
         const outMessage: ChatMessage = {
           content: this.message,
           chatRoomId: this.roomId,
@@ -550,7 +553,7 @@ export default defineComponent({
       this.modalChatAdmin = !this.modalChatAdmin;
       this.manageChatParticipants = []
       this.managedChatPassword = ""
-      // get chat memberships
+      // get chat members
       try {
         this.managedChatMemberships = (await getChatRoomMembershipsReq(this.roomId)).data
         // delete current user from list
@@ -592,7 +595,7 @@ export default defineComponent({
       })
 
       // add new members
-      try { // TODO: capturar error de usuario no encontrado -> el backend devería responder un 404
+      try {
         this.manageChatParticipants.forEach(async (username) => {
           if (username !== this.user?.username && username !== "") {
             const invitee = (await getUserByName(username)).data

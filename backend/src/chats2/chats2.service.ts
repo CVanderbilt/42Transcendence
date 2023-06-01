@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatRoomEntity, ChatMembershipEntity, ChatMsgEntity } from './chatEntities.entity';
@@ -7,6 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { UserEntity } from 'src/users/user.entity';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { User } from 'src/users/user.interface';
+import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
 
 @Injectable()
 export class Chats2Service {
@@ -71,6 +72,7 @@ export class Chats2Service {
         return await this.chatRoomsRepo.save(room)
     }
 
+    @UseGuards(JwtAdminGuard)
     findAllChatRooms(): Promise<ChatRoom[]> {
         return this.chatRoomsRepo.find();
     }

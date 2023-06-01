@@ -21,7 +21,7 @@ import {
     }
   
     handleConnection(client: any, ...args: any[]) {
-      console.log('Hola alguien se conecto al socket 👌👌👌');
+      console.log('Alguien se conecto al socket 👌👌👌');
     }
   
     handleDisconnect(client: any) {
@@ -35,14 +35,14 @@ import {
       client.join(`room_${room}`);
     }
   
-    @SubscribeMessage('event_message') //TODO Backend
+    @SubscribeMessage('event_message')
     handleIncommingMessage(
       client: Socket,
-      payload: { room: string; message: string, username: string },
+      payload: { room: string; message: string, username: string, roomId: number },
     ) {
-      const { room, message, username } = payload;
+      const { room, message, username, roomId } = payload;
       console.log(username + " manda el mensaje " + message + " por el chat " + room)
-      this.server.to(`room_${room}`).emit('new_message',message, username);
+      this.server.to(`room_${room}`).emit('new_message',message, username, roomId);
     }
   
     @SubscribeMessage('event_leave')

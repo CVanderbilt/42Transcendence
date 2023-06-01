@@ -11,6 +11,9 @@ url     = require('url');
 import { getAuthToken, validateInput } from 'src/utils/utils';
 import * as Joi from 'joi';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
+import { plainToClass } from 'class-transformer';
+import { UserDto } from './user.dto';
+
 
 @Controller('users')
 export class UsersController {
@@ -51,20 +54,27 @@ export class UsersController {
     async demoteUser(@Param('id') id: string): Promise<void> {
         await this.usersService.setUserAsCustomer(id);
     }
+    
     // @UseGuards(JwtAuthGuard)
     @Get()
-    async findAll(): Promise<User[]> {
-        return await (this.usersService.findAllUsers())
+    async findAll(): Promise<UserDto[]> {
+        // transforma el array de usuarios en un array de UserDto
+        const users = await this.usersService.findAllUsers()
+        return users.map(user => new UserDto(user))
     }
 
     @Get('name/:username')
-    async findUserByName(@Param('username') username: string): Promise<User> {
-        return this.usersService.findOneByName(username)
+    async findUserByName(@Param('username') username: string): Promise<UserDto> {
+        const user = await this.usersService.findOneByName(username)
+        if (!user)
+            throw new HttpException(`User ${username} not found`, 404)
+
+        return new UserDto(user) // para no devolver el password
     }
     
     @Get(':id')
     async findUser(@Param('id') id: string): Promise<User> {
-        return this.usersService.findOneById(id)
+        return new UserDto( await this.usersService.findOneById(id) )
     }
 
     // admins y el propio usuario a modificar

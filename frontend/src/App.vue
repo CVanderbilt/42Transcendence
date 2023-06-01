@@ -113,12 +113,13 @@ export default defineComponent({
   },
   methods: {
     searchFriend(username: string){ //todo: update para usar apis
+      
       getUserByName(username)
         .then((response) => {
           this.$router.push("/user?uuid=" + response.data.id);
         })
         .catch((error) => {
-          alert("usuario o contraseña incorrectos");
+          alert("Usuario no encontrado");
         });
     },
     modifyProfileRoute() {

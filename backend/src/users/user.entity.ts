@@ -1,4 +1,6 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Exclude } from "class-transformer";
+import { ChatMembershipEntity } from "src/chats2/chatEntities.entity";
+import { BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('user')
 export class UserEntity extends BaseEntity {
@@ -8,6 +10,7 @@ export class UserEntity extends BaseEntity {
     @Column ({ nullable: true }) 
     email: string
 
+    @Exclude()
     @Column ({ nullable: true }) 
     password: string
 
@@ -17,14 +20,12 @@ export class UserEntity extends BaseEntity {
     @Column({ nullable: false, default: "Anonymous" })
     username: string
 
+    @Exclude()
     @Column({ default: false })
     is2fa: boolean;
 
-    @Column(
-        {
-            // select: false, // no se selecciona en las queries a sql, por lo que no se muestra cuando devuelves el dto
-            default: "",
-        }) // si añado nullable: true después no TS me deja darle un valor
+    @Exclude()
+    @Column({ default: "", }) // si añado nullable: true después no TS me deja darle un valor
     twofaSecret: string
 
     @Column({ default: 0})
@@ -47,4 +48,7 @@ export class UserEntity extends BaseEntity {
 
     @Column({ nullable: false, default: "CUSTOMER" })
     role: string;
+
+    @OneToMany(() => ChatMembershipEntity, membership => membership.chatRoom, { cascade: ["remove"] })
+    memberships: ChatMembershipEntity[];
 }

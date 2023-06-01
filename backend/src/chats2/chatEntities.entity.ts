@@ -1,6 +1,5 @@
-import { Logger } from "@nestjs/common";
 import { UserEntity } from "src/users/user.entity";
-import { BaseEntity, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Timestamp } from "typeorm";
+import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, Timestamp } from "typeorm";
 
 @Entity('chatRoom')
 export class ChatRoomEntity extends BaseEntity{
@@ -23,10 +22,16 @@ export class ChatRoomEntity extends BaseEntity{
 
     @Column({default: null})
     password: string
+
+    @OneToMany(() => ChatMembershipEntity, membership => membership.chatRoom, { cascade: ['remove'] })
+    memberships: ChatMembershipEntity[];
+
+    @OneToMany(() => ChatMsgEntity, message => message.chatRoom, { cascade: ['remove'] })
+    messages: ChatMsgEntity[];
 }
 
 @Entity('chatMembership')
-export class ChatMembershipEntity extends BaseEntity{
+export class ChatMembershipEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number    
 
