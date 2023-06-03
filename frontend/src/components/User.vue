@@ -46,9 +46,8 @@
 <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
-import { key, store } from "../store/store";
+import { key } from "../store/store";
 import { getUserById } from "../api/user";
-import { getDirectChatRoomReq } from "@/api/chatApi";
 import { getFriendshipsRequest, makeFriendshipRequest, unfriendRequest } from "@/api/friendshipsApi";
 import { generateImageURL } from "@/utils/utils";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
@@ -120,38 +119,6 @@ export default defineComponent({
           alert("usuario o contraseña incorrectos");
         });
     },
-
-    // async createChat(lookedUpUserName: string, lookedUpId: string) {
-    //   const names : string[] = [];
-    //   names.push(this.currentUser?.username as string);
-    //   names.push(lookedUpUserName);
-    //   names.sort();
-
-    //   const chatRoomName =
-    //     "directMessage¿" + names[0] + "¿" + names[1];
-
-    //   const UUID = this.currentUser?.id as string;
-
-    //   console.log(chatRoomName)
-
-    //   let room;
-    //   try {
-    //     room = (await createChatRoomReq(chatRoomName, UUID, "", true)).data
-    //   } catch(err) {
-    //     alert("Direct chat could not be created");
-    //     console.log(err)
-    //     return
-    //   }
-    //   try {
-    //     inviteUsersReq(room.id, lookedUpId)
-    //   } catch(err) {
-    //     alert("User could not be invited to chat");
-    //     console.log(err)
-    //     return
-    //   }
-
-    //   this.$router.push("/chats?name=" + chatRoomName);
-    // },
 
     createGame() {
       const gameId = "skdlfjhgsdkjfh"

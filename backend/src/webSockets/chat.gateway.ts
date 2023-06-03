@@ -17,21 +17,22 @@ import {
     @WebSocketServer() server: Server;
   
     afterInit(server: any) {
-      console.log('Esto se ejecuta cuando inicia')
+      console.log('Socket initialized')
     }
   
     handleConnection(client: any, ...args: any[]) {
-      console.log('Alguien se conecto al socket 👌👌👌');
+      console.log('Client connected to socket👌')
+
     }
   
     handleDisconnect(client: any) {
-      console.log('Alguien se fue del chat')
+      console.log('Client disconnected from socket👋')
     }
   
   
     @SubscribeMessage('event_join')
     handleJoinRoom(client: Socket, room: string) {
-        console.log(`alguien se unió al chat ${room}`)
+      console.log(`alguien se unió al chat ${room}`)
       client.join(`room_${room}`);
     }
   

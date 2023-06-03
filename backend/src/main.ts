@@ -25,7 +25,6 @@ async function bootstrap() {
   
   const chats2Service = app.get(Chats2Service)
   await chats2Service.getChatRoom(generalChatRoomDto)
-
 }
 
 bootstrap();

@@ -4,9 +4,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
-// import { ChatsModule } from './chats/chats.module';
-import { ChatGateway } from './chatSocket/chat.gateway';
-import {GameGateway} from './gameSocket/game.gateway'
+import { ChatGateway } from './webSockets/chat.gateway';
+import { StateGateway } from './webSockets/state.gateway';
+import { GameGateway } from './gameSocket/game.gateway'
 import { FriendshipsModule } from './friendships/friendships.module';
 import { GamesModule } from './games/games.module';
 import { MatchesModule } from './matches/matches.module';
@@ -36,10 +36,12 @@ import { GlobalExceptionFilter } from './GlobalExceptionFilter';
     MatchesModule,
     Chats2Module,
     AuthModule,
+    StateGateway
   ],
   providers: [
     ChatGateway,
     GameGateway,
+    StateGateway,
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,

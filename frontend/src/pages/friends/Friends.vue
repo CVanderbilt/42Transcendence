@@ -4,12 +4,16 @@
     <div v-for="fshp in friendships" v-bind:key="fshp.id">
       <div class="friend-block">
         <h2>{{ fshp.friend.username }}</h2>
+
+        <p>{{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}</p>
+        <p v-if="!friendsStates.find(x => x.userId == fshp.friend.id)">Offline</p>
+
         <h3>Member since<br>{{ fshp.friend.createdAt }}</h3>
         <h3>Victories: {{ fshp.friend.victories }}</h3>
         <h3>Defeats: {{ fshp.friend.defeats }}</h3>
         <h3>Ladder position: ??</h3>
         <div v-if="!fshp.isBlocked">
-          <OpenDirectChatButton :userId="user.id" :friendId="fshp.friend.id"/>
+          <OpenDirectChatButton :userId="user.id" :friendId="fshp.friend.id" />
           <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="createGame(fshp.friend.id)">
             Game
           </button>
@@ -31,19 +35,25 @@
 </template>
     
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 import { useStore } from "vuex";
 import { key } from "../../store/store";
-import "@/style/styles.css";
 import { getFriendshipsRequest, IFriendship, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
+import { stateSocketIO } from "@/main";
+import "@/style/styles.css";
+
+interface UserState {
+  userId: string;
+  state: string;
+}
 
 export default defineComponent({
   name: "Friends",
 
   components: {
     OpenDirectChatButton,
-},
+  },
 
   data() {
     let friendships: IFriendship[] = []
@@ -56,8 +66,42 @@ export default defineComponent({
     };
   },
 
+  setup() {
+    const io = stateSocketIO();
+    const friendsStates = ref<UserState[]>([])
+    const updateStates = (updatedState: UserState) => {
+      const index = friendsStates.value.findIndex(element => updatedState.userId == element.userId)
+      if (index != -1)
+        friendsStates.value[index].state = updatedState.state
+      else
+        friendsStates.value.push(updatedState)
+    }
+
+    return {
+      io,
+      friendsStates,
+      updateStates,
+    };
+  },
+
   async mounted() {
     this.getFriendships()
+
+    this.io.socket.on("user_states", (states: UserState[]) => {
+      states.forEach(element => {
+        const state: UserState = {
+          userId: element.userId,
+          state: element.state,
+        }
+        this.updateStates(state)
+      })
+    });
+
+    this.io.socket.emit("get_users_states", this.user.id)
+
+    this.io.socket.on("user_state_updated", (state: UserState) => {
+      this.updateStates(state)
+    });
   },
 
   methods: {
@@ -69,7 +113,6 @@ export default defineComponent({
           // get nice date
           const date = new Date(friend.createdAt)
           const since = date.getDay() + "/" + date.getMonth() + "/" + date.getFullYear()
-          console.log(since)
           friend.createdAt = since
           this.friendships.push(fshp)
         })

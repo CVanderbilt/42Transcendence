@@ -44,7 +44,6 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  console.log('enruta')
   if (to.matched.some((route) => route.meta.requiresAuth)) {
     
     if (!localStorage.getItem('token') && to.matched.some((route) => route.meta.requiresAuth)) {
@@ -78,9 +77,16 @@ export const gameSocketIO = () => {
     socket
   }
 }
-  
+
 export const chatSocketIO = () => {
   const socket = io('http://localhost:83')
+  return {
+    socket
+  }
+}
+
+export const stateSocketIO = () => {
+  const socket = io('http://localhost:84')
   return {
     socket
   }
@@ -98,3 +104,8 @@ app.config.errorHandler = (error: any, vm, info) => {
 }
 
 app.mount('#app')
+
+
+
+
+

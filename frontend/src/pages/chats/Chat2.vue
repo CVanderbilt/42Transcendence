@@ -332,8 +332,6 @@ export default defineComponent({
       this.messages.push(msg)
     });
 
-    // join room socket
-
   },
 
   beforeRouteLeave() {
@@ -405,12 +403,7 @@ export default defineComponent({
           senderId: this.user.id,
         }
 
-        try {
-          postChatMessageReq(this.roomId, outMessage)
-        }
-        catch (err: any) {
-          alert("Error posting the message. Try again later");
-        }
+        postChatMessageReq(this.roomId, outMessage)
 
         this.message = "";
         // this.chatArea.scrollTop = this.chatArea.scrollHeight
@@ -432,7 +425,6 @@ export default defineComponent({
       try {
         console.log("joining room")
         const resp = await joinChatRoomReq(room.id, this.user?.id as string, password) // returns membership even if user is already a member of the room
-        console.log(resp.data)
         this.isAdmin = resp.data.isAdmin
         if (!this.userMemberships.find((membership) => membership.chatRoom.id === room.id)) {
           this.userMemberships.push(resp.data)
