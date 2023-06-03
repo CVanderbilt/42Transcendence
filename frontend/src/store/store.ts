@@ -3,15 +3,15 @@ import { createStore, Store } from 'vuex'
 import createPersistedState from 'vuex-persistedstate'
 import { useSocketIO } from "../main";
 
-export interface IUser {
-  id: string,
-  email: string,
-  username: string,
-  password: string,
-  pic: string,
-  is2fa: boolean,
-  role: string,
-  isBanned: boolean
+export class IUser {
+  id = "";
+  email = "";
+  username = "";
+  password = "";
+  pic = "";
+  is2fa = false;
+  role = "";
+  isBanned = false;
 }
 
 // define your typings for the store state
@@ -19,7 +19,7 @@ export interface State {
   apiCode: string
   chats:  [{ name: string, role: string, isBanned: boolean, isMuted: boolean}]
   socket: any
-  user?: IUser
+  user: IUser
   notification: { message: string, isError: boolean }
 }
 
@@ -30,7 +30,8 @@ export const store = createStore<State>({
     apiCode: "",
     chats: [{ name: "general", role: "user", isBanned: false, isMuted: false}],
     socket: null,
-    notification: { message: "message", isError: false}
+    notification: { message: "message", isError: false},
+    user : new IUser()
   },
 
   mutations: {

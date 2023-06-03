@@ -6,56 +6,32 @@
           <div class="card bg-dark text-white" style="border-radius: 1rem">
             <div class="card-body p-5 text-center">
               <div class="mb-md-5 mt-md-4 pb-9">
-                <div
-                  class="
+                <div class="
                     d-flex
                     justify-content-center
                     text-center
                     mt-4
                     mb-5
                     pt-1
-                  "
-                >
-                  <img
-                    :src="generateImageURL()"
-                    height="200"
-                    style="border-radius: 50%"
-                  />
+                  ">
+                  <img :src="generateImageURL()" height="200" style="border-radius: 50%" />
                 </div>
                 <h2 class="fw-bold mt-1 mb-5 text-uppercase">{{ lookedUpUserName }}</h2>
                 <h4 class="fw-bold mt-1 mb-5">Email: {{ lookedUpEmail }}</h4>
 
-                <button
-                  v-if="!areFriends"
-                  class="btn btn-outline-light mt-3 btn-lg px-5"
-                  type="submit"
-                  v-on:click="makeFriend()"
-                >
-                Make friend
+                <button v-if="!areFriends" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
+                  v-on:click="makeFriend()">
+                  Make friend
                 </button>
-                <button
-                  v-if="areFriends"
-                  class="btn btn-outline-light mt-3 btn-lg px-5"
-                  type="submit"
-                  v-on:click="unfriend()"
-                >
-                Unfriend
+                <button v-if="areFriends" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
+                  v-on:click="unfriend()">
+                  Unfriend
                 </button>
                 <p v-if="areFriends">you guys are friends</p>
                 <p v-if="!areFriends"> </p>
-                
-                <button
-                  class="btn btn-outline-light mt-3 btn-lg px-5"
-                  type="submit"
-                  v-on:click="openChat(lookedUpUserName, lookedUpId)"
-                >
-                  Chat
-                </button>
-                <button
-                  class="btn btn-outline-light mt-3 btn-lg px-5"
-                  type="submit"
-                  v-on:click="createGame()"
-                >
+
+                <OpenDirectChatButton :userId="userId" :friendId="lookedUpId" />
+                <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="createGame()">
                   Game
                 </button>
               </div>
@@ -67,20 +43,23 @@
   </section>
 </template>
   
-  <script lang="ts">
+<script lang="ts">
 import { computed, defineComponent } from "vue";
-import { useStore, mapActions } from "vuex";
+import { useStore } from "vuex";
 import { key, store } from "../store/store";
 import { getUserById } from "../api/user";
-import axios from "axios";
-import { createChatRoomReq, inviteUsersReq } from "@/api/chatApi";
+import { getDirectChatRoomReq } from "@/api/chatApi";
 import { getFriendshipsRequest, makeFriendshipRequest, unfriendRequest } from "@/api/friendshipsApi";
 import { generateImageURL } from "@/utils/utils";
-
-declare var require: any;
+import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
 
 export default defineComponent({
   name: "User",
+
+  components: {
+    OpenDirectChatButton,
+  },
+
   setup() {
     const store = useStore(key);
     const profilePicture = "";
@@ -93,12 +72,16 @@ export default defineComponent({
   },
 
   data() {
+    const store = useStore(key);
+    const user = store.state.user;
+
     return {
       lookedUpId: "",
       lookedUpUserName: "",
       lookedUpEmail: "",
       areFriends: false,
       friendshipId: "",
+      userId: user.id,
     };
   },
 
@@ -113,17 +96,15 @@ export default defineComponent({
   },
 
   methods: {
-    async getFriendship()
-    {
+    async getFriendship() {
       try {
         const friendships = await getFriendshipsRequest(this.currentUser?.id as string)
         const found = friendships.find(f => f.friend.id == this.lookedUpId)
-        if (found)
-          {
-            this.areFriends = true
-            this.friendshipId = found.id as string
-          }
-      } catch(err) {
+        if (found) {
+          this.areFriends = true
+          this.friendshipId = found.id as string
+        }
+      } catch (err) {
         console.log(err)
       }
     },
@@ -172,42 +153,9 @@ export default defineComponent({
     //   this.$router.push("/chats?name=" + chatRoomName);
     // },
 
-    createGame(){
+    createGame() {
       const gameId = "skdlfjhgsdkjfh"
       this.$router.push("/game?id=" + this.lookedUpId);
-    },
-
-    async openChat(friendName: string, friendId: string) {
-      const names: string[] = [];
-      names.push(this.currentUser?.username as string);
-      names.push(friendName);
-      names.sort();
-
-      const chatRoomName =
-        names[0] + "-" + names[1];
-
-      const UUID = this.currentUser?.id as string;
-
-      console.log(chatRoomName)
-
-      let room;
-      try {
-        room = (await createChatRoomReq(chatRoomName, UUID, "", true)).data
-      } catch (err) {
-        alert("Direct chat could not be created");
-        console.log(err)
-        return
-      }
-      try {
-        const res = await inviteUsersReq(room.id, friendId)
-        console.log(res)
-      } catch (err) {
-        alert("User could not be invited to chat");
-        console.log(err)
-        return
-      }
-
-      this.$router.push("/chats?name=" + chatRoomName);
     },
 
     onUpload() {
@@ -238,23 +186,19 @@ export default defineComponent({
 </script>
   
   <!-- Add "scoped" attribute to limit CSS to this component only -->
-  <style scoped>
+<style scoped>
 .gradient-custom {
   /* fallback for old browsers */
   background: #3609da;
 
   /* Chrome 10-25, Safari 5.1-6 */
-  background: -webkit-linear-gradient(
-    to right,
-    rgba(4, 8, 22, 0.804),
-    rgb(193, 209, 237)
-  );
+  background: -webkit-linear-gradient(to right,
+      rgba(4, 8, 22, 0.804),
+      rgb(193, 209, 237));
 
   /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-  background: linear-gradient(
-    to right,
-    rgba(4, 8, 22, 0.804),
-    rgb(193, 209, 237)
-  );
+  background: linear-gradient(to right,
+      rgba(4, 8, 22, 0.804),
+      rgb(193, 209, 237));
 }
 </style>

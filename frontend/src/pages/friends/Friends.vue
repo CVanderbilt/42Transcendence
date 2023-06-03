@@ -9,10 +9,7 @@
         <h3>Defeats: {{ fshp.friend.defeats }}</h3>
         <h3>Ladder position: ??</h3>
         <div v-if="!fshp.isBlocked">
-          <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
-            v-on:click="openChat(fshp.friend.id)">
-            Chat
-          </button>
+          <OpenDirectChatButton :userId="user.id" :friendId="fshp.friend.id"/>
           <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="createGame(fshp.friend.id)">
             Game
           </button>
@@ -39,23 +36,23 @@ import { useStore } from "vuex";
 import { key } from "../../store/store";
 import "@/style/styles.css";
 import { getFriendshipsRequest, IFriendship, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
-import { findDirectChatRoomReq as getDirectChatRoomReq } from "@/api/chatApi";
+import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
 
 export default defineComponent({
   name: "Friends",
 
+  components: {
+    OpenDirectChatButton,
+},
+
   data() {
     let friendships: IFriendship[] = []
-    return {
-      friendships: friendships,
-    };
-  },
-
-  setup() {
     const store = useStore(key);
     const user = store.state.user;
+
     return {
-      user,
+      friendships: friendships,
+      user: user,
     };
   },
 
@@ -79,13 +76,6 @@ export default defineComponent({
       } catch (err) {
         console.log(err)
       }
-    },
-
-    // TODO refactorizar a un componente
-    async openChat(friendId: string) {
-      // Search if chat already exists
-      const chatRoom = await (await getDirectChatRoomReq(this.user?.id as string, friendId)).data
-      this.$router.push("/chats?name=" + chatRoom.name);
     },
 
     createGame(friendId: string) {
