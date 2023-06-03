@@ -17,13 +17,13 @@
                   </p>
 
                   <div class="form-outline form-white mb-4">
-                    <input type="email" id="emailX" class="form-control form-control-lg"
+                    <input type="email" id="emailX" class="form-control form-control-lg" required
                       v-on:keyup.enter="validateLogin()" v-model="email" />
                     <label class="form-label" for="emailX">Email</label>
                   </div>
 
                   <div class="form-outline form-white mb-4">
-                    <input type="password" id="typePasswordX" class="form-control form-control-lg"
+                    <input type="password" id="typePasswordX" class="form-control form-control-lg" required
                       v-on:keyup.enter="validateLogin()" v-model="password" />
                     <label class="form-label" for="typePasswordX">Password</label>
                   </div>

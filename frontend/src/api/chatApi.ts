@@ -135,3 +135,9 @@ export async function promoteUserInChat(userName: string, roomId: string) {
 export async function demoteUserInChat(userName: string, roomId: string) {
     return apiClient.post(`${URL}/memberships/demote`, {userName, roomId})
 }
+
+export async function findDirectChatRoomReq(user1: string, user2: string) {
+    console.log("findDirectChatRoomReq")
+    console.log(user1)
+    return apiClient.post(`${URL}/rooms/direct`, {user1, user2})
+}

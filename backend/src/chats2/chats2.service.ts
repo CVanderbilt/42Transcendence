@@ -23,7 +23,7 @@ export class Chats2Service {
         private readonly usersRepo: Repository<UserEntity>,
     ) { }
 
-    async getChatRoom(roomDto: ChatRoomDto): Promise<ChatRoom> {
+    async getChatRoom(roomDto: ChatRoomDto, user: User = null): Promise<ChatRoom> {
         // check whether the room name is already taken
         const existingRoom = await this.chatRoomsRepo.findOne({ where: { name: roomDto.name } })
         if (existingRoom) {
@@ -37,6 +37,15 @@ export class Chats2Service {
             password: roomDto.password ? bcrypt.hashSync(roomDto.password, 10) : null,
             isDirect: roomDto.isDirect ? roomDto.isDirect : false,
         })
+
+        // if a user is provided add it as owner to the room
+        if (user) {
+            await this.chatMembershipsRepo.save({
+                user: { id: user.id },
+                chatRoom: { id: room.id },
+                isOwner: true,
+            })
+        }
 
         return room
     }
@@ -85,6 +94,52 @@ export class Chats2Service {
         return this.chatRoomsRepo.findOne({ where: { name: name } })
     }
 
+    async getDirectChatRoom(userId1: string, userId2: string) : Promise<ChatRoom> {
+        // find the chat room with the two users that is private
+        const chatRoom = await this.chatRoomsRepo
+        .createQueryBuilder('chatRoom')
+        .innerJoin('chatRoom.memberships', 'membership1')
+        .innerJoin('chatRoom.memberships', 'membership2')
+        .where('chatRoom.isDirect = :isDirect', { isDirect: true })
+        .andWhere('membership1.user.id = :userId1', { userId1: userId1 })
+        .andWhere('membership2.user.id = :userId2', { userId2: userId2 })
+        .getOne();
+
+        if (chatRoom) {
+            return chatRoom
+        }
+
+        const u1 = await this.usersRepo.findOne({ where: { id: userId1 } })
+        const u2 = await this.usersRepo.findOne({ where: { id: userId2 } })
+
+        const names = [u1.username, u2.username]
+        names.sort()
+        const roomName = "directMessage¿" + names[0] + "¿" + names[1]
+        // if no room is found create one
+        const roomDto: ChatRoomDto = {
+            name: roomName,
+            password: "",
+            isDirect: true,
+        }
+        const roomCreated = await this.getChatRoom(roomDto)
+        const membershipDto1: ChatMembershipDto = {
+            userId: userId1,
+            chatRoomId: roomCreated.id,
+            isAdmin: false,
+            isOwner: false,
+        }
+        const membershipDto2: ChatMembershipDto = {
+            userId: userId2,
+            chatRoomId: roomCreated.id,
+            isAdmin: false,
+            isOwner: false,
+        }
+        await this.joinChatRoom(roomCreated.id, membershipDto1)
+        await this.joinChatRoom(roomCreated.id, membershipDto2)
+        return roomCreated
+    }
+            
+
     async findUserChatRooms(userId: string): Promise<ChatRoom[]> {
         const res = await this.chatMembershipsRepo.createQueryBuilder('membership')
             .leftJoinAndSelect('membership.chatRoom', 'chatRoom')
@@ -100,6 +155,7 @@ export class Chats2Service {
         return rooms
     }
 
+    // called when a user is created
     async joinUser2GeneralChat(userId: string) {
         var generalChat: ChatRoom = await this.findChatRoomByName(process.env.GENERAL_CHAT_NAME)
         if (!generalChat) {
@@ -246,10 +302,12 @@ export class Chats2Service {
     }
 
     async getUserChatMembership(userId: string, chatRoomId: number) {
-        return await this.chatMembershipsRepo.findOne( { where: {
-            user: { id: userId },
-            chatRoom: { id: chatRoomId }
-        }})
+        return await this.chatMembershipsRepo.findOne({
+            where: {
+                user: { id: userId },
+                chatRoom: { id: chatRoomId }
+            }
+        })
     }
 
     async setIsBanned(userId: string, chatRoomId: number, isBanned: boolean) {
@@ -290,8 +348,8 @@ export class Chats2Service {
     }
 
     async deleteRoom(chatRoomId: number) {
-        await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId }})
-        await this.chatMsgsRepo.delete({ chatRoom: { id: chatRoomId }})
+        await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId } })
+        await this.chatMsgsRepo.delete({ chatRoom: { id: chatRoomId } })
         this.chatRoomsRepo.delete(chatRoomId);
     }
 
@@ -309,7 +367,7 @@ export class Chats2Service {
         if (!membership) {
             throw new UnauthorizedException('You are not allowed to post messages in this room')
         }
-        
+
         const postedMsg = await this.chatMsgsRepo.save({
             sender: sender,
             chatRoom: room,

@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { Jwt2faAuthGuard } from 'src/auth/jwt-2fa-auth.guard';
-import { validateInput } from 'src/utils/utils';
+import { getAuthToken, validateInput } from 'src/utils/utils';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { ChatMembership, ChatRoom } from './chats.interface';
 import { Chats2Service } from './chats2.service';
@@ -35,9 +35,21 @@ export class Chats2Controller {
         return await (this.chatsService.findUserChatRooms(id))
     }
 
+    // get private chat for users
+    @Post('rooms/direct')
+    async getPrivateRoom(@Body() body: any): Promise<ChatRoom> {
+        Logger.log("getPrivateRoom")
+        //TODO validar que los ids sean validos
+        Logger.log(`body: ${body}`)
+        const id1 = body.user1
+        const id2 = body.user2
+        Logger.log(`id1: ${id1}, id2: ${id2}`)
+        return await (this.chatsService.getDirectChatRoom(id1, id2))
+    }
+
     // new chat room
     @Post('rooms')
-    async create(@Body() dto: ChatRoomDto): Promise<ChatRoom> {
+    async create(@Req() request, @Body() dto: ChatRoomDto): Promise<ChatRoom> {
         // validateInput(Joi.object({
         //     password: Joi.string().required(), // Eliminar is required porque puede haber salas sin password
         //     name: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(), // todo: revisar a lo mejor no funciona correctamente
@@ -45,7 +57,9 @@ export class Chats2Controller {
         //     isDirect: Joi.boolean // todo: revisar a lo mejor no funciona correctamente
         // }), dto);
         try {
-            const res = await this.chatsService.getChatRoom(dto)
+            const token = getAuthToken(request)
+            const user = await this.usersService.findOneById(token.userId)
+            const res = await this.chatsService.getChatRoom(dto, user)
             return res
         } catch (error) {
             Logger.error(error)

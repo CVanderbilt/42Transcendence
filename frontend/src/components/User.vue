@@ -47,7 +47,7 @@
                 <button
                   class="btn btn-outline-light mt-3 btn-lg px-5"
                   type="submit"
-                  v-on:click="createChat(lookedUpUserName, lookedUpId)"
+                  v-on:click="openChat(lookedUpUserName, lookedUpId)"
                 >
                   Chat
                 </button>
@@ -140,14 +140,51 @@ export default defineComponent({
         });
     },
 
-    async createChat(lookedUpUserName: string, lookedUpId: string) {
-      const names : string[] = [];
+    // async createChat(lookedUpUserName: string, lookedUpId: string) {
+    //   const names : string[] = [];
+    //   names.push(this.currentUser?.username as string);
+    //   names.push(lookedUpUserName);
+    //   names.sort();
+
+    //   const chatRoomName =
+    //     "directMessage¿" + names[0] + "¿" + names[1];
+
+    //   const UUID = this.currentUser?.id as string;
+
+    //   console.log(chatRoomName)
+
+    //   let room;
+    //   try {
+    //     room = (await createChatRoomReq(chatRoomName, UUID, "", true)).data
+    //   } catch(err) {
+    //     alert("Direct chat could not be created");
+    //     console.log(err)
+    //     return
+    //   }
+    //   try {
+    //     inviteUsersReq(room.id, lookedUpId)
+    //   } catch(err) {
+    //     alert("User could not be invited to chat");
+    //     console.log(err)
+    //     return
+    //   }
+
+    //   this.$router.push("/chats?name=" + chatRoomName);
+    // },
+
+    createGame(){
+      const gameId = "skdlfjhgsdkjfh"
+      this.$router.push("/game?id=" + this.lookedUpId);
+    },
+
+    async openChat(friendName: string, friendId: string) {
+      const names: string[] = [];
       names.push(this.currentUser?.username as string);
-      names.push(lookedUpUserName);
+      names.push(friendName);
       names.sort();
 
       const chatRoomName =
-        "directMessage¿" + names[0] + "¿" + names[1];
+        names[0] + "-" + names[1];
 
       const UUID = this.currentUser?.id as string;
 
@@ -156,29 +193,21 @@ export default defineComponent({
       let room;
       try {
         room = (await createChatRoomReq(chatRoomName, UUID, "", true)).data
-      } catch(err) {
+      } catch (err) {
         alert("Direct chat could not be created");
         console.log(err)
         return
       }
       try {
-        inviteUsersReq(room.id, lookedUpId)
-      } catch(err) {
+        const res = await inviteUsersReq(room.id, friendId)
+        console.log(res)
+      } catch (err) {
         alert("User could not be invited to chat");
         console.log(err)
         return
       }
 
       this.$router.push("/chats?name=" + chatRoomName);
-    },
-
-    createGame(){
-      const gameId = "skdlfjhgsdkjfh"
-      this.$router.push("/game?id=" + this.lookedUpId);
-    },
-
-    openChat() {
-      this.$router.push("/chats?id=" + this.lookedUpId);
     },
 
     onUpload() {

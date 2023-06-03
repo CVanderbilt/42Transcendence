@@ -49,6 +49,6 @@ export class UserEntity extends BaseEntity {
     @Column({ nullable: false, default: "CUSTOMER" })
     role: string;
 
-    @OneToMany(() => ChatMembershipEntity, membership => membership.chatRoom, { cascade: ["remove"] })
+    @OneToMany(() => ChatMembershipEntity, membership => membership.chatRoom, { onDelete: 'CASCADE' })
     memberships: ChatMembershipEntity[];
 }

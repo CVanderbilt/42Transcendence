@@ -23,10 +23,10 @@ export class ChatRoomEntity extends BaseEntity{
     @Column({default: null})
     password: string
 
-    @OneToMany(() => ChatMembershipEntity, membership => membership.chatRoom, { cascade: ['remove'] })
+    @OneToMany(() => ChatMembershipEntity, membership => membership.chatRoom, { onDelete: 'CASCADE'})
     memberships: ChatMembershipEntity[];
 
-    @OneToMany(() => ChatMsgEntity, message => message.chatRoom, { cascade: ['remove'] })
+    @OneToMany(() => ChatMsgEntity, message => message.chatRoom, { onDelete: 'CASCADE' })
     messages: ChatMsgEntity[];
 }
 

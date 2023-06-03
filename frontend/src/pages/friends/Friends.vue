@@ -10,7 +10,7 @@
         <h3>Ladder position: ??</h3>
         <div v-if="!fshp.isBlocked">
           <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
-            v-on:click="openChat(fshp.friend.username, fshp.friend.id)">
+            v-on:click="openChat(fshp.friend.id)">
             Chat
           </button>
           <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="createGame(fshp.friend.id)">
@@ -39,7 +39,7 @@ import { useStore } from "vuex";
 import { key } from "../../store/store";
 import "@/style/styles.css";
 import { getFriendshipsRequest, IFriendship, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
-import { createChatRoomReq, inviteUsersReq } from "@/api/chatApi";
+import { findDirectChatRoomReq as getDirectChatRoomReq } from "@/api/chatApi";
 
 export default defineComponent({
   name: "Friends",
@@ -82,37 +82,10 @@ export default defineComponent({
     },
 
     // TODO refactorizar a un componente
-    async openChat(friendName: string, friendId: string) {
-      const names: string[] = [];
-      names.push(this.user?.username as string);
-      names.push(friendName);
-      names.sort();
-
-      const chatRoomName =
-        names[0] + "-" + names[1];
-
-      const UUID = this.user?.id as string;
-
-      console.log(chatRoomName)
-
-      let room;
-      try {
-        room = (await createChatRoomReq(chatRoomName, UUID, "", true)).data
-      } catch (err) {
-        alert("Direct chat could not be created");
-        console.log(err)
-        return
-      }
-      try {
-        const res = await inviteUsersReq(room.id, friendId)
-        console.log(res)
-      } catch (err) {
-        alert("User could not be invited to chat");
-        console.log(err)
-        return
-      }
-
-      this.$router.push("/chats?name=" + chatRoomName);
+    async openChat(friendId: string) {
+      // Search if chat already exists
+      const chatRoom = await (await getDirectChatRoomReq(this.user?.id as string, friendId)).data
+      this.$router.push("/chats?name=" + chatRoom.name);
     },
 
     createGame(friendId: string) {
