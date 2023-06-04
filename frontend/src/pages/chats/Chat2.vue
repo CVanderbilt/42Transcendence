@@ -458,30 +458,27 @@ export default defineComponent({
     },
 
     async changeRoom(roomId: string, roomName: string) {
-      this.userMemberships = (await getUserMembershipsReq(this.user?.id as string)).data
-      const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
-      if (!membership) {
-        console.log("Can not change room");
-        return;
-      }
-      this.currentMembership = membership
-      this.roomId = roomId;
-      this.io.socket.emit("event_leave", this.chatRoomName);
-      this.messages = [];
-      this.io.socket.emit("event_join", roomName);
-      this.chatRoomName = roomName;
-
-      // try to get messages
-      try {
-        getChatRoomMessagesReq(roomId).then((response) => {
-          for (var i in response.data) {
+      getUserMembershipsReq(this.user?.id as string)
+      .then(response => {
+        this.userMemberships = response.data
+        const membership = this.userMemberships.find((membership => membership.chatRoom.id === roomId))
+        if (!membership) {
+          throw new Error("Can not change room")
+        }
+        this.currentMembership = membership
+        this.roomId = roomId;
+        this.io.socket.emit("event_leave", this.chatRoomName);
+        this.messages = [];
+        this.io.socket.emit("event_join", roomName);
+        this.chatRoomName = roomName;
+        
+        getChatRoomMessagesReq(roomId)
+        .then(_response => {
+          for (var i in _response.data) {
             this.messages.push(response.data[i]);
           }
         })
-      }
-      catch (err) {
-        console.log("Can not get messages");
-      }
+      })
     },
 
     async createChatRoom(roomName: string, password: string, userNames: string[]) {

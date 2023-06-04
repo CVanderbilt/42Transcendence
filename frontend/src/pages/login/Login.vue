@@ -201,11 +201,9 @@ export default defineComponent({
 
     async submit2faCode() {
       console.log("submitCode: " + this.twoFactorCode + "")
-      try {
-        //Validate the user's code and redirect them to the appropriate page
-        const response = await apiClient.post(AUTHENTICATE_2FA_ENDPOINT + "/" + this.twoFactorCode)
-        if (response.status === 200) {
-          const user: IUser = {
+      apiClient.post(`${AUTHENTICATE_2FA_ENDPOINT}/${this.twoFactorCode}`)
+      .then(response => {
+        const user: IUser = {
             id: response.data.userId,
             username: response.data.name,
             email: response.data.email,
@@ -216,22 +214,13 @@ export default defineComponent({
             isBanned: response.data.isBanned
           }
 
-          console.log("2fa token: " + localStorage.getItem("token"))
-          localStorage.setItem("token", response.data.token)
-          
-          store.commit("changeUser", user)
-          console.log(localStorage.getItem("user"))
-          this.$router.push("/");
-        }
-      } catch (error: any) {
-        if (error.response.status === 401) {
-          alert('Invalid code, please try again.')
-        }
-        else {
-          alert('Something went wrong, please try again.')
-        }
-        console.log(error.name + ": " + error.message)
-      }
+        console.log("2fa token: " + localStorage.getItem("token"))
+        localStorage.setItem("token", response.data.token)
+
+        store.commit("changeUser", user)
+        console.log(localStorage.getItem("user"))
+        this.$router.push("/");
+      })
     },
   },
 
