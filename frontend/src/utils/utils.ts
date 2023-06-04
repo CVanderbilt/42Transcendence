@@ -21,3 +21,11 @@ export function throwFromAsync(app: App<Element>, e: Error | string) {
 export function publishNotification(message: string, isError: boolean) {
   store.commit("setNotification", { message, isError})
 }
+
+export function isAuthenticated() {
+  if (!localStorage.getItem('token'))
+    return false
+  if (store.state.user.is2faEnabled && !store.state.user.is2fa)
+    return false
+  return true
+}

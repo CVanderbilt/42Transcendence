@@ -10,6 +10,7 @@ export class IUser {
   password = "";
   pic = "";
   is2fa = false;
+  is2faEnabled = true;
   role = "";
   isBanned = false;
 }

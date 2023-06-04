@@ -21,7 +21,7 @@ import User from './components/User.vue'
 import NotificationBanner from './components/NotificationBanner.vue'
 import EndGame from './pages/endGame/endGame.vue'
 import Admin from './pages/admin/Admin.vue'
-import { publishNotification } from './utils/utils'
+import { isAuthenticated, publishNotification } from './utils/utils'
 
 const routes = [
   { path: '/', name: 'home', component: Home, meta: { requiresAuth: true } },
@@ -45,14 +45,14 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   if (to.matched.some((route) => route.meta.requiresAuth)) {
-    
-    if (!localStorage.getItem('token') && to.matched.some((route) => route.meta.requiresAuth)) {
+    if (!isAuthenticated()) {
       next('/login')
-    } else {
-      next()
+    }
+    else {
+      next();
     }
   } else if (to.matched.some((route) => route.meta.onlyWithoutAuth)) {
-    if (localStorage.getItem('token')) {
+    if (isAuthenticated()) {
       next('/')
     } else {
       next()
