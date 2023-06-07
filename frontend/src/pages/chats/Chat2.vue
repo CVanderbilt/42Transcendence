@@ -458,10 +458,9 @@ export default defineComponent({
     },
 
     async changeRoom(roomId: string, roomName: string) {
-      getUserMembershipsReq(this.user?.id as string)
-      .then(response => {
+      getUserMembershipsReq(this.user?.id as string).then((response) => {
         this.userMemberships = response.data
-        const membership = this.userMemberships.find((membership => membership.chatRoom.id === roomId))
+        const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
         if (!membership) {
           throw new Error("Can not change room")
         }
@@ -471,14 +470,14 @@ export default defineComponent({
         this.messages = [];
         this.io.socket.emit("event_join", roomName);
         this.chatRoomName = roomName;
-        
-        getChatRoomMessagesReq(roomId)
-        .then(_response => {
-          for (var i in _response.data) {
-            this.messages.push(response.data[i]);
+
+        getChatRoomMessagesReq(roomId).then((response2) => {
+          for (var i in response2.data) {
+            this.messages.push(response2.data[i]);
           }
         })
       })
+
     },
 
     async createChatRoom(roomName: string, password: string, userNames: string[]) {
