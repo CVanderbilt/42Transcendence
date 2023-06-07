@@ -132,7 +132,7 @@ export default defineComponent({
               password: response.data.password,
               pic: response.data.pic,
               is2fa: response.data.is2fa,
-              is2faEnabled: response.data.is2faEnabled,
+              is2faEnabled: response.data.is2faEnabled || false,
               role: response.data.role,
               isBanned: response.data.isBanned
             }
@@ -163,7 +163,7 @@ export default defineComponent({
               password: response.data.password,
               pic: response.data.pic,
               is2fa: response.data.is2fa,
-              is2faEnabled: response.data.is2faEnabled,
+              is2faEnabled: response.data.is2faEnabled || false,
               role: response.data.role,
               isBanned: response.data.isBanned
             }
