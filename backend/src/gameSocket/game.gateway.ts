@@ -9,11 +9,25 @@ import {
 import { Server, Socket } from 'socket.io';
 import { MatchesService} from '../matches/matches.service';
 
-let numPlayers = {};
-let player1 = {};
-let player2 = {};
-let ballpos = {};
-let game = {};
+interface Player {
+  user: string;
+  paddlePos: number;
+  paddleHeight: number;
+  upPressed: boolean;
+  downPressed: boolean;
+  inGame: boolean;
+  score: number;
+}
+
+interface GameRoom {
+  player1: Player,
+  player2: Player,
+  numPlayers: number,
+  ballpos: { x: number, y: number, dx: number, dy: number }
+  gameStatus: "WAITING" | "PLAYING" | "FINISHED" | "MISSING_PLAYER"
+}
+
+const gameRooms: GameRoom[] = []
 const canvasHeight = 300;
 const canvasWidth = 500;
 
@@ -52,133 +66,124 @@ export class GameGateway
     const { room, username } = payload
     console.log(`alguien se unió al juego ${room}`)
     
+    const _room = getOrCreateRoom(room)
     
-    if (game[room] == undefined) {
-      game[room] = "waiting"
-      numPlayers[room] = 0;
-      player1[room] = { user: "", paddlePos: 230 / 2, pladdleHeight: 75, upPressed: false, downPressed: false, inGame: false, score: 0 }
-      player2[room] = { user: "", paddlePos: 230 / 2, pladdleHeight: 75, upPressed: false, downPressed: false, inGame: false, score: 0 }
-      ballpos[room] = { x: 250, y: 250, dx: 2, dy: 2 }
-    }
-    if (numPlayers[room] < 2) {
+    if (_room.numPlayers < 2) {
 
-      if (player1[room].inGame == false) {
+      if (_room.player1.inGame == false) {
         console.log("Añade player 1")
-        numPlayers[room]++
-        player1[room].user = username
-        player1[room].inGame = true
-      } else if (player2[room].inGame == false) {
+        _room.numPlayers++
+        _room.player1.user = username
+        _room.player1.inGame = true
+      } else if (_room.player2.inGame == false) {
         console.log("Añade player 2")
-        numPlayers[room]++
-        player2[room].user = username
-        player2[room].inGame = true
+        _room.numPlayers++
+        _room.player2.user = username
+        _room.player2.inGame = true
       }
       
         const gameServer = this.server;
-        game[room] = "playing";
+        _room.gameStatus = "PLAYING";
         
         var intervalRefreshId = setInterval( () => {
-          if (numPlayers[room] > 1) {
+          if (_room.numPlayers > 1) {
             if (
-              player1[room].downPressed &&
-              player1[room].paddlePos < canvasHeight - player1[room].pladdleHeight
+              _room.player1.downPressed &&
+              _room.player1.paddlePos < canvasHeight - _room.player1.paddleHeight
             ) {
-              player1[room].paddlePos += 7;
-            } else if (player1[room].upPressed && player1[room].paddlePos > 0) {
-              player1[room].paddlePos -= 7;
+              _room.player1.paddlePos += 7;
+            } else if (_room.player1.upPressed && _room.player1.paddlePos > 0) {
+              _room.player1.paddlePos -= 7;
             }
-            if (player2[room].downPressed && player2[room].paddlePos < canvasHeight - player2[room].pladdleHeight) {
-              player2[room].paddlePos += 7;
-            } else if (player2[room].upPressed && player2[room].paddlePos > 0) {
-              player2[room].paddlePos -= 7;
-            }
-
-            if (ballpos[room].y + ballpos[room].dy > canvasHeight - 5 || ballpos[room].y + ballpos[room].dy < 5) {
-              ballpos[room].dy = -ballpos[room].dy;
+            if (_room.player2.downPressed && _room.player2.paddlePos < canvasHeight - _room.player2.paddleHeight) {
+              _room.player2.paddlePos += 7;
+            } else if (_room.player2.upPressed && _room.player2.paddlePos > 0) {
+              _room.player2.paddlePos -= 7;
             }
 
-            if (ballpos[room].x + ballpos[room].dx < 15) {
+            if (_room.ballpos.y + _room.ballpos.dy > canvasHeight - 5 || _room.ballpos.y + _room.ballpos.dy < 5) {
+              _room.ballpos.dy = -_room.ballpos.dy;
+            }
+
+            if (_room.ballpos.x + _room.ballpos.dx < 15) {
               {
-                if (ballpos[room].y > player1[room].paddlePos && ballpos[room].y < player1[room].paddlePos + player1[room].pladdleHeight) {
-                  if (player1[room].downPressed && ballpos[room].dy < 4) {
-                    ballpos[room].dy++
+                if (_room.ballpos.y > _room.player1.paddlePos && _room.ballpos.y < _room.player1.paddlePos + _room.player1.paddleHeight) {
+                  if (_room.player1.downPressed && _room.ballpos.dy < 4) {
+                    _room.ballpos.dy++
                   }
-                  if (player1[room].upPressed && ballpos[room].dy > -4) {
-                    ballpos[room].dy--
+                  if (_room.player1.upPressed && _room.ballpos.dy > -4) {
+                    _room.ballpos.dy--
                   }
-                  ballpos[room].dx = 2;
-                } else if (ballpos[room].x + ballpos[room].dx < 0) {
-                  player2[room].score++
+                  _room.ballpos.dx = 2;
+                } else if (_room.ballpos.x + _room.ballpos.dx < 0) {
+                  _room.player2.score++
                   this.matchesService.opponentGoal(room)
                   console.log("GOL1")
-                  ballpos[room].x = 250;
-                  if (ballpos[room].dy > 0)
-                    ballpos[room].dy = 2
+                  _room.ballpos.x = 250;
+                  if (_room.ballpos.dy > 0)
+                  _room.ballpos.dy = 2
                   else
-                    ballpos[room].dy = -2
+                  _room.ballpos.dy = -2
                 }
               }
-            } else if (ballpos[room].x + ballpos[room].dx > canvasWidth - 15) {
-              if (ballpos[room].y > player2[room].paddlePos && ballpos[room].y < player2[room].paddlePos + player2[room].pladdleHeight) {
-                if (player2[room].downPressed && ballpos[room].dy < 4) {
-                  ballpos[room].dy++
+            } else if (_room.ballpos.x + _room.ballpos.dx > canvasWidth - 15) {
+              if (_room.ballpos.y > _room.player2.paddlePos && _room.ballpos.y < _room.player2.paddlePos + _room.player2.paddleHeight) {
+                if (_room.player2.downPressed && _room.ballpos.dy < 4) {
+                  _room.ballpos.dy++
                 }
-                if (player2[room].upPressed && ballpos[room].dy > -4) {
-                  ballpos[room].dy--
+                if (_room.player2.upPressed && _room.ballpos.dy > -4) {
+                  _room.ballpos.dy--
                 }
-                ballpos[room].dx = -2;
-              } else if (ballpos[room].x + ballpos[room].dx > canvasWidth - 0) {
-                ballpos[room].x = 250
-                player1[room].score++;
+                _room.ballpos.dx = -2;
+              } else if (_room.ballpos.x + _room.ballpos.dx > canvasWidth - 0) {
+                _room.ballpos.x = 250
+                _room.player1.score++;
                 this.matchesService.localGoal(room);
                 console.log("GOL2")
-                if (ballpos[room].dy > 0)
-                  ballpos[room].dy = 2
+                if (_room.ballpos.dy > 0)
+                _room.ballpos.dy = 2
                 else
-                  ballpos[room].dy = -2
+                _room.ballpos.dy = -2
                 //alert("GAME OVER");
                 //document.location.reload();
               }
             }
-            ballpos[room].x += ballpos[room].dx;
-            ballpos[room].y += ballpos[room].dy;
-            gameServer.to(`room_${room}`).emit('draw', ballpos[room].x, ballpos[room].y, player1[room].paddlePos, player1[room].pladdleHeight, player2[room].paddlePos, player2[room].pladdleHeight, player1[room].score, player2[room].score, player1[room].user, player2[room].user);
-            if (player1[room].score == 5 || player2[room].score == 5){
-              game[room] = "finished"
+            _room.ballpos.x += _room.ballpos.dx;
+            _room.ballpos.y += _room.ballpos.dy;
+            gameServer.to(`room_${room}`).emit('draw', _room.ballpos.x, _room.ballpos.y, _room.player1.paddlePos, _room.player1.paddleHeight, _room.player2.paddlePos, _room.player2.paddleHeight, _room.player1.score, _room.player2.score, _room.player1.user, _room.player2.user);
+            if (_room.player1.score == 5 || _room.player2.score == 5){
+              _room.gameStatus = "FINISHED"
               clearInterval(intervalRefreshId);
             }
-            //console.log({ ballX: ballpos[room].x, ballY: ballpos[room].y, player1: player1[room].paddlePos, player1Height: player1[room].pladdleHeight, player2: player2[room].paddlePos, player2Height: player2[room].pladdleHeight })
           }
         }, 1000 / 60)
 
       
-      console.log(numPlayers[room]);
-      console.log(player1[room]);
-      console.log(player2[room]);
+      console.log(_room)
     }
 
 
 
     client.on("disconnect", (reason) => {
-      if (username == player1[room].user) {
+      if (username == _room.player1.user) {
         console.log("jugador 1 se va")
         clearInterval(intervalRefreshId);
-        player1[room].inGame = false;
-        numPlayers[room]--;
-        game[room] = "missing player"
+        _room.player1.inGame = false;
+        _room.numPlayers--;
+        _room.gameStatus = "MISSING_PLAYER"
         
       }
 
-      if (username == player2[room].user) {
+      if (username == _room.player2.user) {
         console.log("jugador 2 se va");
         clearInterval(intervalRefreshId);
-        player2[room].inGame = false
-        numPlayers[room]--;
-        game[room] = "missing player";
+        _room.player2.inGame = false
+        _room.numPlayers--;
+        _room.gameStatus = "MISSING_PLAYER";
       }
 
-      if (numPlayers[room] == 0) {
-        cleanRoom(room);
+      if (_room.numPlayers == 0) {
+        delete gameRooms[room]
       }
 
 
@@ -196,36 +201,40 @@ export class GameGateway
     payload: { room: string, username: string, movement: string, type: string },
   ) {
     const { room, username, movement, type } = payload;
-    if (player1[room].user == username) {
+    const _room = gameRooms[room]
+    if (!room) {
+      return ;
+    }
+    if (_room.player1.user == username) {
       console.log("player1move")
 
       if (movement == "down" && type == "press") {
 
-        player1[room].downPressed = true;
+        _room.player1.downPressed = true;
       }
       else if (movement == "up" && type == "press") {
 
-        player1[room].upPressed = true;
+        _room.player1.upPressed = true;
       }
       else if (movement == "down" && type == "release") {
-        player1[room].downPressed = false;
+        _room.player1.downPressed = false;
       }
       else if (movement == "up" && type == "release") {
-        player1[room].upPressed = false;
+        _room.player1.upPressed = false;
       }
     }
-    else if (player2[room].user == username) {
+    else if (_room.player2.user == username) {
       if (movement == "down" && type == "press") {
-        player2[room].downPressed = true;
+        _room.player2.downPressed = true;
       }
       else if (movement == "up" && type == "press") {
-        player2[room].upPressed = true;
+        _room.player2.upPressed = true;
       }
       else if (movement == "down" && type == "release") {
-        player2[room].downPressed = false;
+        _room.player2.downPressed = false;
       }
       else if (movement == "up" && type == "release") {
-        player2[room].upPressed = false;
+        _room.player2.upPressed = false;
       }
     }
   }
@@ -241,76 +250,24 @@ export class GameGateway
 
 }
 
-function cleanRoom(room: string) {
-  delete game[room];
-  delete numPlayers[room];
-  delete player1[room];
-  delete player2[room];
-  delete ballpos[room];
+const getOrCreateRoom = (roomId: string): GameRoom => {
+  const room = gameRooms[roomId] || (gameRooms[roomId] = {
+  gameStatus: "WAITING",
+  numPlayers: 0,
+  player1: createPlayer(),
+  player2: createPlayer(),
+  ballpos: { x: 250, y: 250, dx: 2, dy: 2 },
+});
 
+return room;
 }
 
-
-function gameLoop(room: string) {
-
-
-  if (
-    player1[room].downPressed &&
-    player1[room].paddlePos < canvasHeight - player1[room].pladdleHeight
-  ) {
-    player1[room].paddlePos += 7;
-  } else if (player1[room].upPressed && player1[room].paddlePos > 0) {
-    player1[room].paddlePos -= 7;
-  }
-  if (player2[room].downPressed && player2[room].paddlePos < canvasHeight - player2[room].pladdleHeight) {
-    player2[room].paddlePos += 7;
-  } else if (player2[room].upPressed && player2[room].paddlePos > 0) {
-    player2[room].paddlePos -= 7;
-  }
-
-  if (ballpos[room].y + ballpos[room].dy > canvasHeight - 5 || ballpos[room].y + ballpos[room].dy < 5) {
-    ballpos[room].dy = -ballpos[room].dy;
-  }
-
-  if (ballpos[room].x + ballpos[room].dx < 15) {
-    {
-      if (ballpos[room].y > player1[room].paddlePos && ballpos[room].y < player1[room].paddlePos + player1[room].pladdleHeight) {
-        if (player1[room].downPressed && ballpos[room].dy < 4) {
-          ballpos[room].dy++
-        }
-        if (player1[room].upPressed && ballpos[room].dy > -4) {
-          ballpos[room].dy--
-        }
-        ballpos[room].dx = 2;
-      } else if (ballpos[room].x + ballpos[room].dx < 0) {
-        player2[room].score++
-        ballpos[room].x = 250;
-        if (ballpos[room].dy > 0)
-          ballpos[room].dy = 2
-        else
-          ballpos[room].dy = -2
-      }
-    }
-  } else if (ballpos[room].x + ballpos[room].dx > canvasWidth - 15) {
-    if (ballpos[room].y > player2[room].paddlePos && ballpos[room].y < player2[room].paddlePos + player2[room].pladdleHeight) {
-      if (player2[room].downPressed && ballpos[room].dy < 4) {
-        ballpos[room].dy++
-      }
-      if (player2[room].upPressed && ballpos[room].dy > -4) {
-        ballpos[room].dy--
-      }
-      ballpos[room].dx = -2;
-    } else if (ballpos[room].x + ballpos[room].dx > canvasWidth - 0) {
-      ballpos[room].x = 250
-      player1[room].score++;
-      if (ballpos[room].dy > 0)
-        ballpos[room].dy = 2
-      else
-        ballpos[room].dy = -2
-      //alert("GAME OVER");
-      //document.location.reload();
-    }
-  }
-  ballpos[room].x += ballpos[room].dx;
-  ballpos[room].y += ballpos[room].dy;
-}
+const createPlayer = (): Player => ({
+    user: "",
+    paddlePos: 115,
+    paddleHeight: 75,
+    upPressed: false,
+    downPressed: false,
+    inGame: false,
+    score: 0
+  })
