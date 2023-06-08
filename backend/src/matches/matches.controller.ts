@@ -57,4 +57,16 @@ export class MatchesController {
             //Logger2.error(error)
         }
     }
+
+
+    //----------------------------------------------
+
+    @Get('user/:userId')
+    async getMatches(@Param('userId') userId: string): Promise<Match[]> {
+        try {
+            return await this.matchesService.getMatchesByUser(userId);
+        } catch (error) {
+            //Logger2.error(error)
+        }
+    }
 }

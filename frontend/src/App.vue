@@ -3,8 +3,8 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark" v-if=user>
       <div class="container-fluid">
-        <a href="/"><img src="./assets/logo.png" height="30" style="margin-right: 20px ; border-radius: 10%"
-            href="/" /></a>
+        <router-link to="/"><img src="./assets/logo.png" height="30" style="margin-right: 20px ; border-radius: 10%"
+            /></router-link>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
 
           <div style="width: 250px">

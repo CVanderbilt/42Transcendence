@@ -1,4 +1,3 @@
-import { GameEntity } from "src/games/game.entity";
 import { UserEntity } from "src/users/user.entity";
 import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
@@ -7,11 +6,11 @@ export class MatchEntity extends BaseEntity{
     @PrimaryGeneratedColumn()
     id: string
 
-    @ManyToOne(type => UserEntity)
+    @ManyToOne(() => UserEntity)
     @JoinColumn()
     user: UserEntity
 
-    @ManyToOne(type => UserEntity)
+    @ManyToOne(() => UserEntity)
     @JoinColumn()
     opponent: UserEntity
 

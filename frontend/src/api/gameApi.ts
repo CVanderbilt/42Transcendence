@@ -1,4 +1,5 @@
 import { apiClient } from "./baseApi";
+import { IUserAPI } from "./user";
 
 const URL = "/matches";
 
@@ -11,6 +12,7 @@ export interface Match {
     type: string
     isFinished: boolean
     createdAt?: Date;
+    opponent?: IUserAPI;
 }
 
 
@@ -28,4 +30,8 @@ export async function getPlayerOneApi(matchId: string) {
 
 export async function getPlayerTwoApi(matchId: string) {
     return apiClient.get(`${URL}/playerTwo/${matchId}`)
+}
+
+export async function getMatchesReq(userId: string) {
+    return apiClient.get(`${URL}/user/${userId}`)
 }
