@@ -34,6 +34,8 @@ const movementDistance = 7;
 const ballRadius = 5
 const ballMaxY = canvasHeight - ballRadius;
 const ballMinY = ballRadius;
+const ballMinX = 15;
+const ballMaxX = canvasWidth - 15;
 
 @WebSocketGateway(82, {
   cors: { origin: '*' },
@@ -95,34 +97,15 @@ export class GameGateway
               _room.ballpos.dy = -_room.ballpos.dy;
             }
 
-            const ballMinX = 15;
-            const paddle = _room.player1;
-            
-            /*const handleBallCollision = (room: GameRoom, player) => {
-              if (_room.ballpos.x + _room.ballpos.dx < ballMinX) {
-                if (_room.ballpos.y > paddle.paddlePos && _room.ballpos.y < paddle.paddlePos + paddle.paddleHeight) {
-                  if (paddle.downPressed && _room.ballpos.dy < 4) {
-                    _room.ballpos.dy++;
-                  }
-                  if (paddle.upPressed && _room.ballpos.dy > -4) {
-                    _room.ballpos.dy--;
-                  }
-                  _room.ballpos.dx = 2;
-                } else if (_room.ballpos.x + _room.ballpos.dx < 0) {
-                  _room.player2.score++;
-                  this.matchesService.opponentGoal(room);
-                  console.log("GOL1");
-                  _room.ballpos.x = 250;
-                  _room.ballpos.dy = (_room.ballpos.dy > 0) ? 2 : -2;
-                }
-              }
-            }*/
+            const paddle1 = _room.player1;
+            const paddle2 = _room.player2;
+
             if (_room.ballpos.x + _room.ballpos.dx < ballMinX) {
-              if (_room.ballpos.y > paddle.paddlePos && _room.ballpos.y < paddle.paddlePos + paddle.paddleHeight) {
-                if (paddle.downPressed && _room.ballpos.dy < 4) {
+              if (_room.ballpos.y > paddle1.paddlePos && _room.ballpos.y < paddle1.paddlePos + paddle1.paddleHeight) {
+                if (paddle1.downPressed && _room.ballpos.dy < 4) {
                   _room.ballpos.dy++;
                 }
-                if (paddle.upPressed && _room.ballpos.dy > -4) {
+                if (paddle1.upPressed && _room.ballpos.dy > -4) {
                   _room.ballpos.dy--;
                 }
                 _room.ballpos.dx = 2;
@@ -133,24 +116,21 @@ export class GameGateway
                 _room.ballpos.x = 250;
                 _room.ballpos.dy = (_room.ballpos.dy > 0) ? 2 : -2;
               }
-            } else if (_room.ballpos.x + _room.ballpos.dx > canvasWidth - 15) {
-              if (_room.ballpos.y > _room.player2.paddlePos && _room.ballpos.y < _room.player2.paddlePos + _room.player2.paddleHeight) {
-                if (_room.player2.downPressed && _room.ballpos.dy < 4) {
-                  _room.ballpos.dy++
+            } else if (_room.ballpos.x + _room.ballpos.dx > ballMaxX) {
+              if (_room.ballpos.y > paddle2.paddlePos && _room.ballpos.y < paddle2.paddlePos + paddle2.paddleHeight) {
+                if (paddle2.downPressed && _room.ballpos.dy < 4) {
+                  _room.ballpos.dy++;
                 }
-                if (_room.player2.upPressed && _room.ballpos.dy > -4) {
-                  _room.ballpos.dy--
+                if (paddle2.upPressed && _room.ballpos.dy > -4) {
+                  _room.ballpos.dy--;
                 }
                 _room.ballpos.dx = -2;
-              } else if (_room.ballpos.x + _room.ballpos.dx > canvasWidth - 0) {
-                _room.ballpos.x = 250
+              } else if (_room.ballpos.x + _room.ballpos.dx > canvasWidth) {
+                _room.ballpos.x = 250;
                 _room.player1.score++;
                 this.matchesService.localGoal(room);
-                console.log("GOL2")
-                if (_room.ballpos.dy > 0)
-                _room.ballpos.dy = 2
-                else
-                _room.ballpos.dy = -2
+                console.log("GOL2");
+                _room.ballpos.dy = (_room.ballpos.dy > 0) ? 2 : -2;
               }
             }
             _room.ballpos.x += _room.ballpos.dx;
