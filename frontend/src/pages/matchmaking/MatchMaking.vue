@@ -65,7 +65,7 @@
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
 import { key, store } from "../..//store/store";
-import { enterCompetitiveGameApi } from "../../api/gameApi";
+import { enterCompetitiveGameApi, enterExhibitionGameApi } from "../../api/gameApi";
 import "@/style/styles.css";
 import { onUnmounted } from 'vue'
 
@@ -101,9 +101,20 @@ export default defineComponent({
       console.log(matchData.data.id)
       this.$router.push("/game?id=" + matchData.data.id);
     },
-    enterExhibitionMatch() {
-      console.log(this.options)
-      this.$router.push("/game");
+    async enterExhibitionMatch() {
+      let powerups = "";
+      powerups = powerups.concat(this.options.bigPaddle ? "B" : "");
+      powerups = powerups.concat(this.options.fastBall ? "F" : "");
+      if (powerups === "") {
+        powerups = "N";
+      }
+      try {
+        const matchData = await enterExhibitionGameApi(this.user?.id as string, powerups)
+        this.$router.push("/game?id=" + matchData.data.id);
+      }
+      catch (e) {
+        alert(e)
+      }
     }
   },
 });

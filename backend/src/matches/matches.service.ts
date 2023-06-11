@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { MatchEntity } from './match.entity';
 import { Match } from './match.interface';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { User } from 'src/users/user.interface';
+import { Console } from 'console';
 
 @Injectable()
 export class MatchesService {
@@ -16,8 +17,9 @@ export class MatchesService {
     ) { }
 
     async findOne(matchId: string): Promise<Match> {
-        return MatchEntity.findOneBy({ id: matchId })
+        return MatchEntity.findOne({ where: { id: matchId }, relations: ["user", "opponent"] })
     }
+    
     async find(): Promise<Match[]> {
         const list = await MatchEntity
             .createQueryBuilder('match')
@@ -41,15 +43,18 @@ export class MatchesService {
         return match.opponent
     }
 
-    async createMatch(userId: string, type: string): Promise<Match> {
+    async createMatch(userId: string, type: string, powerups: string): Promise<Match> {
         const user = await this.usersRepo.findOne({ where: { id: userId } });
         const match = await this.matchesRepo.save({
             user: user,
-            type: type
+            type: type,
+            powerups: powerups,
+            state: "Pending opponent"
         })
+
+        console.log(match)
         return match
     }
-
 
     async addOpponent(userId: string, matchId: string): Promise<Match> {
         const opponent = await this.usersRepo.findOne({ where: { id: userId } });
@@ -64,29 +69,51 @@ export class MatchesService {
         }
     }
 
-    async getOpponentFreeCompetitiveMatch(): Promise<Match> {
-        //const opponent = await this.usersRepo.findOne({ where: { id: userId } });
-        const opponentFreeMatch = await this.matchesRepo.findOne({ where: { state: "Pending opponent", type: "Competitive" } });
-        console.log(opponentFreeMatch)
-        if (opponentFreeMatch) {
-            return opponentFreeMatch
-        }
-        else {
-            return
+    async getOpponentAvailableMatch(type: string, userId: string): Promise<Match | null> {
+        try {
+            const pendingMatches = await this.matchesRepo.find({
+                where: {
+                    state: 'Pending opponent',
+                    type: type,
+                    opponent: IsNull(),
+                },
+                relations: ['user', 'opponent']
+            });
+
+            console.log("pending matches")
+            console.log(pendingMatches)
+
+            if (pendingMatches.length === 0) {
+                return null
+            }
+
+            const sameId = pendingMatches.filter((match) => match.user.id === userId);
+            console.log("same id") 
+            console.log(sameId)
+            if (pendingMatches.length > sameId.length)
+                {
+                    console.log("returning match")
+                    console.log(pendingMatches[sameId.length])
+                    return pendingMatches[sameId.length]
+                }
+            else
+                return null
+        } catch (error) {
+            console.error("Error in getOpponentAvailableMatch:", error);
+            throw error;
         }
     }
 
-    async getCompetitiveMatch(userId: string): Promise<Match> {
-        console.log("Ejecuta!!")
-        const opponentFreeMatch = await this.getOpponentFreeCompetitiveMatch();
-        //habria que cambiar esto para que el mismo usuario no se pueda meter de oponente a su propio partido
+    async joinMatch(userId: string, type: string, powerups: string = ""): Promise<Match> {
+        const opponentFreeMatch = await this.getOpponentAvailableMatch(type, userId);
+        console.log(opponentFreeMatch)
         if (opponentFreeMatch) {
             console.log("Añade el usuario a un partido ya existente")
             return this.addOpponent(userId, opponentFreeMatch.id)
         }
         else {
             console.log("Crea un partido")
-            return this.createMatch(userId, "Competitive")
+            return this.createMatch(userId, type, powerups)
         }
     }
 
@@ -130,13 +157,13 @@ export class MatchesService {
     async getMatchesByUser(userId: string): Promise<Match[]> {
 
         const list: MatchEntity[] = await this.matchesRepo
-        .createQueryBuilder("match")
-        .leftJoinAndSelect("match.user", "user")
-        .leftJoinAndSelect("match.opponent", "opponent")
-        .where("match.user.id = :userId OR match.opponent.id = :userId", {
-          userId: userId,
-        })
-        .getMany();
+            .createQueryBuilder("match")
+            .leftJoinAndSelect("match.user", "user")
+            .leftJoinAndSelect("match.opponent", "opponent")
+            .where("match.user.id = :userId OR match.opponent.id = :userId", {
+                userId: userId,
+            })
+            .getMany();
 
         // Swap user and opponent if opponent is the user
         list.forEach(element => {

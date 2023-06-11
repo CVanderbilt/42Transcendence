@@ -5,8 +5,8 @@
     </div>
     <canvas ref="canvas" width="500" height="300">
       <line x1="250" y1="0" x2="250" y2="300" style="stroke: #FFFFFF; stroke-width: 3" />
-      <text x="20" y="20" style="fill: #FFFFFF; font-size: 15px;">{{leftUserName}}</text>
-      <text x="450" y="20" style="fill: #FFFFFF; font-size: 15px;">{{rightUserName}}</text>
+      <text x="20" y="20" style="fill: #FFFFFF; font-size: 15px;">{{ leftUserName }}</text>
+      <text x="450" y="20" style="fill: #FFFFFF; font-size: 15px;">{{ rightUserName }}</text>
     </canvas>
   </div>
 </template>
@@ -16,6 +16,7 @@ import { defineComponent, computed } from "vue";
 import { gameSocketIO } from "../..//main";
 
 import { key, store } from "../..//store/store";
+import { getGameApi } from "@/api/gameApi";
 
 export default defineComponent({
   name: "Game",
@@ -50,12 +51,28 @@ export default defineComponent({
       playing: false
     };
   },
-  mounted(): void {
-    if (this.$route.query.id !== undefined) {
-      this.room = this.$route.query.id
-      this.io.socket.emit("event_join_game", {room: this.$route.query.id, username: this.user.username});
+  async mounted(): Promise<void> {
+    if (this.$route.query.id === undefined) {
+      this.$router.push("/matchmaking")
+      return
     }
-    
+
+    const game = await (await getGameApi(this.$route.query.id)).data
+    if (game.user.id !== this.user.id) {
+      this.$router.push("/matchmaking")
+      return
+    }
+
+    this.room = this.$route.query.id
+    this.io.socket.emit("event_join_game", { room: this.$route.query.id, username: this.user.username })
+
+    //read powerups
+    if (game.powerups.contains("L")) {
+      this.dx = 4;
+      this.dy = 4;
+    }
+    game.powerups
+
 
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
@@ -81,7 +98,7 @@ export default defineComponent({
       this.leftUserName = player1name;
       this.leftUserScore = player1score;
       this.rightUserScore = player2score;
-      if(this.leftUserScore == 5 || this.rightUserScore == 5){
+      if (this.leftUserScore == 5 || this.rightUserScore == 5) {
         this.$router.push("/endGame?id=" + this.room);
       }
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -96,32 +113,26 @@ export default defineComponent({
       this.ctx.fill();
       this.ctx.closePath();
       this.ctx.beginPath();
-      this.ctx.rect(
-        this.canvas.width - 10,
-        player2pos,
-        10,
-        player2Height
-      );
+      this.ctx.rect(this.canvas.width - 10, player2pos, 10, player2Height);
       this.ctx.fillStyle = "#009500";
       this.ctx.fill();
       this.ctx.closePath();
     })
   },
   methods: {
-    
     keyDownHandler(e: KeyboardEvent): void {
       if (e.key == "Down" || e.key == "ArrowDown") {
-        if (this.leftUserDownPressed == false){
-        this.io.socket.emit("move", {
-          room: this.room, username: this.user.username, movement: "down", type: "press"
-        });
-      }
+        if (this.leftUserDownPressed == false) {
+          this.io.socket.emit("move", {
+            room: this.room, username: this.user.username, movement: "down", type: "press"
+          });
+        }
       } else if (e.key == "Up" || e.key == "ArrowUp") {
-        if (this.leftUserUpPressed == false){
-        this.io.socket.emit("move", {
-          room: this.room, username: this.user.username, movement: "up", type: "press"
-        });
-      }
+        if (this.leftUserUpPressed == false) {
+          this.io.socket.emit("move", {
+            room: this.room, username: this.user.username, movement: "up", type: "press"
+          });
+        }
       }
     },
     keyUpHandler(e: KeyboardEvent): void {
@@ -142,11 +153,12 @@ export default defineComponent({
 
 </script>
   
-  <style>
+<style>
 .game-board {
   margin-top: 6em;
   color: white;
 }
+
 canvas {
   background: rgb(0, 0, 0);
   border: 1px solid #333;
@@ -161,18 +173,14 @@ canvas {
   background: #3609da;
 
   /* Chrome 10-25, Safari 5.1-6 */
-  background: -webkit-linear-gradient(
-    to right,
-    rgba(4, 8, 22, 0.804),
-    rgb(193, 209, 237)
-  );
+  background: -webkit-linear-gradient(to right,
+      rgba(4, 8, 22, 0.804),
+      rgb(193, 209, 237));
 
   /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-  background: linear-gradient(
-    to right,
-    rgba(4, 8, 22, 0.804),
-    rgb(193, 209, 237)
-  );
+  background: linear-gradient(to right,
+      rgba(4, 8, 22, 0.804),
+      rgb(193, 209, 237));
 }
 </style>
 

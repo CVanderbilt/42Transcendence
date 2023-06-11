@@ -11,7 +11,5 @@ import { UserEntity } from 'src/users/user.entity';
     controllers: [MatchesController],
     providers: [MatchesService],
     exports: [MatchesService]
-    // providers: [UserStatsService],
-    // controllers: [UserStatsController],
 })
 export class MatchesModule {}

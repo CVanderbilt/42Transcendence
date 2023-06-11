@@ -34,8 +34,6 @@ const movementDistance = 7;
 const ballRadius = 5
 const ballMaxY = canvasHeight - ballRadius;
 const ballMinY = ballRadius;
-const ballMinX = 15;
-const ballMaxX = canvasWidth - 15;
 
 @WebSocketGateway(82, {
   cors: { origin: '*' },
@@ -96,9 +94,6 @@ export class GameGateway
             if (_room.ballpos.y + _room.ballpos.dy > ballMaxY || _room.ballpos.y + _room.ballpos.dy < ballMinY) {
               _room.ballpos.dy = -_room.ballpos.dy;
             }
-
-            const paddle1 = _room.player1;
-            const paddle2 = _room.player2;
 
             if (_room.ballpos.x + _room.ballpos.dx < 15) {
               {
@@ -178,7 +173,7 @@ export class GameGateway
 
   @SubscribeMessage('move') //TODO Backend
   handleRightPaddleDown(
-    client: Socket,
+    cliWent: Socket,
     payload: { room: string, username: string, movement: "down" | "up", type: "press" | "release" },
   ) {
     const { room, username, movement, type } = payload;
