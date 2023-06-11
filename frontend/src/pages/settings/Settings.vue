@@ -74,8 +74,7 @@ import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
 import { key, store } from "../../store/store";
 import { generateImageURL, publishNotification } from "@/utils/utils";
-import { IUserAPI, putImage, updateUser } from "@/api/user";
-import { me } from "@/api/auth";
+import { IUserAPI, putImage, updateUserReq } from "@/api/user";
 
 declare var require: any;
 //todo: que cuando se modifique el usuario se recarge la informacion del usuario (la imagen se tiene que volver a descargar y el store.user tiene que actualizarse)
@@ -119,7 +118,7 @@ export default defineComponent({
         return;
       }
 
-        updateUser(store.state.user.id, this.options)
+       updateUserReq(store.state.user.id, this.options) // TODO: no captura el error del servidor cuando los nobre sde usuarios son iguales
       .then(() => { publishNotification("User updated", false) })
 
         store.commit("changeUserName", this.options.username)

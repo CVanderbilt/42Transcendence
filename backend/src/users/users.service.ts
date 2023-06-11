@@ -27,6 +27,7 @@ export class UsersService {
     }
 
     async findOneByName(username: string): Promise<User> {
+        console.log("findOneByName", username)
         return this.usersRepo.findOne( { where: { username: username } } )
     }
 
@@ -53,6 +54,12 @@ export class UsersService {
         //user.id = undefined;
 
         const storedUser = await this.findOneById(id)
+
+        if (storedUser.username !== user.username) {
+            const userWithSameUsername = await this.findOneByName(user.username)
+            if (userWithSameUsername && userWithSameUsername.id !== id)
+                throw new HttpException("USERNAME_ALREADY_EXISTS", HttpStatus.CONFLICT)
+        }
 
         // esto lo que hace es crear un updatedUser con los valores de user (parametro) y todos los miembros
         //  de user que sean undefined mantendrán el valor de storedUser, es decir, el valor que había ya en la base de datos

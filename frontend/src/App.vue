@@ -22,9 +22,6 @@
             <li class="nav-item">
               <router-link class="nav-link" to="/friends">Friends</router-link>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Explore</a>
-            </li>
           </ul>
           <ul class="navbar-nav">
             <li class="nav-item">
@@ -105,9 +102,6 @@ export default defineComponent({
         .then((response) => {
           this.$router.push("/user?uuid=" + response.data.id);
         })
-        .catch((error) => {
-          alert("Usuario no encontrado");
-        });
     },
     modifyProfileRoute() {
       this.$router.push("/settings");

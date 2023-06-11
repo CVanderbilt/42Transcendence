@@ -180,6 +180,7 @@ export class Chats2Service {
         if (!roomExists) {
             throw new NotFoundException('Room does not exist')
         }
+
         // find if the user is already a member of the room
         const userMembership = await this.chatMembershipsRepo.find({
             where: {
@@ -187,7 +188,10 @@ export class Chats2Service {
                 chatRoom: { id: roomId }
             }
         })
+
+        Logger.log(userMembership)
         if (userMembership.length > 0) {
+            Logger.log('User is already a member of the room')
             return this.chatMembershipsRepo.findOne(
                 {
                     where: { id: userMembership[0].id },
@@ -195,8 +199,17 @@ export class Chats2Service {
                 })
         }
 
-        // if the room is private, check the password
         const room = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
+        
+        // if it is a direct room, check if there are already two members
+        if (room.isDirect) {
+            const roomMemberships = await this.findChatRoomMembers(roomId)
+            if (roomMemberships.length >= 2) {
+                throw new UnauthorizedException('You are not allowed to join this room')
+            }
+        }
+
+        // if the room is private, check the password
         if (room.isPrivate) {
             if (!data.password) {
                 throw new UnauthorizedException('Password is required for this room')

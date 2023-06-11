@@ -16,8 +16,10 @@ export interface IUserAPI {
 //     return apiClient.post(URL, {...options, chats: [{name: "general", role: "user"}]});
 // } // Esto sucede automáticamente en el backend cuando un usuario se registra
 
-export async function updateUser(id: string, options: IUserAPI) {    
-    return apiClient.put(`${URL}/${id}`, options)
+export async function updateUserReq(id: string, options: IUserAPI) {    
+    const res = await apiClient.put(`${URL}/${id}`, options)
+    console.log(res)
+    return res
 }
 
 export async function getUserById(id: string) {

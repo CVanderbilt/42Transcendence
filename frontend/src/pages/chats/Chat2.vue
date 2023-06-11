@@ -435,7 +435,7 @@ export default defineComponent({
         return;
       }
       // change chat
-      this.changeRoom(room.id, room.name);
+      this.changeRoom(room.id, room.name);//TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
     },
 
     async leaveRoom(roomId: any) {
