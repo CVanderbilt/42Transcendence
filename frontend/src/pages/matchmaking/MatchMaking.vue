@@ -21,11 +21,11 @@
                       <p>Powerups</p>
                       <form style="display: flex; flex-direction: column;">
                         <div>
-                          <label for="isBig" style="margin-right: 20px;">Big paddle</label>
-                          <input type="checkbox" v-model="options.bigPaddle" />
+                          <label for="isSmall" style="margin-right: 20px;">Small paddle</label>
+                          <input type="checkbox" v-model="options.smallPaddle" />
                         </div>
                         <div>
-                          <label for="isBig" style="margin-right: 20px;">Fast ball</label>
+                          <label for="isFast" style="margin-right: 20px;">Fast ball</label>
                           <input type="checkbox" v-model="options.fastBall" />
                         </div>
                       </form>
@@ -85,7 +85,7 @@ export default defineComponent({
   data() {
     return {
       options: {
-        bigPaddle: false,
+        smallPaddle: false,
         fastBall: false,
       },
     };
@@ -103,7 +103,7 @@ export default defineComponent({
     },
     async enterExhibitionMatch() {
       let powerups = "";
-      powerups = powerups.concat(this.options.bigPaddle ? "B" : "");
+      powerups = powerups.concat(this.options.smallPaddle ? "S" : "");
       powerups = powerups.concat(this.options.fastBall ? "F" : "");
       if (powerups === "") {
         powerups = "N";

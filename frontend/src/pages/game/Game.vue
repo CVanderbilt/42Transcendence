@@ -12,10 +12,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from "vue";
+import { defineComponent } from "vue";
 import { gameSocketIO } from "../..//main";
 
-import { key, store } from "../..//store/store";
+import { store } from "../..//store/store";
 import { getGameApi } from "@/api/gameApi";
 
 export default defineComponent({
@@ -29,26 +29,25 @@ export default defineComponent({
       user,
       canvas: null,
       ctx: null,
-      ball: null,
-      x: 250,
-      y: 280,
-      dx: 2,
-      dy: 2,
       leftPaddleY: 0,
       leftPaddleH: 75,
-      leftPaddleW: 10,
       leftUserUpPressed: false,
       leftUserDownPressed: false,
-      rightUserDownPressed: false,
-      rightUserUpPressed: false,
       rightPaddleY: 0,
       rightPaddleH: 75,
-      rightPaddleW: 10,
       leftUserScore: 0,
       rightUserScore: 0,
       leftUserName: "",
       rightUserName: "",
-      playing: false
+
+      // ball: null,
+      // x: 250,
+      // y: 280,
+      // leftPaddleW: 10,
+      // rightUserDownPressed: false,
+      // rightUserUpPressed: false,
+      // rightPaddleW: 10,
+      // playing: false
     };
   },
   async mounted(): Promise<void> {
@@ -66,21 +65,13 @@ export default defineComponent({
     this.room = this.$route.query.id
     this.io.socket.emit("event_join_game", { room: this.$route.query.id, username: this.user.username })
 
-    //read powerups
-    if (game.powerups.contains("L")) {
-      this.dx = 4;
-      this.dy = 4;
-    }
-    game.powerups
-
-
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
     this.leftPaddleY = (this.canvas.height - this.leftPaddleH) / 2;
     this.rightPaddleY = (this.canvas.height - this.rightPaddleH) / 2;
     document.addEventListener("keydown", this.keyDownHandler, false);
     document.addEventListener("keyup", this.keyUpHandler, false);
-    //this.draw();
+
     this.io.socket.on(("draw"), (
       ballX: number,
       ballY: number,
@@ -119,6 +110,7 @@ export default defineComponent({
       this.ctx.closePath();
     })
   },
+
   methods: {
     keyDownHandler(e: KeyboardEvent): void {
       if (e.key == "Down" || e.key == "ArrowDown") {
@@ -148,8 +140,6 @@ export default defineComponent({
     }
   },
 });
-
-
 
 </script>
   
