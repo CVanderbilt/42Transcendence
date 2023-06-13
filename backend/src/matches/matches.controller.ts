@@ -13,23 +13,12 @@ export class MatchesController {
         return this.matchesService.findOne(id);
     }
 
-    @Get('/playerOne/:id')
-    async getPlayerOne(
-        @Param('id') id: string): Promise<User> {
-        return this.matchesService.getPlayerOne(id);
-    }
-
-    @Get('/playerTwo/:id')
-    async getPlayerTwo(
-        @Param('id') id: string): Promise<User> {
-        return this.matchesService.getPlayerTwo(id);
-    }
-
     @Get()
     async find(): Promise<Match[]> {
         return this.matchesService.find();
     }
 
+    // todo: hacer que solo se puedan crear amistosos, competitivo se generan a través de matchmaking
     @Post(':userId/:type')
     async create(
         @Param('userId') userId: string,
@@ -43,6 +32,8 @@ export class MatchesController {
         }
     }
 
+    /*
+    Competitive matches no se generan mediante api, se generan a través del matchmaking
     @Get('competitiveMatch/:userId')
     async getCompetitiveMatch(@Param('userId') userId: string): Promise<Match> {
         try {
@@ -50,8 +41,9 @@ export class MatchesController {
         } catch (error) {
             //Logger2.error(error)
         }
-    }
+    }*/
 
+    //todo: esto solo debe poder affectar a no competitive matches
     @Post('addOpponent/:userId/:matchId')
     async addOpponent(@Param('userId') userId: string, @Param('matchId') matchId: string): Promise<Match> {
         try {

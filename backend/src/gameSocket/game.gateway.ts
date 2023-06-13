@@ -7,6 +7,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { MatchMaker } from 'src/matches/matchmaking';
+import { MatchesService} from '../matches/matches.service';
 import { MatchesService } from '../matches/matches.service';
 
 interface Player {
@@ -46,8 +48,11 @@ export class GameGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   private intervalRefreshId: NodeJS.Timeout;
+  private matchMaker: MatchMaker
 
-  constructor(private matchesService: MatchesService) { }
+  constructor(private matchesService: MatchesService) {
+    this.matchMaker = new MatchMaker();
+  }
 
   afterInit(server: any) {
     console.log('Iniciamos server para pong');
@@ -59,16 +64,19 @@ export class GameGateway
   }
 
   handleDisconnect(client: any) {
-    console.log('handle disconnect');
+    //todo: no se si aquí o en otro lado, pero countdown para que si un usuario se ausenta mucho tiempo acabe siendo victoria para el otro jugador
+    console.log('handle disconnect')
   }
 
   @SubscribeMessage('event_join_game')
-  async handleJoinRoom(client: Socket, payload: { room: string; username: string }) {
-    const { room, username } = payload;
-    console.log(`alguien se unió al juego ${room}`);
-
-    const _room = await this.getOrCreateRoom(room);
-
+  async handleJoinRoom(client: Socket, payload: { room: string, username: string }) {
+    const { room, username } = payload
+    console.log(`${username} started matchmaking`)
+    
+    const roomId = await this.matchMaker.makeMatch(username, 100) //todo: cambiar el score de 100 al del usuario, esta info estará en el token aunq habría que sacarla de la base de datos porq no siempre estará sincronizada, también podemos pasar
+    const _room = getOrCreateRoom(roomId)
+    console.log(`found room ${roomId}`)
+    
     if (_room.numPlayers < 2) {
       if (!_room.player1.inGame || !_room.player2.inGame) {
         const player = _room.player1.inGame ? _room.player2 : _room.player1;
@@ -77,77 +85,76 @@ export class GameGateway
         player.user = username;
         player.inGame = true;
       }
+      
+      const gameServer = this.server;
+      _room.gameStatus = "PLAYING";
+
+        this.intervalRefreshId = setInterval( async () => {
+          if (_room.numPlayers > 1) {
+            const calculatePlayerPos = (player: Player) => {
+              if (player.downPressed && player.paddlePos < canvasHeight - player.paddleHeight) {
+                player.paddlePos += movementDistance;
+              } else if (player.upPressed && player.paddlePos > 0) {
+                player.paddlePos -= movementDistance;
+              }
+            }
+            calculatePlayerPos(_room.player1)
+            calculatePlayerPos(_room.player2)
 
       const gameServer = this.server;
       _room.gameStatus = "PLAYING";
 
-      this.intervalRefreshId = setInterval(() => {
-        if (_room.numPlayers > 1) {
-          const calculatePlayerPos = (player: Player) => {
-            if (player.downPressed && player.paddlePos < canvasHeight - player.paddleHeight) {
-              player.paddlePos += movementDistance;
-            } else if (player.upPressed && player.paddlePos > 0) {
-              player.paddlePos -= movementDistance;
-            }
-          };
-          calculatePlayerPos(_room.player1);
-          calculatePlayerPos(_room.player2);
-
-          if (_room.ballpos.y + _room.ballpos.dy > ballMaxY || _room.ballpos.y + _room.ballpos.dy < ballMinY) {
-            _room.ballpos.dy = -_room.ballpos.dy;
-          }
-
-          if (_room.ballpos.x + _room.ballpos.dx < 15) {
-            {
-              if (_room.ballpos.y > _room.player1.paddlePos && _room.ballpos.y < _room.player1.paddlePos + _room.player1.paddleHeight) {
-                if (_room.player1.downPressed && _room.ballpos.dy < 2 * _room.ballSpeed) {
-                  _room.ballpos.dy += 0.5 * _room.ballSpeed;
+            if (_room.ballpos.x + _room.ballpos.dx < 15) {
+              {
+                if (_room.ballpos.y > _room.player1.paddlePos && _room.ballpos.y < _room.player1.paddlePos + _room.player1.paddleHeight) {
+                  if (_room.player1.downPressed && _room.ballpos.dy < 4) {
+                    _room.ballpos.dy++
+                  }
+                  if (_room.player1.upPressed && _room.ballpos.dy > -4) {
+                    _room.ballpos.dy--
+                  }
+                  _room.ballpos.dx = 2;
+                } else if (_room.ballpos.x + _room.ballpos.dx < 0) {
+                  _room.player2.score++
+                  _room.ballpos.x = 250;
+                  if (_room.ballpos.dy > 0)
+                  _room.ballpos.dy = 2
+                  else
+                  _room.ballpos.dy = -2
                 }
-                if (_room.player1.upPressed && _room.ballpos.dy > -2 * _room.ballSpeed) {
-                  _room.ballpos.dy -= 0.5 * _room.ballSpeed;
+              }
+            } else if (_room.ballpos.x + _room.ballpos.dx > canvasWidth - 15) {
+              if (_room.ballpos.y > _room.player2.paddlePos && _room.ballpos.y < _room.player2.paddlePos + _room.player2.paddleHeight) {
+                if (_room.player2.downPressed && _room.ballpos.dy < 4) {
+                  _room.ballpos.dy++
                 }
-                _room.ballpos.dx = -_room.ballpos.dx;
-              }
-              else if (_room.ballpos.x + _room.ballpos.dx < 0) {
-                _room.player2.score++;
-                this.matchesService.opponentGoal(room);
-                console.log("GOL1");
-                _room.ballpos.x = 250;
-                _room.ballpos.dx = -_room.ballpos.dx;
-                _room.ballpos.dx *= 1.2
+                if (_room.player2.upPressed && _room.ballpos.dy > -4) {
+                  _room.ballpos.dy--
+                }
+                _room.ballpos.dx = -2;
+              } else if (_room.ballpos.x + _room.ballpos.dx > canvasWidth - 0) {
+                _room.ballpos.x = 250
+                _room.player1.score++;
+                if (_room.ballpos.dy > 0)
+                _room.ballpos.dy = 2
+                else
+                _room.ballpos.dy = -2
               }
             }
-          }
-          else if (_room.ballpos.x + _room.ballpos.dx > canvasWidth - 15) {
-            if (_room.ballpos.y > _room.player2.paddlePos && _room.ballpos.y < _room.player2.paddlePos + _room.player2.paddleHeight) {
-              if (_room.player2.downPressed && _room.ballpos.dy < 2 * _room.ballSpeed) {
-                _room.ballpos.dy += 0.5 * _room.ballSpeed;
-              }
-              if (_room.player2.upPressed && _room.ballpos.dy > -2 * _room.ballSpeed) {
-                _room.ballpos.dy -= 0.5 * _room.ballSpeed;
-              }
-              _room.ballpos.dx = -_room.ballpos.dx;
-            }
-            else if (_room.ballpos.x + _room.ballpos.dx > canvasWidth - 0) {
-              _room.ballpos.x = 250;
-              _room.player1.score++;
-              this.matchesService.localGoal(room);
-              console.log("GOL2");
-              _room.ballpos.dx = -_room.ballpos.dx;
-              _room.ballpos.dx *= 1.2
-              //alert("GAME OVER");
-              //document.location.reload();
+            _room.ballpos.x += _room.ballpos.dx;
+            _room.ballpos.y += _room.ballpos.dy;
+            gameServer.to(`room_${roomId}`).emit('info', roomId);
+            gameServer.to(`room_${roomId}`).emit('draw', _room.ballpos.x, _room.ballpos.y, _room.player1.paddlePos, _room.player1.paddleHeight, _room.player2.paddlePos, _room.player2.paddleHeight, _room.player1.score, _room.player2.score, _room.player1.user, _room.player2.user);
+            if (_room.player1.score == 5 || _room.player2.score == 5){
+              _room.gameStatus = "FINISHED"
+              const match = await this.matchesService.createMatch(_room.player1.user, _room.player2.user)
+              clearInterval(this.intervalRefreshId);
+              gameServer.to(`room_${roomId}`).emit('endGame', match.id);
+              this.matchMaker.matchEnded(_room.player1.user, _room.player2.user)
+              delete gameRooms[roomId]
             }
           }
-          _room.ballpos.x += _room.ballpos.dx;
-          _room.ballpos.y += _room.ballpos.dy;
-          gameServer.to(`room_${room}`).emit('draw', _room.ballpos.x, _room.ballpos.y, _room.player1.paddlePos, _room.player1.paddleHeight, _room.player2.paddlePos, _room.player2.paddleHeight, _room.player1.score, _room.player2.score, _room.player1.user, _room.player2.user);
-          if (_room.player1.score === 5 || _room.player2.score === 5) {
-            _room.gameStatus = "FINISHED";
-            clearInterval(this.intervalRefreshId);
-          }
-        }
-      }, 1000 / 60);
+        }, 1000 / 60);
 
       console.log(_room);
     }
@@ -162,13 +169,14 @@ export class GameGateway
       _room.gameStatus = "MISSING_PLAYER";
 
       if (_room.numPlayers <= 0) {
-        delete gameRooms[room];
+        this.matchMaker.matchEnded(_room.player1.user, _room.player2.user)
+        delete gameRooms[roomId]
       }
 
       console.log(`socket ${client.id} disconnected due to ${reason}`);
     });
 
-    client.join(`room_${room}`);
+    client.join(`room_${roomId}`);
   }
 
   @SubscribeMessage('move') //TODO Backend

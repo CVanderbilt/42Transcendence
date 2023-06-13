@@ -69,6 +69,8 @@ export class MatchesService {
         }
     }
 
+    //todo: hacer que esto solo sirva para encontrar partidas amistosas, las competitivas van por el socket directamente
+    //    de hecho competitive match solo está usando el de crear y el de guardar (ni siquiera usa goles y demás)
     async getOpponentAvailableMatch(type: string, userId: string): Promise<Match | null> {
         try {
             const pendingMatches = await this.matchesRepo.find({

@@ -25,7 +25,7 @@ import {
     }
 
     handleConnection(client: any, ...args: any[]) {
-      console.log('Client connected to state socket👋')
+      //console.log('Client connected to state socket👋')
     }
     handleDisconnect(client: any) {
       console.log('Client disconnected from state socket')

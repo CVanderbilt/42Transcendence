@@ -30,6 +30,7 @@
     "@nestjs/swagger": "^6.1.4",
     "@nestjs/typeorm": "^9.0.1",
     "@nestjs/websockets": "^9.2.1",
+    "async-mutex": "^0.4.0",
     "axios": "^1.3.3",
     "bcrypt": "^5.1.0",
     "class-transformer": "^0.5.1",

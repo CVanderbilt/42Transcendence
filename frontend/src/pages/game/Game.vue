@@ -56,6 +56,7 @@ export default defineComponent({
       return
     }
 
+    //todo: revisar, esto no tendría que quitarse? en su lugar usuarios que no formen parte del game solo podrán observar
     const game = await (await getGameApi(this.$route.query.id)).data
     if (game.user.id !== this.user.id) {
       this.$router.push("/matchmaking")
@@ -71,7 +72,9 @@ export default defineComponent({
     this.rightPaddleY = (this.canvas.height - this.rightPaddleH) / 2;
     document.addEventListener("keydown", this.keyDownHandler, false);
     document.addEventListener("keyup", this.keyUpHandler, false);
-
+    //this.draw();
+    this.io.socket.on(("info"), (roomId: string) => { this.room = roomId })
+    this.io.socket.on(("endGame"), (roomId: string) => { this.$router.push(`/endGame?id=${roomId}`) })
     this.io.socket.on(("draw"), (
       ballX: number,
       ballY: number,
@@ -83,15 +86,11 @@ export default defineComponent({
       player2score: number,
       player1name: string,
       player2name: string,
-
     ) => {
       this.rightUserName = player2name;
       this.leftUserName = player1name;
       this.leftUserScore = player1score;
       this.rightUserScore = player2score;
-      if (this.leftUserScore == 5 || this.rightUserScore == 5) {
-        this.$router.push("/endGame?id=" + this.room);
-      }
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.beginPath();
       this.ctx.arc(ballX, ballY, 10, 0, Math.PI * 2);

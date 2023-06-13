@@ -8,7 +8,6 @@ import { ChatGateway } from './webSockets/chat.gateway';
 import { StateGateway } from './webSockets/state.gateway';
 import { GameGateway } from './gameSocket/game.gateway'
 import { FriendshipsModule } from './friendships/friendships.module';
-import { GamesModule } from './games/games.module';
 import { MatchesModule } from './matches/matches.module';
 import { Chats2Module } from './chats2/chats2.module';
 import { GameModule } from './gameSocket/game.module';
@@ -32,7 +31,6 @@ import { GlobalExceptionFilter } from './GlobalExceptionFilter';
     UsersModule,
     // ChatsModule,
     FriendshipsModule,
-    GamesModule,
     MatchesModule,
     Chats2Module,
     AuthModule,
