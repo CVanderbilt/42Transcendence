@@ -1,23 +1,68 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { MatchEntity } from './match.entity';
 import { Match } from './match.interface';
-import { IsNull, Not, Repository } from 'typeorm';
+import { IsNull, Not, RemoveOptions, Repository, SaveOptions } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { User } from 'src/users/user.interface';
-import { Console } from 'console';
+import { MatchMaker } from './matchmaking';
 
 @Injectable()
 export class MatchesService {
+    private readonly matchMaker: MatchMaker
     constructor(
         @InjectRepository(MatchEntity)
         private readonly matchesRepo: Repository<MatchEntity>,
         @InjectRepository(UserEntity)
         private readonly usersRepo: Repository<UserEntity>
-    ) { }
+    ) { 
+        this.matchMaker = new MatchMaker(matchesRepo, usersRepo)
+    }
 
-    async findOne(matchId: string): Promise<Match> {
-        return MatchEntity.findOne({ where: { id: matchId }, relations: ["user", "opponent"] })
+    async makeMatch(userId: string, score: number): Promise<string> {
+        return await this.matchMaker.makeMatch(userId, score)
+    }
+
+    matchEnded(user1: string, user2: string) {
+        this.matchMaker.matchEnded(user1, user2)
+    }
+
+    async matchAftermath(
+        id: string,
+        players: [{ name: string, score: number }, { name: string, score: number }]
+    ) {
+        console.log(`[${id}] -> players: {${players[0].name},${players[0].score}}, {${players[1].name},${players[1].score}}`)
+        const match = await this.matchesRepo.findOne({ where: { id }, relations: ["user", "opponent"] })
+        //todo: a lo mejor preferimos fallar silenciosamente aquí
+        //todo: revisar porq matchEntity puede no tener id ?
+        if (!match)
+            throw Error(`match with id: ${id} not found`)
+        const player = players.find(p => p.name === match.user.username)
+        const opponent = players.find(p => p.name === match.opponent.username)
+        if (!player)
+            throw Error(`no recieved player from: ${players} was user: ${match.user}`)
+        if (!opponent)
+            throw Error(`no recieved player from: ${players} was opponent: ${match.opponent}`)
+        match.playerScore = player.score
+        match.opponentScore = opponent.score
+        if (player.score > opponent.score) {
+            match.user.victories++;
+            match.opponent.defeats++;
+        } else {
+            match.opponent.victories++;
+            match.user.defeats++;
+        }
+        match.isFinished = true;
+        match.save();
+    }
+
+    async findOne(matchId: string): Promise<{ match: Match, player: User, opponent: User }> {
+        const matchEntity = await MatchEntity.findOne({ where: { id: matchId }, relations: ["user", "opponent"] })
+        return {
+            match: matchEntity,
+            player: matchEntity.user,
+            opponent: matchEntity.opponent
+        }
     }
     
     async find(): Promise<Match[]> {

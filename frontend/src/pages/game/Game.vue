@@ -52,13 +52,7 @@ export default defineComponent({
   },
   async mounted(): Promise<void> {
     if (this.$route.query.id === undefined) {
-      this.$router.push("/matchmaking")
-      return
-    }
-
-    //todo: revisar, esto no tendría que quitarse? en su lugar usuarios que no formen parte del game solo podrán observar
-    const game = await (await getGameApi(this.$route.query.id)).data
-    if (game.user.id !== this.user.id) {
+      console.log("no id, redirecting to matchmaking")
       this.$router.push("/matchmaking")
       return
     }

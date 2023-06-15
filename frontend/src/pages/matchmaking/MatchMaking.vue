@@ -97,9 +97,10 @@ export default defineComponent({
       this.$router.push("/settings");
     },
     async enterCompetitiveMatch() {
-      const matchData = await enterCompetitiveGameApi(this.user?.id as string)
-      console.log(matchData.data.id)
-      this.$router.push("/game?id=" + matchData.data.id);
+      enterCompetitiveGameApi(this.user.username)
+      .then(response => {
+        this.$router.push("/game?id=" + response.data);
+      })
     },
     async enterExhibitionMatch() {
       let powerups = "";

@@ -16,8 +16,8 @@ export interface Match {
 }
 
 
-export async function enterCompetitiveGameApi(userId: string) {
-    return apiClient.get(`${URL}/competitiveMatch/${userId}`)
+export async function enterCompetitiveGameApi(userName: string) {
+    return apiClient.get(`${URL}/competitiveMatch/${userName}`)
 }
 
 export async function getGameApi(matchId: string) {

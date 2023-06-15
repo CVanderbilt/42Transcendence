@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Param, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Param, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { Match } from './match.interface';
 import { User } from 'src/users/user.interface';
 import { MatchesService } from './matches.service';
+import { HttpStatusCode } from 'axios';
 
 @Controller('matches')
 export class MatchesController {
@@ -10,7 +11,7 @@ export class MatchesController {
     @Get(':id')
     async findOne(
         @Param('id') id: string): Promise<Match> {
-        return this.matchesService.findOne(id);
+        return (await this.matchesService.findOne(id)).match;
     }
 
     @Get()
@@ -32,16 +33,23 @@ export class MatchesController {
         }
     }
 
-    /*
-    Competitive matches no se generan mediante api, se generan a través del matchmaking
-    @Get('competitiveMatch/:userId')
-    async getCompetitiveMatch(@Param('userId') userId: string): Promise<Match> {
+    @Get('competitiveMatch/:userName')
+    async getCompetitiveMatch(@Param('userName') userName: string): Promise<string> {
         try {
-            return await this.matchesService.joinMatch(userId, "competitive");
+            console.log("getCompetitiveMatch called with userName: " + userName)
+            const kk = await this.matchesService.makeMatch(userName, 100);
+            console.log("makeMatch funcionó y devuelve:")
+            console.log(kk)
+            return kk;
+            //return await this.matchesService.joinMatch(userId, "competitive");
         } catch (error) {
             //Logger2.error(error)
+            console.log("error getting competitive match")
+            console.log(error)
+            if (error instanceof HttpException) throw (error)
+            throw new HttpException("competitive matchmaking failed", HttpStatusCode.InternalServerError);
         }
-    }*/
+    }
 
     //todo: esto solo debe poder affectar a no competitive matches
     @Post('addOpponent/:userId/:matchId')
