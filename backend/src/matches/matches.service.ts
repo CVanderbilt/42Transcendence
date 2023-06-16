@@ -208,12 +208,16 @@ export class MatchesService {
             .leftJoinAndSelect("match.user", "user")
             .leftJoinAndSelect("match.opponent", "opponent")
             .where("match.user.id = :userId OR match.opponent.id = :userId", {
-                userId: userId,
+                userId: userId
+            })
+            .where("match.state = :state", { 
+                state: "Full" 
             })
             .getMany();
 
-        // Swap user and opponent if opponent is the user
-        list.forEach(element => {
+        for (let index = 0; index < list.length; index++) {
+            const element = list[index];
+
             if (element.opponent.id == userId) {
                 const o = element.user
                 element.user = element.opponent
@@ -222,8 +226,7 @@ export class MatchesService {
                 element.playerScore = element.opponentScore
                 element.opponentScore = s
             }
-        })
-
+        }
 
         return await (list as Match[])
     }

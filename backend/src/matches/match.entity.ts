@@ -30,7 +30,7 @@ export class MatchEntity extends BaseEntity{
     @Column({ default: "Pending opponent"})
     state: string
 
-    @Column({ default: "Friendly"})
+    @Column({ default: "Exhibition"})
     type: string
 
     @Column({ default: false})
