@@ -22,6 +22,9 @@
             <li class="nav-item">
               <router-link class="nav-link" to="/friends">Friends</router-link>
             </li>
+            <li class="nav-item">
+              <router-link class="nav-link" to="/rules">Rules</router-link>
+            </li>
           </ul>
           <ul class="navbar-nav">
             <li class="nav-item">

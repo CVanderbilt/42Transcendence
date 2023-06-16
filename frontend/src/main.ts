@@ -21,6 +21,7 @@ import User from './components/User.vue'
 import NotificationBanner from './components/NotificationBanner.vue'
 import EndGame from './pages/endGame/endGame.vue'
 import Admin from './pages/admin/Admin.vue'
+import Rules from './pages/rules/Rules.vue'
 import { isAuthenticated, publishNotification } from './utils/utils'
 
 const routes = [
@@ -35,7 +36,8 @@ const routes = [
   { path: '/friends', name: 'friends', component: Friends, meta: { requiresAuth: true } },
   { path: '/matchmaking', name: 'matchmaking', component: Matchmaking, meta: { requiresAuth: true } },
   { path: '/endgame', name: 'endGame', component: EndGame, meta: { requiresAuth: true } },
-  { path: '/admin', name: 'adminPage', component: Admin, meta: { requiresAuth: true } }
+  { path: '/admin', name: 'adminPage', component: Admin, meta: { requiresAuth: true } },
+  { path: '/rules', name: 'rules', component: Rules, meta: { requiresAuth: false } },
 ]
 
 const router = createRouter({

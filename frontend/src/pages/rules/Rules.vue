@@ -1,36 +1,19 @@
 <template>
   <h1>Rules</h1>
-  <div style="display: flex; flex-direction: row;">
-    <div v-for="fshp in friendships" v-bind:key="fshp.id">
-      <div class="friend-block">
-        <h2>{{ fshp.friend.username }}</h2>
+  <div style="display: flex; flex-direction: column;">
+    <li>
+      The objective of Pong is to score points by successfully hitting the ball past your opponent's paddle.
+    </li>
+    <li>
+      The objective of Pong is to score points by successfully hitting the ball past your opponent's paddle.
+    </li>
+    <li>
+      The objective of Pong is to score points by successfully hitting the ball past your opponent's paddle.
+    </li>
+    <li>
+      The objective of Pong is to score points by successfully hitting the ball past your opponent's paddle.
+    </li>
 
-        <p>{{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}</p>
-        <p v-if="!friendsStates.find(x => x.userId == fshp.friend.id)">Offline</p>
-
-        <h3>Member since<br>{{ fshp.friend.createdAt }}</h3>
-        <h3>Victories: {{ fshp.friend.victories }}</h3>
-        <h3>Defeats: {{ fshp.friend.defeats }}</h3>
-        <h3>Ladder position: ??</h3>
-        <div v-if="!fshp.isBlocked">
-          <OpenDirectChatButton :userId="user.id" :friendId="fshp.friend.id" />
-          <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="createGame(fshp.friend.id)">
-            Game
-          </button>
-        </div>
-
-        <div>
-          <button v-if="!fshp.isBlocked" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
-            v-on:click="setBlock(fshp.id as string, true)">Block
-          </button>
-          <button v-if="fshp.isBlocked" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
-            v-on:click="setBlock(fshp.id as string, false)">Unblock
-          </button>
-          <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
-            v-on:click="unfriend(fshp.id as string)">Unfriend</button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
     
@@ -49,7 +32,7 @@ interface UserState {
 }
 
 export default defineComponent({
-  name: "Friends",
+  name: "Rules",
 
   components: {
     OpenDirectChatButton,
