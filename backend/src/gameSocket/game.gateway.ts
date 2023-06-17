@@ -80,6 +80,8 @@ export class GameGateway
         _room.numPlayers++;
         player.user = username;
         player.inGame = true;
+      } else {
+        console.log("Viewer joined (" + username + ")")
       }
       
       const gameServer = this.server;
@@ -145,7 +147,7 @@ export class GameGateway
             _room.ballpos.y += _room.ballpos.dy;
             gameServer.to(`room_${_room.id}`).emit('info', _room.id);
             gameServer.to(`room_${_room.id}`).emit('draw', _room.ballpos.x, _room.ballpos.y, _room.player1.paddlePos, _room.player1.paddleHeight, _room.player2.paddlePos, _room.player2.paddleHeight, _room.player1.score, _room.player2.score, _room.player1.user, _room.player2.user);
-            if (_room.player1.score == 5 || _room.player2.score == 5){
+            if (_room.player1.score == 50 || _room.player2.score == 50){
               _room.gameStatus = "FINISHED"
               //const match = await this.matchesService.createMatch(_room.player1.user, _room.player2.user)
               //this.matchesService.matchAftermath()
@@ -167,6 +169,10 @@ export class GameGateway
 
     client.on("disconnect", (reason) => {
       const activePlayer = getActivePlayer(_room, username);
+      if (!activePlayer) {
+        console.log("Viewer disconected")
+        return ;
+      }
 
       console.log(`${activePlayer} se va`);
       clearInterval(this.intervalRefreshId);
@@ -197,6 +203,10 @@ export class GameGateway
     }
 
     const activePlayer = getActivePlayer(_room, username)
+    if (!activePlayer) {
+      console.log(`Viewer ${username} cant interact with this room`)
+      return ;
+    }
     if ((movement != "down" && movement != "up")
       || (type != "press" && type != "release")
       || !activePlayer) {
@@ -245,6 +255,7 @@ const getActivePlayer = (room: GameRoom, playerName: string): "player1" | "playe
   } else if (room.player2.user === playerName) {
     return "player2"
   }
+  return null
 }
 
 
