@@ -12,6 +12,7 @@ export class UserDto {
     image: Uint8Array;
     isBanned: boolean;
     role: string;
+    position: number;
 
     constructor(user: User) {
         this.id = user.id
@@ -25,5 +26,6 @@ export class UserDto {
         this.image = user.image;
         this.isBanned = user.isBanned;
         this.role = user.role;
+        this.position = user.position;
     }
 }

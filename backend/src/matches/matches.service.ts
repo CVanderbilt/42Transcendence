@@ -54,6 +54,8 @@ export class MatchesService {
         }
         match.isFinished = true;
         match.save();
+        match.user.save()
+        match.opponent.save()
     }
 
     async findOne(matchId: string): Promise<{ match: Match, player: User, opponent: User }> {

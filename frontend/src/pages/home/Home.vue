@@ -11,7 +11,7 @@
               <li class="breadcrumb-item active">Dashboard</li>
             </ol>
             <div class="row">
-              <div class="col-xl-3 col-md-6">
+              <div class="col-xl-6 col-md-12">
                 <div class="card bg-primary text-white mb-4">
                   <div class="card-body">Exhibition games played</div>
                   <div class="
@@ -29,7 +29,7 @@
                   </div>
                 </div>
               </div>
-              <div class="col-xl-3 col-md-6">
+              <div class="col-xl-6 col-md-12">
                 <div class="card bg-warning text-white mb-4">
                   <div class="card-body">Competition games played</div>
                   <div class="
@@ -47,7 +47,7 @@
                   </div>
                 </div>
               </div>
-              <div class="col-xl-3 col-md-6">
+              <!-- <div class="col-xl-3 col-md-6">
                 <div class="card bg-success text-white mb-4">
                   <div class="card-body">Success Card</div>
                   <div class="
@@ -78,9 +78,9 @@
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> -->
             </div>
-            <div class="row">
+            <!-- <div class="row">
               <div class="col-xl-6">
                 <div class="card mb-4">
                   <div class="card-header">
@@ -103,11 +103,32 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </div> -->
             <div class="card mb-4">
               <div class="card-header">
-                <i class="fas fa-table me-1"></i>
-                DataTable Example
+                <h3>LADDER</h3>
+                <div style="display: flex; justify-content: center;">
+                  <table class="my-table">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>User</th>
+                        <th>Victories</th>
+                        <th>Defeats</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(item, index) in ladder" v-bind:key="item.id"
+                        :class="{ 'alternate-row': index % 2 !== 0 }">
+                        <td>{{ index + 1 }}</td>
+                        <td>{{ item.username }}</td>
+                        <td>{{ item.victories }}</td>
+                        <td>{{ item.defeats }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
               </div>
             </div>
           </div>
@@ -123,33 +144,42 @@ import { useStore } from "vuex";
 import { key } from "../..//store/store";
 import "@/style/styles.css";
 import { Match, getMatchesReq as getMatchesForUserReq } from "@/api/gameApi";
+import { IUserAPI, getLadder } from "@/api/user";
 
 export default defineComponent({
   name: "Home",
+
   setup() {
     const store = useStore(key)
     const user = () => store.state.user
     const matches = ref<Match[]>([]);
     const exhibitions = ref<Match[]>([]);
     const competitions = ref<Match[]>([]);
+    const ladder = ref<IUserAPI[]>([]);
 
     async function fetchMatches() {
       const res = (await getMatchesForUserReq(user().id)).data as Match[]
       matches.value = res;
-      if (res.length > 0)
-      {
+      if (res.length > 0) {
         exhibitions.value = res.filter((m) => m.type === "exhibition");
         competitions.value = res.filter((m) => m.type === "competitive");
       }
     }
 
+    async function fetchLadder() {
+      const res = (await getLadder()) as IUserAPI[]
+      ladder.value = res;
+    }
+
     onMounted(fetchMatches)
+    onMounted(fetchLadder)
 
     return {
       user,
       matches,
       exhibitions,
       competitions,
+      ladder,
     };
   },
 
@@ -177,5 +207,21 @@ export default defineComponent({
   background: linear-gradient(to right,
       rgba(4, 8, 22, 0.804),
       rgb(193, 209, 237));
+}
+
+.my-table {
+  border-collapse: separate;
+  border-spacing: 10px;
+  /* Espacio entre las celdas */
+}
+
+.my-table th,
+.my-table td {
+  padding: 8px;
+  /* Espacio interno de las celdas */
+}
+
+.alternate-row {
+  background-color: #a3f2f2;
 }
 </style>

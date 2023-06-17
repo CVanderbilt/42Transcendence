@@ -4,11 +4,14 @@ const URL = "/users";
 const IMAGE_URL = "/image"
 
 export interface IUserAPI {
+    id?: string
     email?: string
     password?: string
     username: string
     is2fa?: boolean
     twofaSecret?: string // todo: no estoy seguro
+    victories?: number
+    defeats?: number
 }
 
 
@@ -67,4 +70,8 @@ export async function promoteUser(id: string) {
 
 export async function demoteUser(id: string) {
     apiClient.post(`${URL}/${id}/demote`)
+}
+
+export async function getLadder() {
+    return (await apiClient.get(`${URL}`)).data //TODO: cambiar a /ladder
 }

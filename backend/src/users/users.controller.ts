@@ -100,7 +100,7 @@ export class UsersController {
     }
 
     @Get(':id/image')
-        async getImageById(@Res({ passthrough: false }) response: Response, @Param('id') id: string) {
+    async getImageById(@Res({ passthrough: false }) response: Response, @Param('id') id: string) {
         const image = await this.usersService.getFileById(id);
         const stream = !image ?
             fs.createReadStream(path.join(process.cwd(), 'public/noPictureProfile.png')) :
@@ -114,4 +114,7 @@ export class UsersController {
     async setImage(@Param('id') id: string, @UploadedFile() file: Multer.File) {
         return this.usersService.uploadDatabaseFile(file.buffer, id)
     }
+
+    //TODO: get ladder
+    // devuelve a los usuarios ordenados por ranking
 }
