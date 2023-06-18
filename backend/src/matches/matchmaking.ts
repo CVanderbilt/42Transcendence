@@ -89,11 +89,7 @@ export class MatchMaker {
     powerupsAreEquivalent(powerups1: string[], powerups2: string[]): boolean {
       if (powerups1.length != powerups2.length)
         return false
-      powerups1.forEach(p => {
-        if (!powerups2.includes(p))
-          return false
-      })
-      return true
+      return powerups1.every(p => powerups2.includes(p))
     }
   
     async matchUsers(user: QueuedUser, otherUser: QueuedUser): Promise<string> {

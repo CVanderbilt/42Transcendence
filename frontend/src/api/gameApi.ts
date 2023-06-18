@@ -36,6 +36,6 @@ export async function getMatchesReq(userId: string) {
     return apiClient.get(`${URL}/user/${userId}`)
 }
 
-export async function enterExhibitionGameApi(userId: string, powerups: string) {
-    return apiClient.get(`${URL}/exhibitionMatch/${userId}/${powerups}`)
+export async function enterExhibitionGameApi(userName: string, powerups: string) {
+    return apiClient.get(`${URL}/exhibitionMatch/${userName}/${powerups.toString()}`)
 }

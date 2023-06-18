@@ -109,13 +109,10 @@ export default defineComponent({
       if (powerups === "") {
         powerups = "N";
       }
-      try {
-        const matchData = await enterExhibitionGameApi(this.user?.id as string, powerups)
-        this.$router.push("/game?id=" + matchData.data.id);
-      }
-      catch (e) {
-        alert(e)
-      }
+      enterExhibitionGameApi(this.user.username, powerups)
+      .then(response => {
+        this.$router.push("/game?id=" + response.data);
+      })
     }
   },
 });

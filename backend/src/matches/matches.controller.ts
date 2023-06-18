@@ -72,16 +72,23 @@ export class MatchesController {
         }
     }
 
-    @Get('exhibitionMatch/:userId/:powerups') //TODO: deberia ser put?
+    @Get('exhibitionMatch/:userName/:powerups')
     async getExhibitionMatch(
-        @Param('userId') userId: string,
+        @Param('userName') userName: string,
         @Param('powerups') powerups: string,
-    ): Promise<Match> {
-        Logger.log("ExhibitionMatch")
+    ): Promise<string> {
         try {
-            return await this.matchesService.joinMatch(userId, "exhibition", powerups);
+            console.log("getCompetitiveMatch called with userName: " + userName)
+            const powerupsList: string[] = []
+            for (let i = 0; i < powerups.length; i++)
+                powerupsList.push(powerups[i])
+            const gameId = await this.matchesService.makeMatch(userName, 100, true, powerupsList);
+            console.log("makeMatch funcionó y devuelve:")
+            console.log(gameId)
+            return gameId;
         } catch (error) {
-            //Logger2.error(error)
+            if (error instanceof HttpException) throw (error)
+            throw new HttpException("friendly matchmaking failed", HttpStatusCode.InternalServerError);
         }
     }
     
