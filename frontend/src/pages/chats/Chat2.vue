@@ -294,6 +294,8 @@ export default defineComponent({
   },
 
   async mounted() {
+    alert("mounted")
+
     this.chatRoomName = "general"; // default room
     this.isAdmin = false;
 

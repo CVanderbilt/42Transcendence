@@ -73,5 +73,6 @@ export async function demoteUser(id: string) {
 }
 
 export async function getLadder() {
-    return (await apiClient.get(`${URL}`)).data //TODO: cambiar a /ladder
+    
+    return (await apiClient.post(`${URL}`)).data //TODO: cambiar a /ladder
 }

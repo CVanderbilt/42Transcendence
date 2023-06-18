@@ -31,7 +31,8 @@
       <h3>Match Making</h3>
     <ul style="text-align: left;">
       <li>
-        Reglas de match making?//TODO: escribir las reglas
+        Matches players with similar victory - defeat ratio.
+        Only competitive statistics are taken into account.
       </li>
     </ul>
     </div>

@@ -115,6 +115,9 @@ export class UsersController {
         return this.usersService.uploadDatabaseFile(file.buffer, id)
     }
 
-    //TODO: get ladder
-    // devuelve a los usuarios ordenados por ranking
+    @Post('ladder')
+    async getLadder(): Promise<User[]> {
+        Logger.log('getLadder')
+        return null
+    }
 }
