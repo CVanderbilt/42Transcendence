@@ -37,10 +37,10 @@ export class MatchesController {
     async getCompetitiveMatch(@Param('userName') userName: string): Promise<string> {
         try {
             console.log("getCompetitiveMatch called with userName: " + userName)
-            const kk = await this.matchesService.makeMatch(userName, 100);
+            const gameId = await this.matchesService.makeMatch(userName, 100, false, []);
             console.log("makeMatch funcionó y devuelve:")
-            console.log(kk)
-            return kk;
+            console.log(gameId)
+            return gameId;
             //return await this.matchesService.joinMatch(userId, "competitive");
         } catch (error) {
             //Logger2.error(error)

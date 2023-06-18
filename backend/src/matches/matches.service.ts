@@ -19,8 +19,8 @@ export class MatchesService {
         this.matchMaker = new MatchMaker(matchesRepo, usersRepo)
     }
 
-    async makeMatch(userId: string, score: number): Promise<string> {
-        return await this.matchMaker.makeMatch(userId, score)
+    async makeMatch(userId: string, score: number, isFriendly: boolean, powerups: string[]): Promise<string> {
+        return await this.matchMaker.makeMatch(userId, score, isFriendly, powerups)
     }
 
     matchEnded(user1: string, user2: string) {

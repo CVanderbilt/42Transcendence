@@ -28,9 +28,10 @@ interface GameRoom {
   gameStatus: "WAITING" | "PLAYING" | "FINISHED" | "MISSING_PLAYER",
   ballSpeed: number,
   paddleHeight: number,
+  isCompetitive: boolean
 }
 
-const gameRooms: GameRoom[] = [];
+export const gameRooms: GameRoom[] = [];
 const canvasHeight = 300;
 const canvasWidth = 500;
 const movementDistance = 7;
@@ -68,10 +69,10 @@ export class GameGateway
   async handleJoinRoom(client: Socket, payload: { room: string, username: string }) {
     const { room, username } = payload
     
-    //todo: revisar, error interno cuando un usuario intenta entrar en uan room o antigua o inexistente, no está claro
-    //const roomId = await this.matchMaker.makeMatch(username, 100) //todo: cambiar el score de 100 al del usuario, esta info estará en el token aunq habría que sacarla de la base de datos porq no siempre estará sincronizada, también podemos pasar
-    const _room = await this.getOrCreateRoom(room)
-    console.log(`found room ${JSON.stringify(_room, null, 2)}`)
+    //todo: revisar, error interno cuando un usuario intenta entrar en uan room o antigua o inexistente, no está claro -> creo q ya está bien
+    const _room = gameRooms[room]
+    if (!_room)
+      return
     const activePlayer = getActivePlayer(_room, username)
     if (activePlayer != null) {
       console.log(`${username} is ${activePlayer}`)
@@ -81,7 +82,6 @@ export class GameGateway
         _room.numPlayers++;
         console.log("numplayer++ = " + _room.numPlayers)
       }
-      console.log(`Player ${username} joined room ${JSON.stringify(_room, null, 2)}`)
       
       const gameServer = this.server;
       _room.gameStatus = "PLAYING";
@@ -180,6 +180,7 @@ export class GameGateway
       _room.gameStatus = "MISSING_PLAYER";
 
       if (_room.numPlayers <= 0) {
+        //todo: añadir aqui la logica de ver la recompensa/penalización para cada usuario
         this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
         delete gameRooms[_room.id]
       }
@@ -222,30 +223,6 @@ export class GameGateway
     console.log(`${username} se salio del juego ${room}`)
     client.leave(`room_${room}`);
   }
-
-  getOrCreateRoom = async (roomId: string): Promise<GameRoom> => {
-    // get room from db
-    const matchInfo = await this.matchesService.findOne(roomId)
-
-    if (!matchInfo.match || matchInfo.match.isFinished || matchInfo.match.state !== "Full") {
-      return null; //todo: a lo mejor si isFinished podemos hacer algo para que el usuario lo sepa
-    }
-    // parse powerups
-    const ballSpeed = matchInfo.match.powerups.includes("F") ? 4 : 2
-    const paddleHeight = matchInfo.match.powerups.includes("S") ? 30 : 75
-
-    const room = gameRooms[roomId] || (gameRooms[roomId] = {
-      id: roomId,
-      gameStatus: "WAITING",
-      numPlayers: 0,
-      player1: createPlayer(matchInfo.player.username, paddleHeight),
-      player2: createPlayer(matchInfo.opponent.username, paddleHeight),
-      ballpos: { x: 250, y: 250, dx: ballSpeed, dy: ballSpeed },
-    });
-
-    return room;
-  }
-
 }
 
 const getActivePlayer = (room: GameRoom, playerName: string): "player1" | "player2" => {
@@ -256,13 +233,3 @@ const getActivePlayer = (room: GameRoom, playerName: string): "player1" | "playe
   }
   return null
 }
-
-const createPlayer = (username: string, paddleHeight: number): Player => ({
-  user: username,
-  paddlePos: 115,
-  paddleHeight: paddleHeight,
-  upPressed: false,
-  downPressed: false,
-  inGame: false,
-  score: 0
-})

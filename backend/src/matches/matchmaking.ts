@@ -1,4 +1,4 @@
-import { number, string } from "joi";
+import { boolean, number, string } from "joi";
 import { Mutex, tryAcquire } from "async-mutex"
 import { match } from "assert";
 import { randomUUID } from "crypto";
@@ -7,11 +7,15 @@ import { MatchEntity } from "./match.entity";
 import { HttpException } from "@nestjs/common";
 import { HttpStatusCode } from "axios";
 import { UserEntity } from "src/users/user.entity";
+import { gameRooms } from "src/gameSocket/game.gateway";
+import { v4 as uuidv4 } from 'uuid';
 
 interface QueuedUser {
+    powerups: string[];
     id: string,
     score: number,
     mutex: Mutex,
+    isFriendly: boolean
     matchId?: string,
 }
   
@@ -26,7 +30,7 @@ export class MatchMaker {
         this.usersAlt = new Map<string, QueuedUser>()
     }
 
-    async createCompetitiveMatch(userName: string, opponentName: string): Promise<string> {
+    async createMatch(userName: string, opponentName: string, isCompetitive: boolean, powerups: string[]): Promise<string> {
       try {
           console.log("creating competitive match")
           console.log(`contestants: (${userName} and ${opponentName})`)
@@ -36,27 +40,60 @@ export class MatchMaker {
           console.log("user: " + user)
           const opponent = await this.usersRepo.findOne({ where: { username: opponentName } })
           console.log("opponent: " + opponent)
-          return (await this.matchesRepo.save({
-              user: user,
-              opponent: opponent,
-              type: "competitive",
-              powerups: "",
-              state: "Full"
-          })).id
+          const id = uuidv4()
+          //generate uuid
+          const ballSpeed = powerups.includes("F") ? 4 : 2
+          const paddleHeight = powerups.includes("S") ? 30 : 75
+          gameRooms[id] = {
+            id,
+            gameStatus: "WAITING",
+            numPlayers: 0,
+            player1: {
+              user: user.username,
+              paddlePos: 115,
+              paddleHeight,
+              upPressed: false,
+              downPressed: false,
+              inGame: false,
+              score: 0
+            },
+            player2: {
+              user: opponent.username,
+              paddlePos: 115,
+              paddleHeight,
+              upPressed: false,
+              downPressed: false,
+              inGame: false,
+              score: 0
+            },
+            ballpos: { x: 250, y: 250, dx: ballSpeed, dy: ballSpeed },
+            isCompetitive
+          }
+          return id
       } catch (error) {
           console.log("!!!!!!!!ERROR AQUI!!!!!!!!")
           console.log(error)
       }
   }
 
-    public async makeMatch(userName: string, score: number): Promise<string> {
+    public async makeMatch(userName: string, score: number, friendly: boolean, powerups: string[]): Promise<string> {
         console.log(`${userName} with score: ${score} started matchmaking...`)
-        return this.checkForMatch(userName, score)
+        return this.checkForMatch(userName, score, friendly, powerups)
     }
 
     public matchEnded(user1: string, user2: string) {
         this.usersAlt.delete(user1)
         this.usersAlt.delete(user2)
+    }
+  
+    powerupsAreEquivalent(powerups1: string[], powerups2: string[]): boolean {
+      if (powerups1.length != powerups2.length)
+        return false
+      powerups1.forEach(p => {
+        if (!powerups2.includes(p))
+          return false
+      })
+      return true
     }
   
     async matchUsers(user: QueuedUser, otherUser: QueuedUser): Promise<string> {
@@ -70,7 +107,7 @@ export class MatchMaker {
           console.log(`${user.id} aquires other user mutex`)
           console.log("mathing users succeded Creating random uuid for room")
           
-          const matchId = await this.createCompetitiveMatch(user.id, otherUser.id)
+          const matchId = await this.createMatch(user.id, otherUser.id, true, user.powerups)
         
           otherUser.matchId = matchId
           user.matchId = matchId
@@ -86,7 +123,7 @@ export class MatchMaker {
         }
         console.log("mathing users failed")
       }
-    
+
       checkMatch(user: QueuedUser, threshold: number): string {
         console.log("checknig para user: " + user.id)
         console.log("matchId?: " + user.matchId)
@@ -96,21 +133,25 @@ export class MatchMaker {
         }
         this.usersAlt.forEach((otherUser) => {
             console.log(`        [${user.id}] attempting to match with [${otherUser.id}]`)
-            if (user.id !== otherUser.id && Math.abs(user.score - otherUser.score) <= threshold) {
+            if (user.id !== otherUser.id && user.isFriendly === otherUser.isFriendly &&
+              this.powerupsAreEquivalent(user.powerups, otherUser.powerups)) {
+              if (user.isFriendly || Math.abs(user.score - otherUser.score) <= threshold)
                 return this.matchUsers(user, otherUser);
             }
         })
         return null;
       }
-
-      async checkForMatch(id: string, score: number): Promise<string> {
+//todo random: hacer que si un usuario ya está en matchmaking pero no ha encontrado partida, las requests de hacer matchmaking devuelvan already created o algo así, si un usuario ha empezado matchmaking y cerró la request la manera de encontrar la partida será ir probando varias llamadas hasta que una le diga el matchId normal
+      async checkForMatch(id: string, score: number, isFriendly: boolean, powerups: string[]): Promise<string> {
         // crear o encontrar usuario
         let user = this.usersAlt.get(id)
         if (!user) {
           user = this.usersAlt.set(id, {
             id,
             score,
-            mutex: new Mutex()
+            mutex: new Mutex(),
+            isFriendly,
+            powerups,
           }).get(id)
           if (user.matchId) {
             console.log(`user currently in a match with id: ${user.matchId}`)
@@ -121,27 +162,6 @@ export class MatchMaker {
         }
         return this.checkForMatchLoop(user, 10);
       }
-      /*
-      async checkForMatch(user: QueuedUser): Promise<string> {
-        const match = this.checkMatch(user, 15);
-        if (match) {
-          console.log(`Match found! ${user.id} in room: ${match}`);
-          return match;
-        } else {
-          console.log(`No match found for ${user.id}. Checking again...`);
-    
-          console.log("ENQUEING: " + this.usersAlt.size)
-          console.log(user.id)
-          this.usersAlt.set(user.id, user) 
-          console.log("ENQUEUED: " + this.usersAlt.size)
-    
-          const scoreThreshold = 25;
-    
-          await sleep(5000);
-          return this.checkForMatchRec(user, scoreThreshold);
-        }
-      }
-      */
 
       //todo: arreglar lo de que usuarios desconectados que vuelvan a meterse en el matchmaking se metan automaticamente en esta partida
       //    en teoría tendría que funcionar porq el usuario ya está en el mapa con la roomId correcta pero no
