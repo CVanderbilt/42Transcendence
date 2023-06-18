@@ -1,18 +1,17 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { User } from './user.interface';
 import * as bcrypt from 'bcrypt';
 import { Chats2Service } from 'src/chats2/chats2.service';
-import * as joi from 'joi'
 
 @Injectable()
 export class UsersService {
     constructor(
         private readonly chatsService: Chats2Service,
         @InjectRepository(UserEntity)
-        private readonly usersRepo: Repository<UserEntity>
+        private readonly usersRepo: Repository<UserEntity>,
     ) { }
 
     async createUser(user: User): Promise<User> {
@@ -148,4 +147,28 @@ export class UsersService {
 
     isOwner(user: UserEntity | User) { return user.role === "OWNER" }
     isAdmin(user: UserEntity | User) { return user.role === "ADMIN" }
+
+    async getLadder() : Promise<User[]> {
+        console.log("getLadder")
+        const users = await this.usersRepo.find()
+        users.sort((u1, u2) => {
+            // if player has not played any game, he is last
+            if (u1.victories + u1.defeats === 0)
+                return 1;
+            if (u2.victories + u2.defeats === 0)
+                return -1;    
+            // Order by ratio
+            if (u1.victories / (u1.victories + u1.defeats) < u2.victories / (u2.victories + u2.defeats))
+                return 1;
+            if (u1.victories / (u1.victories + u1.defeats) > u2.victories / (u2.victories + u2.defeats))
+                return -1;
+            // Order by victories
+            if (u1.victories < u2.victories)
+                return 1;
+            if (u1.victories > u2.victories)
+                return -1;
+            return 0;
+        })
+        return users
+    }
 }

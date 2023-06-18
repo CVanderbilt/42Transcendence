@@ -13,6 +13,8 @@ export class User {
     victories?: number
     defeats?: number
     achievements?: string
+    position?: number
+
     createdAt?: Date
 
     image?: Uint8Array;

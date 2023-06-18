@@ -72,7 +72,7 @@ export class MatchesController {
         }
     }
 
-    @Get('exhibitionMatch/:userId/:powerups')
+    @Get('exhibitionMatch/:userId/:powerups') //TODO: deberia ser put?
     async getExhibitionMatch(
         @Param('userId') userId: string,
         @Param('powerups') powerups: string,
@@ -84,4 +84,5 @@ export class MatchesController {
             //Logger2.error(error)
         }
     }
+    
 }
