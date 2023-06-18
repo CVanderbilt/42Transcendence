@@ -22,7 +22,7 @@
                 <div class="form-outline form-white mb-2">
                   <input type="username" id="typeUsername" class="form-control form-control-lg"
                     :placeholder="user!.username" v-model="options.username" />
-                  <label class="form-label" for="typeUsername">Username</label>
+                  <label class="form-label" for="typeUsername">Nickname</label>
                 </div>
 
                 <!-- Comento esto porque creo que no hace falta cambiar el email ni la contraseña ya que solamente piden login con 42
