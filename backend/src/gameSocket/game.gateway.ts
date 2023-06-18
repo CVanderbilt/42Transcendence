@@ -68,21 +68,20 @@ export class GameGateway
   async handleJoinRoom(client: Socket, payload: { room: string, username: string }) {
     const { room, username } = payload
     
+    //todo: revisar, error interno cuando un usuario intenta entrar en uan room o antigua o inexistente, no está claro
     //const roomId = await this.matchMaker.makeMatch(username, 100) //todo: cambiar el score de 100 al del usuario, esta info estará en el token aunq habría que sacarla de la base de datos porq no siempre estará sincronizada, también podemos pasar
     const _room = await this.getOrCreateRoom(room)
-    console.log(`found room ${_room.id}`)
-    
-    //todo: tocontinue
-    if (_room.numPlayers < 2) {
-      if (!_room.player1.inGame || !_room.player2.inGame) {
-        const player = _room.player1.inGame ? _room.player2 : _room.player1;
-        console.log(`Añade ${player === _room.player1 ? 'player 1' : 'player 2'}`);
-        _room.numPlayers++;
-        player.user = username;
+    console.log(`found room ${JSON.stringify(_room, null, 2)}`)
+    const activePlayer = getActivePlayer(_room, username)
+    if (activePlayer != null) {
+      console.log(`${username} is ${activePlayer}`)
+      const player = _room[activePlayer]
+      if (!player.inGame) {
         player.inGame = true;
-      } else {
-        console.log("Viewer joined (" + username + ")")
+        _room.numPlayers++;
+        console.log("numplayer++ = " + _room.numPlayers)
       }
+      console.log(`Player ${username} joined room ${JSON.stringify(_room, null, 2)}`)
       
       const gameServer = this.server;
       _room.gameStatus = "PLAYING";
@@ -227,14 +226,14 @@ export class GameGateway
   getOrCreateRoom = async (roomId: string): Promise<GameRoom> => {
     // get room from db
     const matchInfo = await this.matchesService.findOne(roomId)
-    if (!matchInfo.match || matchInfo.match.state !== "Full") {
-      return null;
+
+    if (!matchInfo.match || matchInfo.match.isFinished || matchInfo.match.state !== "Full") {
+      return null; //todo: a lo mejor si isFinished podemos hacer algo para que el usuario lo sepa
     }
     // parse powerups
     const ballSpeed = matchInfo.match.powerups.includes("F") ? 4 : 2
     const paddleHeight = matchInfo.match.powerups.includes("S") ? 30 : 75
 
-    //tocontinue: la room se pone con los jugadores ya creados, ahora falta que los que se unan al socket sean los jugadores que estamos esperando
     const room = gameRooms[roomId] || (gameRooms[roomId] = {
       id: roomId,
       gameStatus: "WAITING",
@@ -258,10 +257,8 @@ const getActivePlayer = (room: GameRoom, playerName: string): "player1" | "playe
   return null
 }
 
-
-
-const createPlayer = (name: string, paddleHeight: number): Player => ({
-  user: "",
+const createPlayer = (username: string, paddleHeight: number): Player => ({
+  user: username,
   paddlePos: 115,
   paddleHeight: paddleHeight,
   upPressed: false,
