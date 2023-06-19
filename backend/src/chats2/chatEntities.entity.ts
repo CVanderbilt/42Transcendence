@@ -55,10 +55,10 @@ export class ChatMembershipEntity extends BaseEntity {
     @Column({default: false})
     isMuted: boolean
 
-    @Column({default: null})
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     bannedUntil: Date
 
-    @Column({default: null})
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     mutedUntil: Date
 }
 

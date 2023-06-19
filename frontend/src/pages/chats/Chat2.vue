@@ -85,6 +85,10 @@
                     <p>You are muted</p>
                   </div>
                 </div>
+                <div v-else>
+                  <h3>You are banned until</h3>
+                  <h3>{{ getNiceDate(currentMembership.bannedUntil) }}</h3>
+                </div>
 
               </div>
             </div>
@@ -97,7 +101,7 @@
                 v-model="searchedChatPassword" />
 
               <b-button @click="joinRoomWithName(searchedChat, searchedChatPassword); searchedChatPassword = '';">Join
-                room</b-button>
+                room</b-button> <!-- TODO: cambiar por joinRoomWithId -->
             </div>
 
 
@@ -350,6 +354,10 @@ export default defineComponent({
   },
 
   methods: {
+    getNiceDate(date: string) {
+      return moment(date).format('MMMM Do YYYY, h:mm:ss a')
+    },
+
     getNiceChatName(chatRoom: ChatRoom) {
       const name = chatRoom.name;
       if (chatRoom.isDirect) {
@@ -419,7 +427,6 @@ export default defineComponent({
         postChatMessageReq(this.roomId, outMessage)
 
         this.message = "";
-        // this.chatArea.scrollTop = this.chatArea.scrollHeight
       }
     },
 
@@ -450,7 +457,7 @@ export default defineComponent({
 
       // change chat
       try {
-        this.changeRoom(room.id, room.name);//TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
+        this.changeRoom(room.id, room.name); //TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
       }
       catch (error: any) {
         const errorMsg = (error).response?.data?.message
