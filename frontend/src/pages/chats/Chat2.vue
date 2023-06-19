@@ -212,7 +212,7 @@ import { defineComponent } from "vue";
 import { useStore } from "vuex";
 import { key } from "../../store/store";
 import "@/style/styles.css";
-import { useSocketIO } from "../../main";
+import { app, useSocketIO } from "../../main";
 import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom, getChatRoomByIdReq } from "../../api/chatApi";
 import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
@@ -221,6 +221,7 @@ import { getFriendshipsRequest } from "../../api/friendshipsApi";
 import { IFriendship } from "../../api/friendshipsApi";
 import moment from 'moment';
 import 'moment-timezone';
+import { publishNotification, throwFromAsync } from "@/utils/utils";
 
 export default defineComponent({
   name: "Chat2",
@@ -535,8 +536,9 @@ export default defineComponent({
         room = await (await createChatRoomReq(roomName, this.user?.id as string, password)).data
       }
       catch (err: any) {
-        console.log("Can not create chat room");
-        alert("Can not create chat room");
+        console.log(err)
+        throwFromAsync(app, JSON.stringify(err)) // TODO: revisar el throwFromAsync, cuando se intenta crear una sala con un nombre que ya está pillado
+        // publishNotification("Error creating chat room: " + err , true)
         return;
       }
 

@@ -102,9 +102,9 @@ export class UsersService {
     async setUserIsBanned(id: string, isBanned: boolean) {
         const user = await this.usersRepo.findOneBy({ id: id })
         if (!user)
-            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+            return new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
         if (this.isAdmin(user) || this.isOwner(user))
-            throw new HttpException("CANT_BAN_PRIVILEGED_USERS", HttpStatus.FORBIDDEN)
+            return new HttpException("CANT_BAN_PRIVILEGED_USERS", HttpStatus.FORBIDDEN)
         user.isBanned = isBanned;
         user.save();
     }

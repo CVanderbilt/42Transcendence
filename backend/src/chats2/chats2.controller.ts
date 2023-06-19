@@ -59,10 +59,11 @@ export class Chats2Controller {
         try {
             const token = getAuthToken(request)
             const user = await this.usersService.findOneById(token.userId)
-            const res = await this.chatsService.getChatRoom(dto, user)
+            const res = await this.chatsService.createChatRoom(dto, user)
             return res
         } catch (error) {
             Logger.error(error)
+            throw error
         }
     }
 

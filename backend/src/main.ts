@@ -24,7 +24,12 @@ async function bootstrap() {
   }
   
   const chats2Service = app.get(Chats2Service)
-  await chats2Service.getChatRoom(generalChatRoomDto)
+  try{
+    await chats2Service.createChatRoom(generalChatRoomDto)
+  }
+  catch(error){
+    console.log("General chat room already exists")
+  }
 }
 
 bootstrap();

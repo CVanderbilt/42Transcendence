@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { HttpException, Injectable, Logger, NotFoundException, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatRoomEntity, ChatMembershipEntity, ChatMsgEntity } from './chatEntities.entity';
@@ -23,11 +23,11 @@ export class Chats2Service {
         private readonly usersRepo: Repository<UserEntity>,
     ) { }
 
-    async getChatRoom(roomDto: ChatRoomDto, user: User = null): Promise<ChatRoom> {
+    async createChatRoom(roomDto: ChatRoomDto, user: User = null): Promise<ChatRoom> {
         // check whether the room name is already taken
         const existingRoom = await this.chatRoomsRepo.findOne({ where: { name: roomDto.name } })
         if (existingRoom) {
-            return existingRoom
+            throw new HttpException('Room name already taken', 409)
         }
 
         // create room
@@ -121,7 +121,7 @@ export class Chats2Service {
             password: "",
             isDirect: true,
         }
-        const roomCreated = await this.getChatRoom(roomDto)
+        const roomCreated = await this.createChatRoom(roomDto)
         const membershipDto1: ChatMembershipDto = {
             userId: userId1,
             chatRoomId: roomCreated.id,
@@ -164,7 +164,7 @@ export class Chats2Service {
                 isPrivate: false,
                 password: "",
             }
-            generalChat = await this.getChatRoom(generalChatRoomDto)
+            generalChat = await this.createChatRoom(generalChatRoomDto)
         }
         const membership: ChatMembershipDto = {
             userId: userId,
