@@ -6,7 +6,7 @@
         <h2>{{ fshp.friend.username }}</h2>
 
         <p>{{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}</p>
-        <p v-if="!friendsStates.find(x => x.userId == fshp.friend.id)">Offline</p>
+        <p v-if="!friendsStates.find(x => x.userId == fshp.friend.id)">offline</p>
 
         <h3>Member since<br>{{ fshp.friend.createdAt }}</h3>
         <h3>Victories: {{ fshp.friend.victories }}</h3>

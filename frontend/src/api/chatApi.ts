@@ -27,7 +27,7 @@ export interface Membership {
     id: string
     user: Member
     isOwner?: boolean
-    isAdmin?: boolean
+    isAdmin: boolean
     isBanned?: boolean
     isMuted?: boolean
     chatRoomName?: string
@@ -140,4 +140,8 @@ export async function getDirectChatRoomReq(user1: string, user2: string) {
     console.log("findDirectChatRoomReq")
     console.log(user1)
     return apiClient.post(`${URL}/rooms/direct`, {user1, user2})
+}
+
+export async function getChatRoomByIdReq(id: string) {
+    return apiClient.get(`${URL}/rooms/${id}`)
 }

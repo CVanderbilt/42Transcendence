@@ -22,7 +22,7 @@
                   </div>
                 </div>
 
-                <b-button @click="modalShow = !modalShow" style="margin: 10px;">Create Room Chat</b-button>
+                <b-button @click="modalShow = !modalShow" style="margin: 10px;">Create Chat Room</b-button>
 
                 <!-- direct chats -->
                 <h6 style="color: white; margin-top: 30px;">Direct chats</h6>
@@ -34,7 +34,6 @@
                     </b-button>
                     <button v-if="item.chatRoom.name !== 'general'" @click="leaveRoom(item.chatRoom.id)"> x </button>
                   </div>
-
                 </div>
               </div>
 
@@ -60,7 +59,8 @@
                           <p v-if="message.senderName !== user?.username" class="message-text">
                             <a v-on:click="searchFriend(message.senderName as string)">{{
                               message.senderName + ": "
-                            }}</a><a>{{ message.content }}</a>
+                            }}</a>
+                            <a>{{ message.content }}</a>
                           </p>
                         </b-col>
                       </div>
@@ -96,7 +96,7 @@
               <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Password"
                 v-model="searchedChatPassword" />
 
-              <b-button @click="joinRoom(searchedChat, searchedChatPassword); searchedChatPassword = '';">Join
+              <b-button @click="joinRoomWithName(searchedChat, searchedChatPassword); searchedChatPassword = '';">Join
                 room</b-button>
             </div>
 
@@ -213,7 +213,7 @@ import { useStore } from "vuex";
 import { key } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
-import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom } from "../../api/chatApi";
+import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom, getChatRoomByIdReq } from "../../api/chatApi";
 import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserByName } from "../../api/user";
@@ -294,22 +294,30 @@ export default defineComponent({
   },
 
   async mounted() {
-    alert("mounted")
-
     this.chatRoomName = "general"; // default room
     this.isAdmin = false;
 
-    // get room from query
-    if (this.$route.query.name !== undefined) {
-      this.chatRoomName = this.$route.query.name as string;
+    // // get room from query
+    // if (this.$route.query.name !== undefined) {
+    //   this.chatRoomName = this.$route.query.name as string;
+    //   console.log(this.chatRoomName)
+    //   // join room
+    //   this.joinRoomWithName(this.chatRoomName);
+    //   this.roomId = await (await getChatRoomByNameReq(this.chatRoomName)).data.id;
+    // }
+
+    this.chatRoomId = "1"; // default general room
+    const requestedRoomId = this.$route.query.roomId as string;
+    if (requestedRoomId) {
+      const chatRoom = await (await getChatRoomByIdReq(requestedRoomId)).data
+      this.chatRoomId = requestedRoomId
+      this.chatRoomName = chatRoom.name
       console.log(this.chatRoomName)
+      // join room
+      this.joinRoomWithId(this.chatRoomId)
+      this.roomId = this.chatRoomId
     }
 
-    // join room
-    this.joinRoom(this.chatRoomName);
-
-    // get room
-    this.roomId = await (await getChatRoomByNameReq(this.chatRoomName)).data.id;
     // get all user memberships
     this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
 
@@ -324,12 +332,12 @@ export default defineComponent({
 
     // join message socket
     this.io.socket.offAny();
-    this.io.socket.on("new_message", (message, username,) => {
+    this.io.socket.on("new_message", (message, username, senderId, roomId) => {
       const msg: ChatMessage = {
         content: message,
         senderName: username,
-        senderId: "",
-        chatRoomId: ""
+        senderId: senderId,
+        chatRoomId: roomId,
       }
       this.messages.push(msg)
     });
@@ -355,9 +363,10 @@ export default defineComponent({
 
     isDisplayMessage(senderId: string): boolean {
       const membership = this.userFriendships.find(x => x.friend.id === senderId)
-      if (membership) {
+
+      if (membership)
         return !membership.isBlocked
-      }
+
       return true
     },
 
@@ -393,6 +402,7 @@ export default defineComponent({
           room: this.chatRoomName,
           message: this.message,
           username: this.user.username,
+          senderId: this.user.id,
           roomId: this.roomId,
         }
 
@@ -412,13 +422,49 @@ export default defineComponent({
       }
     },
 
-    async joinRoom(room2join: string, password?: string) {
-      if (room2join === "") {
+    async joinRoomWithId(roomId: string, password?: string) {
+      if (roomId === "") {
+        console.log("Empty room id");
+        return
+      }
+
+      let room = (await getChatRoomByIdReq(roomId)).data
+      if (!room) {
+        alert("Room not found")
+        room = (await getChatRoomByNameReq("general")).data
+      }
+
+      try {
+        console.log("joining room")
+        const resp = await joinChatRoomReq(room.id, this.user?.id as string, password) // returns membership even if user is already a member of the room
+        this.isAdmin = resp.data.isAdmin
+        if (!this.userMemberships.find((membership) => membership.chatRoom.id === room.id)) {
+          this.userMemberships.push(resp.data)
+        }
+      } catch (error: any) {
+        const errorMsg = (error).response?.data?.message
+        alert("Error joining the room: " + (errorMsg || "Unknown error"));
+        return;
+      }
+
+      // change chat
+      try {
+        this.changeRoom(room.id, room.name);//TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
+      }
+      catch (error: any) {
+        const errorMsg = (error).response?.data?.message
+        alert("Error changing the room: " + (errorMsg || "Unknown error"));
+        return;
+      }
+    },
+
+    async joinRoomWithName(roomName2join: string, password?: string) {
+      if (roomName2join === "") {
         console.log("Empty room name");
         return;
       }
 
-      let room = (await getChatRoomByNameReq(room2join)).data
+      let room = (await getChatRoomByNameReq(roomName2join)).data
       if (!room) {
         alert("Room not found")
         room = (await getChatRoomByNameReq("general")).data
@@ -460,6 +506,7 @@ export default defineComponent({
     },
 
     async changeRoom(roomId: string, roomName: string) {
+      console.log("changing room to " + roomName + " with id " + roomId)
       getUserMembershipsReq(this.user?.id as string).then((response) => {
         this.userMemberships = response.data
         const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)

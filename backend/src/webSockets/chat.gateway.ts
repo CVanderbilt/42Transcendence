@@ -39,11 +39,11 @@ import {
     @SubscribeMessage('event_message')
     handleIncommingMessage(
       client: Socket,
-      payload: { room: string; message: string, username: string, roomId: number },
+      payload: { room: string; message: string, username: string, senderId: string, roomId: number },
     ) {
-      const { room, message, username, roomId } = payload;
+      const { room, message, username, senderId, roomId } = payload;
       console.log(username + " manda el mensaje " + message + " por el chat " + room)
-      this.server.to(`room_${room}`).emit('new_message',message, username, roomId);
+      this.server.to(`room_${room}`).emit('new_message',message, username, senderId, roomId);
     }
   
     @SubscribeMessage('event_leave')
