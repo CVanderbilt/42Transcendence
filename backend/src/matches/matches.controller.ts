@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Param, Logger, HttpException, HttpStatus, Body } from '@nestjs/common';
 import { Match } from './match.interface';
 import { User } from 'src/users/user.interface';
 import { MatchesService } from './matches.service';
@@ -91,5 +91,18 @@ export class MatchesController {
             throw new HttpException("friendly matchmaking failed", HttpStatusCode.InternalServerError);
         }
     }
-    
+
+    /*
+    WIP
+    @Post('challenge')
+    async challenge(@Body data: { requesterName: string, oponentName: string }) {
+        // crea duelo entre requester y oponent
+        // se añaden ambos a la base de datos y si el otro jugador acepta el duelo matchean
+        // requester se añade al mapa, con atribute waiting_for = oponentName, solo matchea con users llamados oponentName que estén con waiting_for = requesterName
+    }
+
+    @Post('challengeAnswer')
+    async challengeAnswer(@Body data: { requesterName: string, oponentName: string, accepted: boolean }) {
+        
+    }*/
 }
