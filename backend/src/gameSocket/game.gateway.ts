@@ -26,8 +26,8 @@ interface GameRoom {
   numPlayers: number,
   ballpos: { x: number, y: number, dx: number, dy: number },
   gameStatus: "WAITING" | "PLAYING" | "FINISHED" | "MISSING_PLAYER",
-  ballSpeed: number,
-  paddleHeight: number,
+  // ballSpeed: number,
+  // paddleHeight: number,
   isCompetitive: boolean
 }
 
@@ -156,8 +156,9 @@ export class GameGateway
               this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
               this.matchesService.matchAftermath(_room.id, [
                 { name: _room.player1.user, score: _room.player1.score },
-                { name: _room.player2.user, score: _room.player2.score }
-              ])
+                { name: _room.player2.user, score: _room.player2.score },
+              ], 
+              _room.isCompetitive ? "Competitive" : "Exhibition")
               delete gameRooms[_room.id]
             }
           }

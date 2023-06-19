@@ -1,9 +1,10 @@
 import { UserEntity } from "src/users/user.entity";
-import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('match')
 export class MatchEntity extends BaseEntity{
-    @PrimaryGeneratedColumn()
+    // @PrimaryGeneratedColumn()
+    @PrimaryColumn()
     id: string
 
     @ManyToOne(() => UserEntity)
@@ -15,7 +16,7 @@ export class MatchEntity extends BaseEntity{
     opponent: UserEntity
 
     @Column({ default: 0})
-    playerScore: number
+    userScore: number
 
     @Column({ default: 0})
     opponentScore: number
@@ -24,17 +25,8 @@ export class MatchEntity extends BaseEntity{
     @JoinColumn()
     winner: UserEntity
 
-    @Column({ default: ""})
-    powerups: string
-
-    @Column({ default: "Pending opponent"})
-    state: string
-
     @Column({ default: "Exhibition"})
     type: string
-
-    @Column({ default: false})
-    isFinished: boolean
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
     createdAt: Date

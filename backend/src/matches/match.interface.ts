@@ -1,10 +1,7 @@
 export interface Match {
-    id?: string
-    playerScore: number
+    id: string
+    userScore: number
     opponentScore: number
-    powerups: string
-    state: string
     type: string
-    isFinished: boolean
-    createdAt?: Date;
+    createdAt: Date;
 }
