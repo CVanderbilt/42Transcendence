@@ -39,7 +39,7 @@
 
               <div class="col-9 chat-column" style="margin-bottom: 20px;">
                 <div class="chat-header">
-                  {{ getNiceChatName(currentMembership.chatRoom) }}
+                  {{ currentMembership.chatRoom.name }}
                 </div>
 
                 <!-- ------------------ chat area ------------------ -->
@@ -338,7 +338,7 @@ export default defineComponent({
       this.messages.push(msg)
     });
 
-    this.fetchDirectChatNames()
+    this.getDirectChatNames()
   },
 
   beforeRouteLeave() {
@@ -346,17 +346,16 @@ export default defineComponent({
   },
 
   methods: {
-    async fetchDirectChatNames() {
+    async getDirectChatNames() {
       let directRooms : ChatRoom[] = 
         this.userMemberships.filter((membership) => membership.chatRoom.isDirect)
         .map((membership) => membership.chatRoom)
 
       directRooms.forEach(async room => {
         const memberships = await (await (getChatRoomMembershipsReq(room.id))).data as Membership[]
-        const otherMembership = memberships.find((membership) => membership.user.id !== this.user?.id) as Membership
         this.directChatNames.push({
           chatRoom: room,
-          niceName: otherMembership.user.username
+          niceName:  memberships[0].user.username + "-" + memberships[1].user.username
         })
       });
 
@@ -368,17 +367,17 @@ export default defineComponent({
       return moment(date).format('MMMM Do YYYY, h:mm:ss a')
     },
 
-    getNiceChatName(chatRoom: ChatRoom) {
-      const name = chatRoom.name;
-      if (chatRoom.isDirect) {
-        if (name.split("¿")[0] === "directMessage") {
-          return name.split("¿")[1].includes(this.user?.username as string)
-            ? name.split("¿")[2]
-            : name.split("¿")[1];
-        }
-      }
-      return name;
-    },
+    // getNiceChatName(chatRoom: ChatRoom) {
+    //   const name = chatRoom.name;
+    //   if (chatRoom.isDirect) {
+    //     if (name.split("¿")[0] === "directMessage") {
+    //       return name.split("¿")[1].includes(this.user?.username as string)
+    //         ? name.split("¿")[2]
+    //         : name.split("¿")[1];
+    //     }
+    //   }
+    //   return name;
+    // },
 
     isDisplayMessage(senderId: string): boolean {
       const membership = this.userFriendships.find(x => x.friend.id === senderId)
@@ -396,13 +395,14 @@ export default defineComponent({
       } catch {
         console.log("Error getting user memberships")
       }
+
       // update current membership
       const membership = this.userMemberships.find((membership: any) => membership.chatRoom.name === this.chatRoomName)
       if (membership !== undefined) {
         this.currentMembership = membership
       }
       else {
-        console.error("membership not found");
+        throwFromAsync(app, "Not a member")
         return;
       }
 
@@ -524,7 +524,6 @@ export default defineComponent({
     },
 
     async changeRoom(roomId: string, roomName: string) {
-      console.log("changing room to " + roomName + " with id " + roomId)
       getUserMembershipsReq(this.user?.id as string).then((response) => {
         this.userMemberships = response.data
         const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)

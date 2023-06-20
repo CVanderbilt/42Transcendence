@@ -17,7 +17,7 @@ export class UserEntity extends BaseEntity {
     @Column({ nullable: true })
     login42: string
 
-    @Column({ nullable: false, default: "Anonymous" })
+    @Column({ nullable: false, default: "Anonymous", unique: true })
     username: string
 
     @Exclude()
@@ -33,6 +33,9 @@ export class UserEntity extends BaseEntity {
 
     @Column({ default: 0})
     defeats: number;
+
+    @Column({ default: 0})
+    score: number;
 
     @Column({ default: ""})
     achievements: string;

@@ -68,7 +68,7 @@ export default defineComponent({
     document.addEventListener("keyup", this.keyUpHandler, false);
     //this.draw();
     this.io.socket.on(("info"), (roomId: string) => { this.room = roomId })
-    this.io.socket.on(("endGame"), (roomId: string) => { this.$router.push(`/endGame?id=${roomId}`) })
+    this.io.socket.on(("endGame"), (reason: string) => { this.$router.push(`/endGame?reason=${reason}`) })
     this.io.socket.on(("draw"), (
       ballX: number,
       ballY: number,
@@ -109,13 +109,13 @@ export default defineComponent({
       if (e.key == "Down" || e.key == "ArrowDown") {
         if (this.leftUserDownPressed == false) {
           this.io.socket.emit("move", {
-            room: this.room, username: this.user.username, movement: "down", type: "press"
+            room: this.room, username: this.user.username, movement: "down", type: "press", time: Date.now()
           });
         }
       } else if (e.key == "Up" || e.key == "ArrowUp") {
         if (this.leftUserUpPressed == false) {
           this.io.socket.emit("move", {
-            room: this.room, username: this.user.username, movement: "up", type: "press"
+            room: this.room, username: this.user.username, movement: "up", type: "press", time: Date.now()
           });
         }
       }
@@ -123,11 +123,11 @@ export default defineComponent({
     keyUpHandler(e: KeyboardEvent): void {
       if (e.key == "Up" || e.key == "ArrowUp") {
         this.io.socket.emit("move", {
-          room: this.room, username: this.user.username, movement: "up", type: "release"
+          room: this.room, username: this.user.username, movement: "up", type: "release", time: Date.now()
         });
       } else if (e.key == "Down" || e.key == "ArrowDown") {
         this.io.socket.emit("move", {
-          room: this.room, username: this.user.username, movement: "down", type: "release"
+          room: this.room, username: this.user.username, movement: "down", type: "release", time: Date.now()
         });
       }
     }

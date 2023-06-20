@@ -107,7 +107,8 @@ export class AuthService {
     
             return data
         } catch (error) {
-            Logger.error("Failed getting token from 42: " + error)            
+            Logger.error("Failed getting token from 42: " + JSON.stringify( error ))            
+            throw new HttpException("Failed getting token from 42", HttpStatus.BAD_REQUEST)
         }
         
     }

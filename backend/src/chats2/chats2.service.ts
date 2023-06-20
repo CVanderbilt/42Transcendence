@@ -8,6 +8,7 @@ import { UserEntity } from 'src/users/user.entity';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { User } from 'src/users/user.interface';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
+import { getAuthToken } from 'src/utils/utils';
 
 @Injectable()
 export class Chats2Service {
@@ -351,6 +352,11 @@ export class Chats2Service {
     }
 
     async leaveRoom(chatRoomId: number, userId: string) {
+        // if user is owner of the room, delete the room
+        const membership = await this.getUserChatMembership(userId, chatRoomId)
+        if (membership.isOwner) {
+            return this.deleteRoom(chatRoomId)
+        }
         const res = await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId }, user: { id: userId } })
         // if the user is the last member of the room, delete the room
         const memberships = await this.findChatRoomMembers(chatRoomId)

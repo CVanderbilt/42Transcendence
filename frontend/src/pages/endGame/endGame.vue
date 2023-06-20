@@ -4,18 +4,13 @@
       <div id="layoutSidenav_nav"></div>
       <div id="layoutSidenav_content">
         <main>
-          <div class="container-fluid px-4">
-            <h1 class="mt-3" style="color: white">GAME ENDED</h1>
-            <h1 class="mt-3" style="color: white">WINNER: </h1>
-            <ol class="breadcrumb mb-4">
-              <li class="breadcrumb-item active">Dashboard</li>
-            </ol>
-            <div class="card mb-4">
-              <div class="card-header">
-                <i class="fas fa-table me-1"></i>
-                Currently Playing
-              </div>
-            </div>
+          <div class="container-fluid px-4" style="margin-top: 200px">
+
+            <h1 style="color: white; ;">GAME ENDED</h1>
+            <h2> 
+              {{ message }}
+            </h2>
+            
           </div>
         </main>
       </div>
@@ -36,21 +31,22 @@ export default defineComponent({
   setup() {
     const store = useStore(key);
     const user = computed(() => store.state.user);
+    const message = ""
     return {
       user,
       room: "",
       player1: "",
-      player2: ""
+      player2: "",
+      message,
     };
   },
 
   async mounted(): Promise<void> {
-    if (this.$route.query.id !== undefined) {
+    if (this.$route.query.id !== undefined ) {
+      this.message = this.$route.query.message as string;
+      this.message = this.message.replace(/_/g, " ");
       this.room = this.$route.query.id as string;
     }
-
-    const match = await getGameApi(this.room)
-    console.log(match);
   },
 
   methods: {

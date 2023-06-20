@@ -25,35 +25,14 @@
                   <label class="form-label" for="typeUsername">Nickname</label>
                 </div>
 
-                <!-- Comento esto porque creo que no hace falta cambiar el email ni la contraseña ya que solamente piden login con 42
-                <div class="form-outline form-white mb-2">
-                  <input type="email" id="typeEmailX" class="form-control form-control-lg" :placeholder="user?.email"
-                    v-model="options.email" />
-                  <label class="form-label" for="typeEmailX">Email</label>
-                </div>
-
-                <div>
-                  <label>
-                    <input type="checkbox" v-model="changePassword"> Change Password
-                  </label>
-                  <div v-if="changePassword == true" class="form-outline form-white mb-2">
-                    <input type="password" id="typePasswordX" class="form-control form-control-lg"
-                      placeholder="Type your new password" v-model="options.password" />
-                    <label class="form-label" for="typePasswordX">New Password</label>
-                  </div>
-                </div> -->
-
                 <div class="form-outline form-white mb-2">
                   <input type="file" ref="fileInput" accept="image/jpeg" @change="uploadImage" />
                   <progress id="progress" value="0" max="100"></progress>
                 </div>
 
-                <div>
-
-                  <div class="form-outline form-white mb-2">
-                    <input type="checkbox" id="is2fa" class="form-check-input" v-model="options.is2fa" />
-                    <label class="form-label" for="is2fa">Use 2 factor authentication</label>
-                  </div>
+                <div class="form-outline form-white mb-2">
+                  <input type="checkbox" id="is2fa" class="form-check-input" v-model="options.is2fa" />
+                  <label class="form-label" for="is2fa">Use 2 factor authentication</label>
                 </div>
 
                 <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="submit()">
@@ -91,8 +70,6 @@ export default defineComponent({
   data() {
     const options: IUserAPI = {
       username: '',
-      // email: '',
-      // password: '',
       is2fa: false,
     }
 
@@ -100,15 +77,11 @@ export default defineComponent({
     return {
       options,
       selectedFile,
-      // changePassword: false,
     };
   },
   mounted() {
     this.options.username = store.state.user?.username as string
     this.options.is2fa = store.state.user?.is2fa
-
-    // this.options.password = '';
-    // this.options.email = this.user!.email;
   },
 
   methods: {
@@ -118,19 +91,25 @@ export default defineComponent({
         return;
       }
 
-       updateUserReq(store.state.user.id, this.options) // TODO: no captura el error del servidor cuando los nobre sde usuarios son iguales
-      .then(() => { publishNotification("User updated", false) })
+      try {
+        updateUserReq(store.state.user.id, this.options) // TODO: no captura el error del servidor cuando los nobre sde usuarios son iguales
+          .then(() => { publishNotification("User updated", false) })
+      }
+      catch (e) {
+        publishNotification("User already exists", true)
+        return;
+      }
 
-        store.commit("changeUserName", this.options.username)
+      store.commit("changeUserName", this.options.username)
 
-        if (this.selectedFile)
-          putImage(store.state.user.id, this.selectedFile);
+      if (this.selectedFile)
+        putImage(store.state.user.id, this.selectedFile);
 
 
-        // si el usuario quiere activar 2fa llevarlo a la pagina de 2fa
-        if (this.options.is2fa && !store.state.user.is2fa) {
-          this.$router.push("/qr");
-        }
+      // si el usuario quiere activar 2fa llevarlo a la pagina de 2fa
+      if (this.options.is2fa && !store.state.user.is2fa) {
+        this.$router.push("/qr");
+      }
 
     },
 

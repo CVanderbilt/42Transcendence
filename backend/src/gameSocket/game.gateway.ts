@@ -28,7 +28,8 @@ interface GameRoom {
   gameStatus: "WAITING" | "PLAYING" | "FINISHED" | "MISSING_PLAYER",
   // ballSpeed: number,
   // paddleHeight: number,
-  isCompetitive: boolean
+  isCompetitive: boolean,
+  refreshIntervalId? : NodeJS.Timeout,
 }
 
 export const gameRooms: GameRoom[] = [];
@@ -47,7 +48,6 @@ const ballMinY = ballRadius;
 export class GameGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
-  private intervalRefreshId: NodeJS.Timeout;
 
   constructor(private matchesService: MatchesService) {}
 
@@ -86,7 +86,7 @@ export class GameGateway
       const gameServer = this.server;
       _room.gameStatus = "PLAYING";
 
-        this.intervalRefreshId = setInterval( async () => {
+        _room.intervalRefreshId = setInterval( async () => {
           if (_room.numPlayers > 1) {
             const calculatePlayerPos = (player: Player) => {
               if (player.downPressed && player.paddlePos < canvasHeight - player.paddleHeight) {
@@ -104,7 +104,6 @@ export class GameGateway
       if (_room.ballpos.y + _room.ballpos.dy > ballMaxY || _room.ballpos.y + _room.ballpos.dy < ballMinY) {
         _room.ballpos.dy = -_room.ballpos.dy;
       }
-
             if (_room.ballpos.x + _room.ballpos.dx < 15) {
               {
                 if (_room.ballpos.y > _room.player1.paddlePos && _room.ballpos.y < _room.player1.paddlePos + _room.player1.paddleHeight) {
@@ -146,13 +145,12 @@ export class GameGateway
             _room.ballpos.y += _room.ballpos.dy;
             gameServer.to(`room_${_room.id}`).emit('info', _room.id);
             gameServer.to(`room_${_room.id}`).emit('draw', _room.ballpos.x, _room.ballpos.y, _room.player1.paddlePos, _room.player1.paddleHeight, _room.player2.paddlePos, _room.player2.paddleHeight, _room.player1.score, _room.player2.score, _room.player1.user, _room.player2.user);
-            if (_room.player1.score == 50 || _room.player2.score == 50){
+            if (_room.player1.score == 5 || _room.player2.score == 5){
               _room.gameStatus = "FINISHED"
-              //const match = await this.matchesService.createMatch(_room.player1.user, _room.player2.user)
-              //this.matchesService.matchAftermath()
-              
-              clearInterval(this.intervalRefreshId);
-              gameServer.to(`room_${_room.id}`).emit('endGame', _room.id);
+
+              clearInterval(_room.intervalRefreshId);
+              const winner = _room.player1.score == 5 ? _room.player1.user : _room.player2.user
+              gameServer.to(`room_${_room.id}`).emit('endGame', "winner_is_" + winner);
               this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
               this.matchesService.matchAftermath(_room.id, [
                 { name: _room.player1.user, score: _room.player1.score },
@@ -175,7 +173,7 @@ export class GameGateway
       }
 
       console.log(`${activePlayer} se va`);
-      clearInterval(this.intervalRefreshId);
+      clearInterval(_room.intervalRefreshId);
       _room[activePlayer].inGame = false;
       _room.numPlayers--;
       _room.gameStatus = "MISSING_PLAYER";
@@ -195,7 +193,7 @@ export class GameGateway
   @SubscribeMessage('move') //TODO Backend
   handleRightPaddleDown(
     cliWent: Socket,
-    payload: { room: string, username: string, movement: "down" | "up", type: "press" | "release" },
+    payload: { room: string, username: string, movement: "down" | "up", type: "press" | "release", date: number },
   ) {
     const { room, username, movement, type } = payload;
     const _room: GameRoom = gameRooms[room]
@@ -208,6 +206,18 @@ export class GameGateway
       console.log(`Viewer ${username} cant interact with this room`)
       return ;
     }
+
+    // check for lag
+    if (payload.date < Date.now() - 1000) {
+      console.log(`Lag detected for ${username}`)
+      _room.gameStatus = "FINISHED"
+      clearInterval(_room.refreshIntervalId);
+      this.server.to(`room_${_room.id}`).emit('endGame', "Lag_detected");
+      this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
+      delete gameRooms[_room.id]
+      return;
+    }
+
     if ((movement != "down" && movement != "up")
       || (type != "press" && type != "release")
       || !activePlayer) {

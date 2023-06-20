@@ -43,6 +43,7 @@ export class MatchesController {
         try {
             return await this.matchesService.getMatchesByUser(userId);
         } catch (error) {
+            console.log (error)
             throw new HttpException("error getting matches", HttpStatusCode.InternalServerError);
         }
     }

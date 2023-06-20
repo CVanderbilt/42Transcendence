@@ -13,6 +13,7 @@ export class UserDto {
     isBanned: boolean;
     role: string;
     position: number;
+    score: number;
 
     constructor(user: User) {
         this.id = user.id
@@ -27,5 +28,6 @@ export class UserDto {
         this.isBanned = user.isBanned;
         this.role = user.role;
         this.position = user.position;
+        this.score = user.score ?? 0;
     }
 }

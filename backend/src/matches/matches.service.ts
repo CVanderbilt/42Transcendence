@@ -38,30 +38,39 @@ export class MatchesService {
         if (existingMatch)
            return
         
-        const user = players.find(p => p.name === match.user.username)
-        const opponent = players.find(p => p.name === match.opponent.username)
+        const user = await this.usersRepo.findOne({ where: { username: players[0].name } })
+        const opponent = await this.usersRepo.findOne({ where: { username: players[1].name } })
         if (!user)
-        throw Error(`no recieved player from: ${players} was user: ${user}`)
+        {
+            console.log(`no recieved player from: ${players} was user: ${user}`)
+            return
+        }
         if (!opponent)
-        throw Error(`no recieved player from: ${players} was opponent: ${opponent}`)
-
+        {
+            console.log(`no recieved player from: ${players} was opponent: ${opponent}`)
+            return
+        }
 
         const match = await this.matchesRepo.create({
             id: id,
             user: user,
             opponent: opponent,
             type: type,
-            userScore: user.score,
-            opponentScore: opponent.score,
-            winner: user.score > opponent.score ? user : opponent,
+            userScore: players[0].score,
+            opponentScore: players[1].score,
+            winner: players[0].score > players[1].score ? user : opponent,
         })
 
-        if (user.score > opponent.score) {
+        if (players[0].score > players[1].score) {
             match.user.victories++;
             match.opponent.defeats++;
+            match.user.score ++;
+            match.opponent.score --;
         } else {
             match.opponent.victories++;
             match.user.defeats++;
+            match.opponent.score ++;
+            match.user.score --;
         }
 
         match.user.save()
@@ -100,9 +109,6 @@ export class MatchesService {
             .leftJoinAndSelect("match.opponent", "opponent")
             .where("match.user.id = :userId OR match.opponent.id = :userId", {
                 userId: userId
-            })
-            .where("match.state = :state", { 
-                state: "Full" 
             })
             .getMany();
 

@@ -6,6 +6,7 @@ import { ChatMembership, ChatRoom } from './chats.interface';
 import { Chats2Service } from './chats2.service';
 import * as Joi from 'joi'
 import { UsersService } from 'src/users/users.service';
+import { gameRooms } from 'src/gameSocket/game.gateway';
 
 @Controller('chats')
 export class Chats2Controller {
@@ -125,7 +126,27 @@ export class Chats2Controller {
 
     // get user memberships
     @Get('memberships/user/:userId')
-    async findUserMemberships(@Param('userId') userId: string): Promise<ChatMembership[]> {
+    async findUserMemberships(@Req() req, @Param('userId') userId: string): Promise<ChatMembership[]> {
+        const token = getAuthToken(req)
+        if (token.role === 'ADMIN' || token.role === 'OWNER') {
+            const rooms = await this.chatsService.findAllChatRooms()
+
+            const memberships : ChatMembership[] = rooms .map(room => {
+                return {
+                    id: -1,
+                    isOwner: true,
+                    isAdmin: true,
+                    isBanned: false,
+                    isMuted: false,
+                    bannedUntil: new Date(),
+                    mutedUntil: new Date(),
+                    chatRoom: room,
+                }
+            })
+
+            return memberships
+        }
+
         return await (this.chatsService.findUserMemberships(userId))
     }
 
