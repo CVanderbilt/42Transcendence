@@ -16,7 +16,7 @@ export default defineComponent({
     async openChat() {
       // Search if chat already exists
       const chatRoom = await (await getDirectChatRoomReq(this.userId, this.friendId)).data
-      this.$router.push("/chats?id=" + chatRoom.id);
+      this.$router.push("/chats?roomId=" + chatRoom.id);
     },
   }
 })

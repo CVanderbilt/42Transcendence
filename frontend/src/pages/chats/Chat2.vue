@@ -26,13 +26,13 @@
 
                 <!-- direct chats -->
                 <h6 style="color: white; margin-top: 30px;">Direct chats</h6>
-                <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name">
+                <div v-for="item in directChatNames" v-bind:key="item.niceName">
                   <div v-if="item.chatRoom.isDirect" style="display: flex;">
                     <b-button v-on:click="changeRoom(item.chatRoom.id, item.chatRoom.name)"
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
-                      {{ getNiceChatName(item.chatRoom) }}
+                      {{ item.niceName }}
                     </b-button>
-                    <button v-if="item.chatRoom.name !== 'general'" @click="leaveRoom(item.chatRoom.id)"> x </button>
+                    <button @click="leaveRoom(item.chatRoom.id)"> x </button>
                   </div>
                 </div>
               </div>
@@ -82,7 +82,7 @@
 
                   </div>
                   <div v-else>
-                    <p>You are muted</p>
+                    <p>You are muted until {{ getNiceDate(currentMembership.mutedUntil) }}</p>
                   </div>
                 </div>
                 <div v-else>
@@ -100,7 +100,7 @@
               <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Password"
                 v-model="searchedChatPassword" />
 
-              <b-button @click="joinRoomWithName(searchedChat, searchedChatPassword); searchedChatPassword = '';">Join
+              <b-button @click="joinRoomBySearchBar(searchedChat, searchedChatPassword); searchedChatPassword = '';">Join
                 room</b-button> <!-- TODO: cambiar por joinRoomWithId -->
             </div>
 
@@ -225,7 +225,7 @@ import { getFriendshipsRequest } from "../../api/friendshipsApi";
 import { IFriendship } from "../../api/friendshipsApi";
 import moment from 'moment';
 import 'moment-timezone';
-import { publishNotification, throwFromAsync } from "@/utils/utils";
+import { throwFromAsync } from "@/utils/utils";
 
 export default defineComponent({
   name: "Chat2",
@@ -283,9 +283,9 @@ export default defineComponent({
       managedChatRequiresPassword: false,
       managedBannedMinutes: 0,
       managedMutedMinutes: 0,
+      directChatNames: [] as { chatRoom: ChatRoom, niceName: string }[],
     };
   },
-
 
   setup() {
     const store = useStore(key);
@@ -302,22 +302,13 @@ export default defineComponent({
     this.chatRoomName = "general"; // default room
     this.isAdmin = false;
 
-    // // get room from query
-    // if (this.$route.query.name !== undefined) {
-    //   this.chatRoomName = this.$route.query.name as string;
-    //   console.log(this.chatRoomName)
-    //   // join room
-    //   this.joinRoomWithName(this.chatRoomName);
-    //   this.roomId = await (await getChatRoomByNameReq(this.chatRoomName)).data.id;
-    // }
-
     this.chatRoomId = "1"; // default general room
     const requestedRoomId = this.$route.query.roomId as string;
     if (requestedRoomId) {
       const chatRoom = await (await getChatRoomByIdReq(requestedRoomId)).data
       this.chatRoomId = requestedRoomId
       this.chatRoomName = chatRoom.name
-      console.log(this.chatRoomName)
+      console.log("url id " + this.chatRoomName)
       // join room
       this.joinRoomWithId(this.chatRoomId)
       this.roomId = this.chatRoomId
@@ -328,9 +319,8 @@ export default defineComponent({
 
     // get current membership
     const membership = this.userMemberships.find((membership: any) => membership.chatRoom.name === this.chatRoomName)
-    if (membership !== undefined) {
+    if (membership !== undefined)
       this.currentMembership = membership
-    }
 
     // get friendships
     this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
@@ -344,9 +334,11 @@ export default defineComponent({
         senderId: senderId,
         chatRoomId: roomId,
       }
+
       this.messages.push(msg)
     });
 
+    this.fetchDirectChatNames()
   },
 
   beforeRouteLeave() {
@@ -354,6 +346,24 @@ export default defineComponent({
   },
 
   methods: {
+    async fetchDirectChatNames() {
+      let directRooms : ChatRoom[] = 
+        this.userMemberships.filter((membership) => membership.chatRoom.isDirect)
+        .map((membership) => membership.chatRoom)
+
+      directRooms.forEach(async room => {
+        const memberships = await (await (getChatRoomMembershipsReq(room.id))).data as Membership[]
+        const otherMembership = memberships.find((membership) => membership.user.id !== this.user?.id) as Membership
+        this.directChatNames.push({
+          chatRoom: room,
+          niceName: otherMembership.user.username
+        })
+      });
+
+      // remove duplicates
+      this.directChatNames = this.directChatNames.filter((value, index) => this.directChatNames.indexOf(value) === index)
+    },
+
     getNiceDate(date: string) {
       return moment(date).format('MMMM Do YYYY, h:mm:ss a')
     },
@@ -466,7 +476,7 @@ export default defineComponent({
       }
     },
 
-    async joinRoomWithName(roomName2join: string, password?: string) {
+    async joinRoomBySearchBar(roomName2join: string, password?: string) {
       if (roomName2join === "") {
         console.log("Empty room name");
         return;
@@ -519,8 +529,10 @@ export default defineComponent({
         this.userMemberships = response.data
         const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
         if (!membership) {
-          throw new Error("Can not change room")
+          throwFromAsync(app, "You are not a member of this room")
+          return
         }
+
         this.currentMembership = membership
         this.roomId = roomId;
         this.io.socket.emit("event_leave", this.chatRoomName);
