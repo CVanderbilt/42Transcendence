@@ -39,7 +39,7 @@
                   Change
                 </button>
               </div>
-              <button v-on:click="logOut()">Logout</button>
+              <button class="btn btn-outline-light mt-3 btn-lg px-5"  v-on:click="logOut()">Logout</button>
             </div>
           </div>
         </div>

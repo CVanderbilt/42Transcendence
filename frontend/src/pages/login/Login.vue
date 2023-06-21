@@ -93,7 +93,7 @@ export default defineComponent({
 
     // comprueba si hay un codigo en la url
     if (this.$route.query.code) {
-      console.log("existe code: " + this.$route.query.code)
+      console.log("42 url code: " + this.$route.query.code)
       this.code = this.$route.query.code as string
       await this.getToken(this.code)
       await this.tokenLogin()
@@ -119,11 +119,12 @@ export default defineComponent({
       elogin(loginData)
         .then((response) => {
           localStorage.setItem("token", response.data.token)
-          console.log("guardando token: " + localStorage.getItem("token"))
+          console.log("saving token: " + localStorage.getItem("token"))
 
           if (response.data.is2fa) {
             this.is2faCodeRequired.status = true
           }
+
           else {
             const user: IUser = {
               id: response.data.userId,
@@ -142,7 +143,7 @@ export default defineComponent({
         })
     },
 
-    // Cambia el codigo de 42 por el JWT token y los datos de usuario
+    // Exchange 42 code for JWT token
     async getToken(code: string) {
       console.log("Adquiriendo token con login de 42")
       var bodyFormData = new FormData();
@@ -173,32 +174,12 @@ export default defineComponent({
         })
     },
 
-    // Si existe token pedimos los datos de usuario al servidor y los guardamos
+    // Check token validity
     async tokenLogin() {
-      // comprueba si ya hay un token en el local storage y si es valido
-      console.log(localStorage.getItem("token"))
       if (localStorage.getItem("token") === null) {
         console.log("Token login: No token found")
         return
       }
-
-      // try {
-      //   await apiClient.get("/auth/me").then((response) => {
-      //     if (response.status === 401) {
-      //       console.log("Token login: Invalid token")
-      //       return
-      //     }
-      //     if (response.status !== 200) {
-      //       console.log("Token login: Error getting user data")
-      //       return
-      //     }
-      //     console.log("You are in")
-      //     this.$router.push("/")
-      //   })
-      // }
-      // catch (error) {
-      //   console.log("Token login: " + error)
-      // }
     },
 
     async submit2faCode() {
@@ -221,7 +202,6 @@ export default defineComponent({
         localStorage.setItem("token", response.data.token)
 
         store.commit("changeUser", user)
-        console.log(localStorage.getItem("user"))
         this.$router.push("/");
       })
     },

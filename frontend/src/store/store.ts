@@ -60,9 +60,6 @@ export const store = createStore<State>({
     },
     changeUser(state, user: IUser) {
       state.user = user;
-      console.log("changing user");
-      console.log({user});
-      console.log(state.user);
     },
     changeUserName(state, userName: string) {
       if (state.user) {

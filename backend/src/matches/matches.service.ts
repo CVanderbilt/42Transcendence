@@ -102,7 +102,6 @@ export class MatchesService {
     //----------------------------------------------
 
     async getMatchesByUser(userId: string): Promise<Match[]> {
-
         const list: MatchEntity[] = await this.matchesRepo
             .createQueryBuilder("match")
             .leftJoinAndSelect("match.user", "user")
@@ -124,6 +123,8 @@ export class MatchesService {
                 element.opponentScore = s
             }
         }
+
+        console.log(await list)
 
         return await (list as Match[])
     }

@@ -40,6 +40,7 @@ export class MatchesController {
 
     @Get('user/:userId')
     async getMatches(@Param('userId') userId: string): Promise<Match[]> {
+        console.log("getMatches called with userId: " + userId)
         try {
             return await this.matchesService.getMatchesByUser(userId);
         } catch (error) {

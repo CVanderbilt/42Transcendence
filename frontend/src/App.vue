@@ -35,11 +35,7 @@
           </ul>
 
           <ul class="navbar-nav d-flex flex-row ms-1 me-45">
-            <b-dropdown id="dropdown-1" right text="Profile" class="m-md-2" variant="light">
-              <b-dropdown-item v-on:click="modifyProfileRoute()">Modify Profile</b-dropdown-item>
-              <b-dropdown-divider></b-dropdown-divider>
-              <b-dropdown-item href="/login" v-on:click="logOut()">Logout</b-dropdown-item>
-            </b-dropdown>
+            <button right class="btn btn-outline-light m-md-2" variant="light" v-on:click="modifyProfileRoute()">Settings</button>
           </ul>
         </div>
       </div>

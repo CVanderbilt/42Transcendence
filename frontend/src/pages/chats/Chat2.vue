@@ -26,7 +26,7 @@
 
                 <!-- direct chats -->
                 <h6 style="color: white; margin-top: 30px;">Direct chats</h6>
-                <div v-for="item in directChatNames" v-bind:key="item.niceName">
+                <div v-for="item in niceRoomNames" v-bind:key="item.niceName">
                   <div v-if="item.chatRoom.isDirect" style="display: flex;">
                     <b-button v-on:click="changeRoom(item.chatRoom.id, item.chatRoom.name)"
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
@@ -39,7 +39,7 @@
 
               <div class="col-9 chat-column" style="margin-bottom: 20px;">
                 <div class="chat-header">
-                  {{ currentMembership.chatRoom.name }}
+                  {{ niceRoomNames.find((room) => room.chatRoom.id == currentMembership.chatRoom.id)?.niceName }}
                 </div>
 
                 <!-- ------------------ chat area ------------------ -->
@@ -56,12 +56,10 @@
                           </p>
                         </b-col>
                         <b-col>
-                          <p v-if="message.senderName !== user?.username" class="message-text">
-                            <a v-on:click="searchFriend(message.senderName as string)">{{
-                              message.senderName + ": "
-                            }}</a>
-                            <a>{{ message.content }}</a>
-                          </p>
+                          <div v-if="message.senderName !== user?.username" class="message-text">
+                            <a style="cursor: pointer;" v-on:click="showUserActions(message.senderId as string)">{{
+                              message.senderName + ": " + message.content }}</a>
+                          </div>
                         </b-col>
                       </div>
                     </div>
@@ -103,8 +101,6 @@
               <b-button @click="joinRoomBySearchBar(searchedChat, searchedChatPassword); searchedChatPassword = '';">Join
                 room</b-button> <!-- TODO: cambiar por joinRoomWithId -->
             </div>
-
-
           </div>
         </main>
       </div>
@@ -147,7 +143,7 @@
     <div>
       <b-modal id="modal-center" centered="true" v-model="modalChatAdmin" @ok="handleManageChat()">
         <div class=" pb-9">
-          <h2 class="fw-bold text-uppercase">{{ 'Manage chat ' + chatRoomName }}</h2>
+          <h2 class="fw-bold text-uppercase">Manage chat</h2>
 
           <!-- manage password -->
           <div v-if="currentMembership.isOwner" class="form-outline form-white mb-2">
@@ -208,19 +204,36 @@
         </div>
       </b-modal>
     </div>
+
+    <!-- user info -->
+    <div>
+      <b-modal id="modal-center" centered="true" v-model="modalUserActions.show">
+        <div class=" pb-9">
+          <div style="display: flex; gap: 20px;">
+            <h2 style="cursor: pointer;" v-on:click="searchFriend()" class="fw-bold text-uppercase">{{
+              modalUserActions.userName }}</h2>
+            <b-button style="background-color: rgb(0, 106, 255);" type="button" @click="WatchUserGame()">Watch</b-button>
+            <b-button style="background-color: rgb(0, 0, 0);" type="button" @click="MakeDuel()">Duel</b-button>
+          </div>
+
+          <div class="form-outline form-white"></div>
+        </div>
+      </b-modal>
+    </div>
+
   </section>
 </template>
   
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "vuex";
-import { key } from "../../store/store";
+import { IUser, key } from "../../store/store";
 import "@/style/styles.css";
 import { app, useSocketIO } from "../../main";
 import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom, getChatRoomByIdReq } from "../../api/chatApi";
 import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
-import { getUserByName } from "../../api/user";
+import { getUserById, getUserByName } from "../../api/user";
 import { getFriendshipsRequest } from "../../api/friendshipsApi";
 import { IFriendship } from "../../api/friendshipsApi";
 import moment from 'moment';
@@ -283,7 +296,14 @@ export default defineComponent({
       managedChatRequiresPassword: false,
       managedBannedMinutes: 0,
       managedMutedMinutes: 0,
-      directChatNames: [] as { chatRoom: ChatRoom, niceName: string }[],
+      niceRoomNames: [] as { chatRoom: ChatRoom, niceName: string }[],
+      modalUserActions: {
+        show: false,
+        userId: "",
+        userName: "",
+        matchUrl: "",
+        currentGameId: "",
+      },
     };
   },
 
@@ -338,7 +358,7 @@ export default defineComponent({
       this.messages.push(msg)
     });
 
-    this.getDirectChatNames()
+    this.fetchNiceRoomNames()
   },
 
   beforeRouteLeave() {
@@ -346,38 +366,30 @@ export default defineComponent({
   },
 
   methods: {
-    async getDirectChatNames() {
-      let directRooms : ChatRoom[] = 
-        this.userMemberships.filter((membership) => membership.chatRoom.isDirect)
-        .map((membership) => membership.chatRoom)
+    async fetchNiceRoomNames() {
+      let chatRooms: ChatRoom[] =
+        this.userMemberships.map((membership) => membership.chatRoom)
 
-      directRooms.forEach(async room => {
-        const memberships = await (await (getChatRoomMembershipsReq(room.id))).data as Membership[]
-        this.directChatNames.push({
+      chatRooms.forEach(async room => {
+        let name = room.name
+        if (room.isDirect) {
+          const memberships = await (await (getChatRoomMembershipsReq(room.id))).data as Membership[]
+          name = memberships[0].user.username + "-" + memberships[1].user.username
+        }
+
+        this.niceRoomNames.push({
           chatRoom: room,
-          niceName:  memberships[0].user.username + "-" + memberships[1].user.username
+          niceName: name,
         })
-      });
+      })
 
       // remove duplicates
-      this.directChatNames = this.directChatNames.filter((value, index) => this.directChatNames.indexOf(value) === index)
+      this.niceRoomNames = this.niceRoomNames.filter((value, index) => this.niceRoomNames.indexOf(value) === index)
     },
 
     getNiceDate(date: string) {
       return moment(date).format('MMMM Do YYYY, h:mm:ss a')
     },
-
-    // getNiceChatName(chatRoom: ChatRoom) {
-    //   const name = chatRoom.name;
-    //   if (chatRoom.isDirect) {
-    //     if (name.split("¿")[0] === "directMessage") {
-    //       return name.split("¿")[1].includes(this.user?.username as string)
-    //         ? name.split("¿")[2]
-    //         : name.split("¿")[1];
-    //     }
-    //   }
-    //   return name;
-    // },
 
     isDisplayMessage(senderId: string): boolean {
       const membership = this.userFriendships.find(x => x.friend.id === senderId)
@@ -545,7 +557,6 @@ export default defineComponent({
           }
         })
       })
-
     },
 
     async createChatRoom(roomName: string, password: string, userNames: string[]) {
@@ -587,6 +598,16 @@ export default defineComponent({
         }
 
         this.changeRoom(room.id, room.name)
+      }
+    },
+
+    async removeChatMembership(membershipId: string) {
+      try {
+        await deleteChatRoomMembershipsReq(membershipId)
+        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.id !== membershipId)
+      } catch (error) {
+        console.log("Can not remove user from chat room: " + error);
+        alert("Can not remove user from chat room: " + error);
       }
     },
 
@@ -667,24 +688,34 @@ export default defineComponent({
       }
     },
 
-    async removeChatMembership(membershipId: string) {
-      try {
-        await deleteChatRoomMembershipsReq(membershipId)
-        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.id !== membershipId)
-      } catch (error) {
-        console.log("Can not remove user from chat room: " + error);
-        alert("Can not remove user from chat room: " + error);
-      }
+    async showUserActions(clickedUserId: string) {
+      this.modalUserActions.userId = clickedUserId;
+      const clickedUser = await (await getUserById(clickedUserId)).data as IUser
+      this.modalUserActions.userName = clickedUser.username;
+      // prepare game link
+      this.modalUserActions.matchUrl = "???"
+      // view current game
+      this.modalUserActions.currentGameId = "???"
+
+      this.modalUserActions.show = !this.modalUserActions.show;
     },
 
-    searchFriend(username: string) {
-      getUserByName(username)
-        .then((response) => {
-          this.$router.push("/user?uuid=" + response.data.id);
-        })
-        .catch((error) => {
-          alert("usuario no encontrado");
-        });
+    searchFriend() {
+      this.$router.push("/user?uuid=" + this.modalUserActions.userId);
+    },
+
+    WatchUserGame() {
+      if (this.modalUserActions.currentGameId) {
+        alert("User is not playing any game right now");
+        return;
+      }
+      this.$router.push("/match?uuid=" + this.modalUserActions.currentGameId);
+    },
+
+    MakeDuel() {
+      // comprobar si el usuario está en una partida y dar alerta
+      // crear partida
+      this.$router.push("/match?uuid=" + this.modalUserActions.matchUrl);
     },
 
     modifyProfileRoute() {

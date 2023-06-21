@@ -9,6 +9,7 @@ import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './c
 import { User } from 'src/users/user.interface';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
 import { getAuthToken } from 'src/utils/utils';
+import { find } from 'rxjs';
 
 @Injectable()
 export class Chats2Service {
@@ -83,8 +84,10 @@ export class Chats2Service {
     }
 
     @UseGuards(JwtAdminGuard)
-    findAllChatRooms(): Promise<ChatRoom[]> {
-        return this.chatRoomsRepo.find();
+    async findAllChatRooms(): Promise<ChatRoom[]> {
+        const rooms = await this.chatRoomsRepo.find()
+
+        return rooms
     }
 
     findChatRoomById(id: number): Promise<ChatRoom> {
