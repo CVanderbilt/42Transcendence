@@ -45,7 +45,7 @@ export class MatchesController {
         } catch (error) {
             //Logger2.error(error)
             console.log("error getting competitive match")
-            console.log(error)
+            //console.log(error)
             if (error instanceof HttpException) throw (error)
             throw new HttpException("competitive matchmaking failed", HttpStatusCode.InternalServerError);
         }
@@ -92,17 +92,12 @@ export class MatchesController {
         }
     }
 
-    /*
-    WIP
     @Post('challenge')
-    async challenge(@Body data: { requesterName: string, oponentName: string }) {
-        // crea duelo entre requester y oponent
-        // se añaden ambos a la base de datos y si el otro jugador acepta el duelo matchean
-        // requester se añade al mapa, con atribute waiting_for = oponentName, solo matchea con users llamados oponentName que estén con waiting_for = requesterName
+    async challenge(@Body() data: { requesterName: string, opponentName: string, powerups: string }) {
+        console.log("challenge y tal")
+        const powerupsList: string[] = []
+            for (let i = 0; i < data.powerups.length; i++)
+                powerupsList.push(data.powerups[i])
+        return this.matchesService.challenge(data.requesterName, data.opponentName, powerupsList)
     }
-
-    @Post('challengeAnswer')
-    async challengeAnswer(@Body data: { requesterName: string, oponentName: string, accepted: boolean }) {
-        
-    }*/
 }

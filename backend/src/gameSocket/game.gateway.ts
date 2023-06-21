@@ -28,7 +28,8 @@ interface GameRoom {
   gameStatus: "WAITING" | "PLAYING" | "FINISHED" | "MISSING_PLAYER",
   ballSpeed: number,
   paddleHeight: number,
-  isCompetitive: boolean
+  isCompetitive: boolean,
+  isChallenge: boolean
 }
 
 export const gameRooms: GameRoom[] = [];
@@ -71,10 +72,22 @@ export class GameGateway
     
     //todo: revisar, error interno cuando un usuario intenta entrar en uan room o antigua o inexistente, no está claro -> creo q ya está bien
     const _room = gameRooms[room]
-    if (!_room)
+    const gameServer = this.server;
+    if (!_room){
+      //todo: revisar con pablo porq no va esto, si no hay soluciones cutres como revisar que el match exista con una api
+      gameServer.to(`room_${room}`).emit('endGame', "Match_doesnt_exist_(si_eso_buscar_en_db_y_diferente_mensaje_para_unexistent_match_y_para_old_match)");
       return
+    }
     const activePlayer = getActivePlayer(_room, username)
     if (activePlayer != null) {
+      if (activePlayer == "player2") {
+        // lock player in matchmaking, if locking it failed cancel this
+        if (!this.matchesService.acceptChallenge(_room.player2.user, _room.player1.user)) {
+          gameServer.to(`room_${_room.id}`).emit('endGame', `Match_closed_because_${_room.player2.user}_couldnt_join`);
+          this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
+          delete gameRooms[_room.id]
+        }
+      }
       console.log(`${username} is ${activePlayer}`)
       const player = _room[activePlayer]
       if (!player.inGame) {
@@ -83,7 +96,6 @@ export class GameGateway
         console.log("numplayer++ = " + _room.numPlayers)
       }
       
-      const gameServer = this.server;
       _room.gameStatus = "PLAYING";
 
         this.intervalRefreshId = setInterval( async () => {

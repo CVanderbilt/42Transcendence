@@ -61,6 +61,8 @@
                             <a v-on:click="searchFriend(message.senderName as string)">{{
                               message.senderName + ": "
                             }}</a><a>{{ message.content }}</a>
+                            <button class="action-button" @click="challengePlayer(message.senderName)">{&#9876;}</button>
+                            <button class="action-button" @click="view()">&#128065;</button>
                           </p>
                         </b-col>
                       </div>
@@ -210,7 +212,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "vuex";
-import { key } from "../../store/store";
+import { key, store } from "../../store/store";
 import "@/style/styles.css";
 import { useSocketIO } from "../../main";
 import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom } from "../../api/chatApi";
@@ -221,6 +223,7 @@ import { getFriendshipsRequest } from "../../api/friendshipsApi";
 import { IFriendship } from "../../api/friendshipsApi";
 import moment from 'moment';
 import 'moment-timezone';
+import { challenge } from "@/api/gameApi";
 
 export default defineComponent({
   name: "Chat2",
@@ -294,7 +297,6 @@ export default defineComponent({
   },
 
   async mounted() {
-    alert("mounted")
 
     this.chatRoomName = "general"; // default room
     this.isAdmin = false;
@@ -609,7 +611,16 @@ export default defineComponent({
         alert("Can not remove user from chat room: " + error);
       }
     },
-
+    async challengePlayer(opponent?: string) {
+      if (!opponent) return
+      challenge(store.state.user.username, opponent)
+      .then(response => {
+        this.$router.push("/game?id=" + response.data);
+      })
+    },
+    view() {
+      alert("VIEW")
+    },
     searchFriend(username: string) {
       getUserByName(username)
         .then((response) => {
@@ -747,5 +758,11 @@ export default defineComponent({
   overflow-wrap: break-word;
   margin-right: 8px;
   margin-left: 8px
+}
+
+.action-button {
+ border: 1px solid gray;
+ color: black;
+ background: rgba(0,0,0,0.5);
 }
 </style>

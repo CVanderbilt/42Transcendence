@@ -19,6 +19,18 @@ export class MatchesService {
         this.matchMaker = new MatchMaker(matchesRepo, usersRepo)
     }
 
+    cancel(userName: string): boolean {
+        return this.matchMaker.cancel(userName)
+    }
+
+    async challenge(requesterName: string, opponentName: string, powerups: string[]): Promise<string> {
+        return await this.matchMaker.challenge(requesterName, opponentName, powerups)
+    }
+
+    acceptChallenge(userName: string, challengedBy: string): boolean {
+        return this.matchMaker.lockPlayerFromChallenge(userName, challengedBy)
+    }
+
     async makeMatch(userId: string, score: number, isFriendly: boolean, powerups: string[]): Promise<string> {
         return await this.matchMaker.makeMatch(userId, score, isFriendly, powerups)
     }
