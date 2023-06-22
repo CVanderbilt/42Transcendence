@@ -17,6 +17,7 @@ interface QueuedUser {
     mutex: Mutex,
     isFriendly: boolean
     matchId?: string,
+    challenging?: string,
 }
   
 // Queue class representing the user queue
@@ -30,7 +31,53 @@ export class MatchMaker {
         this.usersAlt = new Map<string, QueuedUser>()
     }
 
-    async createMatch(userName: string, opponentName: string, isCompetitive: boolean, powerups: string[]): Promise<string> {
+    cancel(userName: string): boolean {
+      console.log("canceling matchmaking for " + userName)
+      const user = this.usersAlt.get(userName)
+      if (user) {
+        if (user.matchId){
+          console.log("cant cancel matchmaking when game is ongoing")
+          return false
+        }
+        console.log("deleting entry")
+        this.usersAlt.delete(userName)
+      }
+      return true
+    }
+
+    async challenge(requesterName: string, opponentName: string, powerups: string[]): Promise<string> {
+      let user = this.usersAlt.get(requesterName)
+        if (!user) {
+          user = this.usersAlt.set(requesterName, {
+            id: requesterName,
+            score: -424242,
+            mutex: new Mutex(),
+            isFriendly: false,
+            powerups,
+            challenging: opponentName
+          }).get(requesterName)
+          return await this.createMatch(requesterName, opponentName, false, powerups, true)
+        } else {
+          throw new HttpException("requester already in matchmaking", HttpStatusCode.Conflict)
+        }
+    }
+
+    lockPlayerFromChallenge(id: string, challenging: string): boolean {
+      let user = this.usersAlt.get(id);
+      if (!user) {
+        user = this.usersAlt.set(id, {
+          id,
+          score: -424242,
+          mutex: new Mutex(),
+          isFriendly: false,
+          powerups: ["N"], // lo ignorará porq se está uniendo a una partida ya empezada
+          challenging
+        }).get(id)
+      }
+      return user.challenging === challenging
+    }
+    
+    async createMatch(userName: string, opponentName: string, isCompetitive: boolean, powerups: string[], isChallenge: boolean = false): Promise<string> {
       try {
           console.log("creating competitive match")
           console.log(`contestants: (${userName} and ${opponentName})`)
@@ -67,7 +114,8 @@ export class MatchMaker {
               score: 0
             },
             ballpos: { x: 250, y: 250, dx: ballSpeed, dy: ballSpeed },
-            isCompetitive
+            isCompetitive,
+            isChallenge
           }
           return id
       } catch (error) {
@@ -129,7 +177,7 @@ export class MatchMaker {
         }
         this.usersAlt.forEach((otherUser) => {
             console.log(`        [${user.id}] attempting to match with [${otherUser.id}]`)
-            if (user.id !== otherUser.id && user.isFriendly === otherUser.isFriendly &&
+            if (!otherUser.challenging && user.id !== otherUser.id && user.isFriendly === otherUser.isFriendly &&
               this.powerupsAreEquivalent(user.powerups, otherUser.powerups)) {
               if (user.isFriendly || Math.abs(user.score - otherUser.score) <= threshold)
                 return this.matchUsers(user, otherUser);
@@ -174,7 +222,18 @@ export class MatchMaker {
           if (match) break ;
           
           threshold += 10
-          if (threshold > 500) throw new HttpException("Cant find a match right now, not enough players. Try againg later", HttpStatusCode.RequestTimeout)
+          if (threshold > 50) {
+            let didCancel = false
+            try {
+              tryAcquire(user.mutex);
+              this.cancel(user.id)
+              didCancel = true
+            } catch (error) {
+              console.log("Couldnt timeout because mutex is locked")
+            } //todo: mecanismo seguridad por si se quedan locks bloqueados mucho tiempo -> cancelar igualmente, borrar queued user y cancelar la partida en la que esté
+            if (didCancel)
+              throw new HttpException("Cant find a match right now, not enough players. Try againg later", HttpStatusCode.RequestTimeout)
+          }
           console.log(`No match found for ${user.id}. Checking again... (${threshold})`);
           await sleep(random(3000, 6000))
         } while (true);

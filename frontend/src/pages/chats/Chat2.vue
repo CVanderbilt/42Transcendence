@@ -227,7 +227,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "vuex";
-import { IUser, key } from "../../store/store";
+import { IUser, key, store } from "../../store/store";
 import "@/style/styles.css";
 import { app, useSocketIO } from "../../main";
 import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom, getChatRoomByIdReq } from "../../api/chatApi";
@@ -239,6 +239,7 @@ import { IFriendship } from "../../api/friendshipsApi";
 import moment from 'moment';
 import 'moment-timezone';
 import { throwFromAsync } from "@/utils/utils";
+import { challenge } from "@/api/gameApi";
 
 export default defineComponent({
   name: "Chat2",
@@ -711,13 +712,16 @@ export default defineComponent({
       }
       this.$router.push("/match?uuid=" + this.modalUserActions.currentGameId);
     },
-
-    MakeDuel() {
-      // comprobar si el usuario está en una partida y dar alerta
-      // crear partida
-      this.$router.push("/match?uuid=" + this.modalUserActions.matchUrl);
+    async challengePlayer(opponent?: string) {
+      if (!opponent) return
+      challenge(store.state.user.username, opponent)
+      .then(response => {
+        this.$router.push("/game?id=" + response.data);
+      })
     },
-
+    view() {
+      alert("VIEW")
+    },
     modifyProfileRoute() {
       this.$router.push("/settings");
     },
@@ -845,5 +849,11 @@ export default defineComponent({
   overflow-wrap: break-word;
   margin-right: 8px;
   margin-left: 8px
+}
+
+.action-button {
+ border: 1px solid gray;
+ color: black;
+ background: rgba(0,0,0,0.5);
 }
 </style>

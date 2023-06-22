@@ -39,3 +39,11 @@ export async function getMatchesReq(userId: string) {
 export async function enterExhibitionGameApi(userName: string, powerups: string) {
     return apiClient.get(`${URL}/exhibitionMatch/${userName}/${powerups.toString()}`)
 }
+
+export async function challenge(userName: string, opponentName: string) {
+    return apiClient.post(`${URL}/challenge`, {
+        requesterName: userName,
+        opponentName: opponentName,
+        powerups: "N"
+    })
+}
