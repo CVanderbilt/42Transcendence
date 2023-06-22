@@ -14,7 +14,7 @@
         <h3>Ladder position: ??</h3>
         <div v-if="!fshp.isBlocked">
           <OpenDirectChatButton :userId="user.id" :friendId="fshp.friend.id" />
-          <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="createGame(fshp.friend.id)">
+          <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="createGame(fshp.friend.username)">
             Game
           </button>
         </div>
@@ -121,10 +121,8 @@ export default defineComponent({
       }
     },
 
-    createGame(friendId: string) {
-      // TODO create game -> refactorizar a un componente
-      // const gameId = "skdlfjhgsdkjfh"
-      // this.$router.push("/game?id=" + friendId);
+    createGame(friendName: string) {
+      this.$router.push(`/chats?challenge=${friendName}`);
     },
 
     setBlock(friendshipId: string, isBlocked: boolean) {

@@ -121,8 +121,8 @@ export default defineComponent({
     },
 
     createGame() {
-      const gameId = "skdlfjhgsdkjfh"
-      this.$router.push("/game?id=" + this.lookedUpId);
+      if (this.$data.lookedUpUserName)
+        this.$router.push(`/chats?challenge=${this.$data.lookedUpUserName}`);
     },
 
     onUpload() {
