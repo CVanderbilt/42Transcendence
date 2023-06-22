@@ -6,6 +6,7 @@ export interface ChatRoomDto {
 }
 
 export interface ChatMembershipDto {
+    [x: string]: any
     userId: string
     chatRoomId: number
     isOwner?: boolean

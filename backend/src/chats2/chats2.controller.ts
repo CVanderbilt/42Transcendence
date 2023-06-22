@@ -106,7 +106,7 @@ export class Chats2Controller {
     @Delete('rooms/:id')
     async deleteRoom(@Param('id') id: number) {
         this.chatsService.deleteRoom(id)
-    }
+    }77
 
     // leave chat room
     @Post('rooms/:id/leave')
@@ -116,6 +116,13 @@ export class Chats2Controller {
         }), data);
         return this.chatsService.leaveRoom(id, data.userId)
     }
+
+    // get one memebership
+    @Get('memberships/:id')
+    async findMembership(@Param('id') id: number): Promise<ChatMembership> {
+        return await (this.chatsService.findChatMembershipById(id))
+    }
+
 
     // get chat room members
     @Get('rooms/:id/members')
@@ -224,4 +231,6 @@ export class Chats2Controller {
         }), msg);
         return this.chatsService.createChatRoomMessage(msg)
     }
+
+
 }
