@@ -87,6 +87,10 @@ export class MatchMaker {
           console.log("user: " + user)
           const opponent = await this.usersRepo.findOne({ where: { username: opponentName } })
           console.log("opponent: " + opponent)
+          if (!user)
+            throw new HttpException("Create match failed, user: " + userName + " not found", HttpStatusCode.NotFound)
+          if (!opponent)
+            throw new HttpException("Create match failed, opponent: " + opponentName + " not found", HttpStatusCode.NotFound)
           const id = uuidv4()
           //generate uuid
           const ballSpeed = powerups.includes("F") ? 4 : 2
@@ -120,7 +124,9 @@ export class MatchMaker {
           return id
       } catch (error) {
           console.log("!!!!!!!!ERROR AQUI!!!!!!!!")
+          //todo: relanzar por ahora servirá, si falla un usuario en matchmaking puede que se bloquee hata que de tiemout pero ya
           console.log(error)
+          throw error
       }
   }
 

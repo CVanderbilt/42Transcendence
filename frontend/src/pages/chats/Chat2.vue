@@ -320,6 +320,10 @@ export default defineComponent({
   },
 
   async mounted() {
+    if (this.$route.query.challenge) {
+      console.log("challenge in query")
+      this.challengePlayer(this.$route.query.challenge as string)
+    }
     this.chatRoomName = "general"; // default room
     this.isAdmin = false;
 

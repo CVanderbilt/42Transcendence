@@ -75,6 +75,11 @@ export class MatchesController {
         const powerupsList: string[] = []
             for (let i = 0; i < data.powerups.length; i++)
                 powerupsList.push(data.powerups[i])
-        return this.matchesService.challenge(data.requesterName, data.opponentName, powerupsList)
+        try {
+            return await this.matchesService.challenge(data.requesterName, data.opponentName, powerupsList)
+        } catch (error) {
+            if (error instanceof HttpException) throw (error)
+            throw new HttpException("competitive matchmaking failed", HttpStatusCode.InternalServerError);
+        }
     }
 }
