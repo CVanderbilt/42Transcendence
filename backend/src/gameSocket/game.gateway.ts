@@ -87,6 +87,10 @@ export class GameGateway
       _room.gameStatus = "PLAYING";
 
         _room.intervalRefreshId = setInterval( async () => {
+          if (_room.gameStatus == "FINISHED") {
+            clearInterval(_room.intervalRefreshId);
+            return ;
+          }
           if (_room.numPlayers > 1) {
             const calculatePlayerPos = (player: Player) => {
               if (player.downPressed && player.paddlePos < canvasHeight - player.paddleHeight) {
