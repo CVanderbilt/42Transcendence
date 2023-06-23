@@ -145,3 +145,7 @@ export async function getDirectChatRoomReq(user1: string, user2: string) {
 export async function getChatRoomByIdReq(id: string) {
     return apiClient.get(`${URL}/rooms/${id}`)
 }
+
+export async function getGeneralRoom() {
+    return apiClient.get(`${URL}/rooms/general`)
+}

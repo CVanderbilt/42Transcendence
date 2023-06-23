@@ -1,64 +1,105 @@
+import { InjectRepository } from '@nestjs/typeorm';
 import {
-    OnGatewayConnection,
-    OnGatewayDisconnect,
-    OnGatewayInit,
-    SubscribeMessage,
-    WebSocketGateway,
-    WebSocketServer,
-  } from '@nestjs/websockets';
-  import { Server, Socket } from 'socket.io';
-  import { Chats2Service } from 'src/chats2/chats2.service';
-  
-  @WebSocketGateway(81, {
-    cors: { origin: '*' },
-  })
-  export class ChatGateway
-    implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-  {
-    // constructor(private chats2service: Chats2Service) {}
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  OnGatewayInit,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { ChatMembershipEntity } from 'src/chats2/chatEntities.entity';
+import { decodeToken } from 'src/utils/utils';
+import { Repository } from 'typeorm';
 
-    @WebSocketServer() server: Server;
-  
-    afterInit(server: any) {
-      console.log('Socket initialized')
-    }
-  
-    handleConnection(client: any, ...args: any[]) {
-      console.log('Client connected to socket👌')
-    }
-  
-    handleDisconnect(client: any) {
-      console.log('Client disconnected from socket👋')
-    }
-  
-  
-    @SubscribeMessage('event_join')
-    handleJoinRoom(client: Socket, room: string, userId: string) {
-      // TODO: check if user is banned
-      console.log(`alguien se unió al chat ${room}`)
-      client.join(`room_${room}`)
-    }
-  
-    @SubscribeMessage('event_message')
-    async handleIncommingMessage(
-      client: Socket,
-      payload: { room: string; message: string, username: string, senderId: string, roomId: number },
-    ) {
-      const { room, message, username, senderId, roomId } = payload;
-      
-      // TODO: check if user is muted or banned      
-      // const roomMembers = await this.chats2service.findChatRoomMembers(roomId) as any[];
-      // const membership = roomMembers.find((m) => m.user.id === senderId);
-      // console.log(`membership: ${membership}`)
+@WebSocketGateway(81, {
+  cors: { origin: '*' },
+})
 
-      this.server.to(`room_${room}`).emit('new_message',message, username, senderId, roomId);
-    }
-  
-    @SubscribeMessage('event_leave')
-    handleRoomLeave(client: Socket, room:string) {
-      console.log(`chao room_${room}`)
-      client.leave(`room_${room}`);
-    }
+export class ChatGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 
-    
+  constructor(
+    @InjectRepository(ChatMembershipEntity)
+    private readonly chatMembershipsRepo: Repository<ChatMembershipEntity>,
+  ) { }
+
+  @WebSocketServer() server: Server;
+
+  afterInit(server: any) {
+    console.log('Socket initialized')
   }
+
+  handleConnection(client: any, ...args: any[]) {
+    console.log('Client connected to socket👌')
+  }
+
+  handleDisconnect(client: any) {
+    console.log('Client disconnected from socket👋')
+  }
+
+
+  @SubscribeMessage('event_join')
+  async handleJoinRoom(client: Socket, payload: JoinPayload) {
+    console.log(`alguien se unió al chat ${payload.roomName}`)
+
+    try {
+      const decodedToken = decodeToken(payload.token)
+      const roomId = payload.roomId as unknown as number
+      const membership = await this.chatMembershipsRepo.findOne({
+        where:
+          { user: { id: decodedToken.userId }, chatRoom: { id: roomId } }
+      })
+
+      if (membership?.isBanned) {
+        console.log(`el usuario ${decodedToken.userId} está baneado`)
+        return
+      }
+
+      client.join(`room_${payload.roomId}`)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  @SubscribeMessage('event_message')
+  async handleIncommingMessage(client: Socket, payload: MessagePayload,) {
+    try {
+      const decodedToken = decodeToken(payload.token)
+      const roomId = payload.roomId as unknown as number
+      const membership = await this.chatMembershipsRepo.findOne({
+        where:
+          { user: { id: decodedToken.userId }, chatRoom: { id: roomId } }
+      })
+
+      if (membership?.isBanned || membership?.isMuted) {
+        console.log(`el usuario ${decodedToken.userId} está baneado o muteado`)
+        return
+      }
+
+      this.server.to(`room_${payload.roomId}`).emit('new_message', payload.message, payload.userName, decodedToken.userId, roomId);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  @SubscribeMessage('event_leave')
+  handleRoomLeave(client: Socket, room: string) {
+    console.log(`chao room_${room}`)
+    client.leave(`room_${room}`);
+  }
+}
+
+interface JoinPayload {
+  roomName: string;
+  roomId: string;
+  userId: string;
+  token: string;
+}
+
+interface MessagePayload {
+  roomId: string;
+  userName: string;
+  message: string;
+  token: string;
+}

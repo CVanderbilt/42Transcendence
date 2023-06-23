@@ -74,21 +74,11 @@ export function generateRandomSquaresImage() {
   return image
 }
 
-
-
-export function getAuthToken(request, validate = true) {
-  const authHeader = request.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer '))
-    throw new NotFoundException('Token not found');
+export function decodeToken(token: string) {
   try {
-    const token = request.headers.authorization.split(' ')[1];
-
-    const decodedToken = validate ? 
-      jwt.verify(token, process.env.JWT_KEY) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean } :
+    const decodedToken =
       jwt.decode(token) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean }
-    
-    console.log("decoded token:")
-    console.log(decodedToken)
+
     const ret = {
       role: decodedToken.role,
       userId: decodedToken.userId,
@@ -105,7 +95,39 @@ export function getAuthToken(request, validate = true) {
         return false;
       }
     };
-    Logger.log(ret)
+    return ret;
+  } catch (err) {
+    throw new UnauthorizedException('Invalid token');
+  }
+}
+
+export function getAuthToken(request, validate = true) {
+  const authHeader = request.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    throw new NotFoundException('Token not found');
+  try {
+    const token = request.headers.authorization.split(' ')[1];
+
+    const decodedToken = validate ?
+      jwt.verify(token, process.env.JWT_KEY) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean } :
+      jwt.decode(token) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean }
+
+    const ret = {
+      role: decodedToken.role,
+      userId: decodedToken.userId,
+      email: decodedToken.email,
+      isTwoFactorAuthenticationEnabled: decodedToken.isTwoFactorAuthenticationEnabled,
+      isTwoFactorAuthenticated: decodedToken.isTwoFactorAuthenticated,
+      hasRightsOverUser: (token, user: User): boolean => {
+        if (token.userId === user.id)
+          return true;
+        if (user.role === "OWNER")
+          return false;
+        if (token.role === "ADMIN" || token.role === "OWNER")
+          return true;
+        return false;
+      }
+    };
     return ret;
   } catch (err) {
     throw new UnauthorizedException('Invalid token');
@@ -119,10 +141,10 @@ export function get42Token(request, validate = true) {
   try {
     const token = request.headers.authorization.split(' ')[1];
 
-    const decodedToken = validate ? 
+    const decodedToken = validate ?
       jwt.verify(token, process.env.JWT_KEY) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean } :
       jwt.decode(token) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean }
-    
+
     console.log("decoded token:")
     console.log(decodedToken)
     const ret = {

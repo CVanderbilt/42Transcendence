@@ -17,6 +17,11 @@ export class Chats2Controller {
         return await (this.chatsService.findAllChatRooms())
     }
 
+    @Get('rooms/general')
+    async findGeneralRoom(): Promise<ChatRoom> {
+        return await (this.chatsService.findChatRoomByName("general"))
+    }
+
     // get chat room by id (room + members)
     @Get('rooms/:id')
     async findRoom(@Param('id') id: number): Promise<ChatRoom> {
