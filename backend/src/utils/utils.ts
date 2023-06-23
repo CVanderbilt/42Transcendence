@@ -147,3 +147,7 @@ export function get42Token(request, validate = true) {
     throw new UnauthorizedException('Invalid token');
   }
 }
+
+export function isPastDate(date: Date): boolean {
+  return date < new Date();
+}

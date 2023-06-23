@@ -11,9 +11,14 @@
               <!-- ------------------ chats list ------------------ -->
               <div class="col chats-list">
                 <!-- chat rooms -->
+                <b-button v-on:click='changeRoom("1", "general")'
+                  style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0; margin-top: 30px;">
+                  chat general
+                </b-button>
+
                 <h6 style="color: white; margin-top: 30px;">Group chats</h6>
                 <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name">
-                  <div v-if="!item.chatRoom.isDirect" style="display: flex;">
+                  <div v-if="!item.chatRoom.isDirect && item.chatRoom.id != '1'" style="display: flex;">
                     <b-button v-on:click="changeRoom(item.chatRoom.id, item.chatRoom.name)"
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                       {{ item.chatRoom.name }}
@@ -86,7 +91,7 @@
                 </div>
                 <div v-else>
                   <h3>You are banned until</h3>
-                  <h3>{{ getNiceDate( currentMembership.bannedUntil) }}</h3>
+                  <h3>{{ getNiceDate(currentMembership.bannedUntil) }}</h3>
                 </div>
 
               </div>
@@ -321,9 +326,11 @@ export default defineComponent({
 
   async mounted() {
     this.chatRoomName = "general"; // default room
+    this.chatRoomId = "1"; // default general room
     this.isAdmin = false;
 
-    this.chatRoomId = "1"; // default general room
+    this.joinRoomWithId("1");
+
     const requestedRoomId = this.$route.query.roomId as string;
     if (requestedRoomId) {
       const chatRoom = await (await getChatRoomByIdReq(requestedRoomId)).data
@@ -540,7 +547,7 @@ export default defineComponent({
     async changeRoom(roomId: string, roomName: string) {
       getUserMembershipsReq(this.user?.id as string).then((response) => {
         this.userMemberships = response.data
-        const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
+        const membership = this.userMemberships.find((membership) => membership.chatRoom.id == roomId)
         if (!membership) {
           throwFromAsync(app, "You are not a member of this room")
           return
@@ -680,7 +687,7 @@ export default defineComponent({
       // update current chat members
       this.managedChatMemberships.forEach(async (membership) => {
         membership.bannedUntil = this.time2utc(membership.bannedUntil)
-        membership.mutedUntil = this.time2utc(membership.mutedUntil)  
+        membership.mutedUntil = this.time2utc(membership.mutedUntil)
         await updateChatRoomMembershipsReq(membership.id, membership)
       })
 
