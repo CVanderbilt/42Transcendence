@@ -1,60 +1,63 @@
 <template>
-    <div class="admin-page">
-      <div class="mainCont" style="align-content: center;">
-        <div class="users-list">
-          <h5 class="table-header"> Manage users </h5>
-          <div class="list-body" ref="usersList">
-            <div class="list-row" v-for="user in userList" :key="user.id">
-              <div class="list-row-content">
-                <div class="list-attribute-name">{{ user.username }}</div>
-                <div class="list-attribute-name">{{ user.id }}</div>
-                <div class="manage">
-                  <div class="list-attribute-box">
-                    <button class="allow" v-if="user.isBanned" @click="allowUserAction(user)">Allow</button>
-                    <button class="ban" v-if="!user.isBanned" @click="banUserAction(user)">Ban</button>
-                    <button class="allow" v-if="!hasAdminRights(user)" @click="promoteUserAction(user)">Promote</button>
-                    <button class="ban" v-if="hasAdminRights(user)" @click="demoteUserAction(user)">Demote</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="chats-list">
-          <h5 class="table-header"> Manage chats </h5>
-          <div class="list-body">
-            <div class="list-row" v-for="chat in chatList" :key="chat.id">
-              <div class="list-row-header">
-                <b class="list-attribute-name">{{ chat.name }}</b>
-              </div>
-              <div class="list-row-content">
+  <button class="fetch-button" @click="updateInfo">Update</button>
+  <div class="admin-page">
+    <div class="mainCont" style="align-content: center;">
+      <div class="users-list">
+        <h5 class="table-header"> Manage users </h5>
+        <div class="list-body" ref="usersList">
+          <div class="list-row" v-for="user in userList" :key="user.id">
+            <div class="list-row-content">
+              <div class="list-attribute-name">{{ user.username }}</div>
+              <div class="list-attribute-name">{{ user.id }}</div>
+              <div class="manage">
                 <div class="list-attribute-box">
-                  <div class="manage">
-                    <input class="list-attribute-input" type="text" placeholder="userName" v-model="chat.userName">
-                    <div class="list-attribute-box">
-                      <button class="ban" @click="banUserInChatAction(chat)">Ban</button>
-                      <button class="allow" @click="allowUserInChatAction(chat)">Allow</button>
-                    </div>
-                    <div class="list-attribute-box">
-                      <button class="allow" @click="banUserInChatAction(chat)">Promote</button>
-                      <button class="ban" @click="allowUserInChatAction(chat)">Demote</button>
-                    </div>
-                  </div>
+                  <button class="allow" v-if="user.isBanned" @click="allowUserAction(user)">Allow</button>
+                  <button class="ban" v-if="!user.isBanned" @click="banUserAction(user)">Ban</button>
+                  <button class="allow" v-if="!hasAdminRights(user)" @click="promoteUserAction(user)">Promote</button>
+                  <button class="ban" v-if="hasAdminRights(user)" @click="demoteUserAction(user)">Demote</button>
                 </div>
-                <button class="chatdestroy" @click="destroyChat(chat)">Destroy</button>
               </div>
             </div>
           </div>
         </div>
       </div>
+      <div class="chats-list">
+        <h5 class="table-header"> Manage chats </h5>
+        <div class="list-body">
+          <div class="list-row" v-for="chat in chatList" :key="chat.id">
+            <div class="list-row-header">
+              <b class="list-attribute-name">{{ chat.name }}</b>
+            </div>
+            <div class="list-row-content">
+              <div class="list-attribute-box">
+                <div class="manage">
+                  <input class="list-attribute-input" type="text" placeholder="userName" v-model="chat.userName">
+                  <div class="list-attribute-box">
+                    <button class="ban" @click="banUserInChatAction(chat)">Ban</button>
+                    <button class="allow" @click="allowUserInChatAction(chat)">Allow</button>
+                  </div>
+                  <div class="list-attribute-box">
+                    <button class="allow" @click="promoteUserInChatAction(chat)">Promote</button>
+                    <button class="ban" @click="demoteUserInChatAction(chat)">Demote</button>
+                  </div>
+                </div>
+              </div>
+              <button class="chatdestroy" @click="destroyChat(chat)">Destroy</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <script lang="ts">
 import { IUser, store } from '@/store/store';
-import { defineComponent } from 'vue';
+import { defineComponent, onMounted } from 'vue';
 import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'
-import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, demoteUserInChat, getAllChatRoomsReq, promoteUserInChat } from '@/api/chatApi';
+import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, demoteUserInChat, getAllChatRoomsReq, getChatRoomMembershipsReq, Membership, promoteUserInChat } from '@/api/chatApi';
+import { publishNotification } from '@/utils/utils';
+import { app } from '@/main';
 
 interface ChatRoomRow extends ChatRoom {
   userName: string
@@ -73,57 +76,85 @@ export default defineComponent({
       chatList: chatList,
     }
   },
-  
+
   methods: {
+    updateInfo() {
+      getAllUsers()
+      .then(list => this.userList = list)
+      .catch(() => alert("Unhandled error when fetching all users for admin page"))
+    getAllChatRoomsReq()
+      .then(list => {
+        this.chatList = list;
+        this.chatList.forEach(async element => {
+          console.log(element.name)
+          if (element.isDirect) {
+            console.log("is direct")
+            const memberships: Membership[] = await (await getChatRoomMembershipsReq(element.id)).data
+            let name = memberships[0].user.username
+            if (memberships.length > 1)
+              name += " - " + memberships[1].user.username
+            element.name = name
+            console.log(element.name)
+          }
+        });
+      })
+      .catch(() => alert("Unhandled error when fetching all chats for admin page"))
+    },
     promoteUserAction(user: IUser) {
-      console.log(`Promoting user ${user.id}`);
+      publishNotification(``, false)
       promoteUser(user.id)
+      
     },
     demoteUserAction(user: IUser) {
-      console.log(`Demoting user ${user.id}`);
+      publishNotification(`Promoting user ${user.id}`, false)
       demoteUser(user.id)
     },
     banUserAction(user: IUser) {
-      console.log(`Banning user ${user.id}`);
+      publishNotification(`Banning user ${user.id}`, false)
       banUser(user.id)
     },
     allowUserAction(user: IUser) {
-      console.log(`Allowing user ${user.id}`);
+      publishNotification(`Allowing user ${user.id}`, false)
       allowUser(user.id)
     },
     banUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
-        console.log(`Banning user: ${chat.userName} in chat: ${chat.name}`)
+        publishNotification(`Banning user: ${chat.userName} in chat: ${chat.name}`, false)
         banUserFromChat(chat.userName, chat.id)
       }
     },
     allowUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
-        console.log(`Allowing user: ${chat.userName} in chat: ${chat.name}`)
+        publishNotification(`Allowing user: ${chat.userName} in chat: ${chat.name}`, false)
         allowUserFromChat(chat.userName, chat.id)
       }
     },
     promoteUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
+        publishNotification(`Promoting user: ${chat.userName} in chat: ${chat.name}`, false)
+        console.log("promoting user in chat")
         promoteUserInChat(chat.userName, chat.id)
       }
     },
     demoteUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
+        publishNotification(`Demoting user: ${chat.userName} in chat: ${chat.name}`, false)
         demoteUserInChat(chat.userName, chat.id)
       }
     },
     destroyChat(chat: ChatRoomRow) {
+      publishNotification(`Deleting chat ${chat.name}`, false)
       deleteChatRoom(chat.id);
     },
     hasAdminRights(user: IUser) {
       return user.role === "ADMIN" || user.role === "OWNER"
     }
   },
-  
+
   mounted() {
     if (!store.state.user || !this.hasAdminRights(store.state.user))
       this.$router.push("/");
+<<<<<<< HEAD
     else {
       const usersList = this.$refs.usersList as HTMLElement;
       usersList.style.height = `${window.innerHeight - usersList.offsetTop}px`;
@@ -134,21 +165,30 @@ export default defineComponent({
       .then(list => { this.chatList = list; console.log(list); console.log(this.chatList) })
       //.catch(() => alert("Unhandled error when fetching all chats for admin page"))
     }
+=======
+    // const usersList = this.$refs.usersList as HTMLElement;
+    // usersList.style.height = `${window.innerHeight - usersList.offsetTop}px`;
+
+    this.updateInfo()
+    
+>>>>>>> 44505dd9c28600fd646e52de63005652e21963c4
   },
 })
 </script>
   
 <style scoped>
 :root {
-    align-items: center;
+  align-items: center;
 }
+
 .mainCont {
-    height: 80vh;
-    width: 99%;
-    justify-content: center;
-    display: flex;
-    flex-wrap: nowrap;
+  height: 100%;
+  width: 99%;
+  justify-content: center;
+  display: flex;
+  flex-wrap: nowrap;
 }
+
 .admin-page {
   display: block;
   justify-content: center;
@@ -173,7 +213,8 @@ export default defineComponent({
   background-color: #ccc;
   height: 80%;
   position: relative;
-  overflow: hidden; /* hide overflowing content */
+  overflow: hidden;
+  /* hide overflowing content */
 }
 
 .table-header {
@@ -183,17 +224,21 @@ export default defineComponent({
 }
 
 .list-body {
-  position: absolute; /* needed to set height */
-  top: 40px; /* height of the .chat-list-header */
+  position: absolute;
+  /* needed to set height */
+  top: 40px;
+  /* height of the .chat-list-header */
   bottom: 0;
   left: 0;
   right: 0;
-  overflow-y: auto; /* allow vertical scrolling */
+  overflow-y: auto;
+  /* allow vertical scrolling */
 }
 
 .list-row {
   display: grid;
-  grid-template-rows: auto 1fr; /* define two rows, one for header and one for content */
+  grid-template-rows: auto 1fr;
+  /* define two rows, one for header and one for content */
   width: 100%;
   height: fit-content;
   border: 1px solid black;
@@ -202,7 +247,8 @@ export default defineComponent({
 
 .list-row-content {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* each subgrid has three columns */
+  grid-template-columns: repeat(3, 1fr);
+  /* each subgrid has three columns */
   gap: 5px;
   width: fit-content;
 }
@@ -213,10 +259,11 @@ export default defineComponent({
 }
 
 .list-attribute-name {
-  width:100%;
+  width: 100%;
   min-width: 10ch;
   height: fit-content;
-  white-space: nowrap; /* prevent text from wrapping */
+  white-space: nowrap;
+  /* prevent text from wrapping */
   overflow: scroll;
   position: relative;
   justify-self: center;
@@ -278,7 +325,8 @@ export default defineComponent({
   background-color: #ccc;
   height: 80%;
   position: relative;
-  overflow: hidden; /* hide overflowing content */
+  overflow: hidden;
+  /* hide overflowing content */
 }
 
 .list-attribute-box {
@@ -290,6 +338,4 @@ export default defineComponent({
   border: 1px solid #ccc;
   border-radius: 5px;
   margin-right: 10px;
-} 
-
-</style>
+}</style>

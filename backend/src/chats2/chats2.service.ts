@@ -1,4 +1,4 @@
-import { HttpException, Injectable, Logger, NotFoundException, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatRoomEntity, ChatMembershipEntity, ChatMsgEntity } from './chatEntities.entity';
@@ -8,9 +8,8 @@ import { UserEntity } from 'src/users/user.entity';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { User } from 'src/users/user.interface';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
-import { getAuthToken } from 'src/utils/utils';
-import { find } from 'rxjs';
-import { after } from 'node:test';
+import { isPastDate } from 'src/utils/utils';
+import { HttpStatusCode } from 'axios';
 
 @Injectable()
 export class Chats2Service {
@@ -99,16 +98,16 @@ export class Chats2Service {
         return this.chatRoomsRepo.findOne({ where: { name: name } })
     }
 
-    async getDirectChatRoom(userId1: string, userId2: string) : Promise<ChatRoom> {
+    async getDirectChatRoom(userId1: string, userId2: string): Promise<ChatRoom> {
         // find the chat room with the two users that is private
         const chatRoom = await this.chatRoomsRepo
-        .createQueryBuilder('chatRoom')
-        .innerJoin('chatRoom.memberships', 'membership1')
-        .innerJoin('chatRoom.memberships', 'membership2')
-        .where('chatRoom.isDirect = :isDirect', { isDirect: true })
-        .andWhere('membership1.user.id = :userId1', { userId1: userId1 })
-        .andWhere('membership2.user.id = :userId2', { userId2: userId2 })
-        .getOne();
+            .createQueryBuilder('chatRoom')
+            .innerJoin('chatRoom.memberships', 'membership1')
+            .innerJoin('chatRoom.memberships', 'membership2')
+            .where('chatRoom.isDirect = :isDirect', { isDirect: true })
+            .andWhere('membership1.user.id = :userId1', { userId1: userId1 })
+            .andWhere('membership2.user.id = :userId2', { userId2: userId2 })
+            .getOne();
 
         if (chatRoom) {
             return chatRoom
@@ -143,7 +142,7 @@ export class Chats2Service {
         await this.joinChatRoom(roomCreated.id, membershipDto2)
         return roomCreated
     }
-            
+
 
     async findUserChatRooms(userId: string): Promise<ChatRoom[]> {
         const res = await this.chatMembershipsRepo.createQueryBuilder('membership')
@@ -194,9 +193,7 @@ export class Chats2Service {
             }
         })
 
-        Logger.log(userMembership)
         if (userMembership.length > 0) {
-            Logger.log('User is already a member of the room')
             return this.chatMembershipsRepo.findOne(
                 {
                     where: { id: userMembership[0].id },
@@ -205,7 +202,7 @@ export class Chats2Service {
         }
 
         const room = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
-        
+
         // if it is a direct room, check if there are already two members
         if (room.isDirect) {
             const roomMemberships = await this.findChatRoomMembers(roomId)
@@ -286,18 +283,28 @@ export class Chats2Service {
         // update isBanned and isMutted fields for each member depending on the date
         res.then(memberships => {
             memberships.forEach(membership => {
-                console.log(membership.bannedUntil)
-                if (membership.bannedUntil < new Date()) {
+                if (isPastDate(membership.bannedUntil)) {
                     membership.isBanned = false
                     this.chatMembershipsRepo.save(membership)
                 }
-                if (membership.mutedUntil < new Date()) {
+                if (isPastDate(membership.mutedUntil)) {
                     membership.isMuted = false
                     this.chatMembershipsRepo.save(membership)
                 }
             })
         })
 
+        return res
+    }
+
+    async findMembershipByUserAndRoom(userId: string, roomId: number): Promise<ChatMembership> {
+        const res = await this.chatMembershipsRepo.findOne({
+            where: {
+                user: { id: userId },
+                chatRoom: { id: roomId }
+            },
+            relations: ['user', 'chatRoom'],
+        })
         return res
     }
 
@@ -308,14 +315,14 @@ export class Chats2Service {
         })
 
         // update isBanned and isMutted fields for each member depending on the date
-        
+
         res.then(memberships => {
             memberships.forEach(membership => {
-                if (membership.bannedUntil < new Date()) {
+                if (isPastDate(membership.bannedUntil)) {
                     membership.isBanned = false
                     this.chatMembershipsRepo.save(membership)
                 }
-                if (membership.mutedUntil < new Date()) {
+                if (isPastDate(membership.mutedUntil)) {
                     membership.isMuted = false
                     this.chatMembershipsRepo.save(membership)
                 }
@@ -326,8 +333,15 @@ export class Chats2Service {
     }
 
     async updateMembership(id: number, data: ChatMembershipDto) {
+
+        if (!data.isBanned)
+            data.bannedUntil = new Date()
+        if (!data.isMuted)
+            data.mutedUntil = new Date()
+
         delete data.chatRoomId
         delete data.user
+
         const res = this.chatMembershipsRepo.update({ id: id }, data)
         return res
     }
@@ -342,17 +356,29 @@ export class Chats2Service {
     }
 
     async setIsBanned(userId: string, chatRoomId: number, isBanned: boolean) {
-        const membership = await this.getUserChatMembership(userId, chatRoomId)
-
-        membership.isBanned = isBanned;
-        membership.save();
+        try {
+            const membership = await this.getUserChatMembership(userId, chatRoomId)
+    
+            membership.isBanned = isBanned;
+            membership.bannedUntil = isBanned ? new Date(3000, 0, 1) : new Date()
+            membership.save();
+        }
+        catch (e) {
+            throw new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
+        }
     }
 
     async setIsAdmin(userId: string, chatRoomId: number, isAdmin: boolean) {
-        const membership = await this.getUserChatMembership(userId, chatRoomId)
-
-        membership.isBanned = isAdmin;
-        membership.save();
+        try {
+            const membership = await this.getUserChatMembership(userId, chatRoomId)
+    
+            membership.isAdmin = isAdmin;
+            membership.save();
+            this.setIsBanned(userId, chatRoomId, !isAdmin)
+        }
+        catch (e) {
+            throw new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
+        }
     }
 
     async deleteMembership(id: number) {
@@ -374,12 +400,18 @@ export class Chats2Service {
         if (membership.isOwner) {
             return this.deleteRoom(chatRoomId)
         }
+
         const res = await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId }, user: { id: userId } })
         // if the user is the last member of the room, delete the room
         const memberships = await this.findChatRoomMembers(chatRoomId)
         if (memberships.length == 0) {
             this.chatRoomsRepo.delete(chatRoomId)
         }
+        // if it was a direct room, delete the room
+        if (membership.chatRoom.isDirect) {
+            this.chatRoomsRepo.delete(chatRoomId)
+        }
+
         return res
     }
 
@@ -389,20 +421,34 @@ export class Chats2Service {
         this.chatRoomsRepo.delete(chatRoomId);
     }
 
-    async createChatRoomMessage(msg: ChatMsgDto): Promise<ChatMsg> {
+
+    //-------------------------------------------- messages
+
+    async createChatRoomMessage(token: any, msg: ChatMsgDto): Promise<ChatMsg> {
         const sender = await this.usersRepo.findOne({ where: { id: msg.senderId } });
         const room = await this.chatRoomsRepo.findOne({ where: { id: msg.chatRoomId } });
-        const membership = await this.chatMembershipsRepo.find({
+        const membership = await this.chatMembershipsRepo.findOne({
             where: {
-                user: { id: msg.senderId },
+                user: { id: token.userId },
                 chatRoom: { id: msg.chatRoomId },
-                isBanned: false,
-                isMuted: false,
             }
         })
-        if (!membership) {
-            throw new UnauthorizedException('You are not allowed to post messages in this room')
+
+
+
+        if (token.role === 'ADMIN' || token.role === 'OWNER') {
+            const postedMsg = await this.chatMsgsRepo.save({
+                sender: sender,
+                chatRoom: room,
+                content: msg.content
+            })
+            return postedMsg
         }
+
+        if (!membership || !isPastDate(membership.bannedUntil))
+            throw new HttpException('You are not allowed to post messages in this room', HttpStatusCode.Unauthorized)
+        if (!isPastDate(membership.mutedUntil))
+            throw new HttpException('You are muted in this room', HttpStatusCode.Unauthorized)
 
         const postedMsg = await this.chatMsgsRepo.save({
             sender: sender,
@@ -413,7 +459,7 @@ export class Chats2Service {
         return postedMsg
     }
 
-    async findChatRoomMessages(roomId: number): Promise<ChatMsgDto[]> {
+    async findChatRoomMessages(token: any, roomId: number): Promise<ChatMsgDto[]> {
         const msgs = await this.chatMsgsRepo.find({
             where: { chatRoom: { id: roomId } },
             relations: ['sender', 'chatRoom']
@@ -431,6 +477,19 @@ export class Chats2Service {
             })
         }
 
+        if (token.role === 'ADMIN' || token.role === 'OWNER')
+            return outMsgs
+
+        const membership = await this.getUserChatMembership(token.userId, roomId)
+        if (!membership)
+            throw new HttpException('You are not a member of this room', HttpStatusCode.Unauthorized)
+
+        console.log(membership.bannedUntil)
+        if (!isPastDate(membership.bannedUntil))
+            throw new HttpException('You have been banned from this room', HttpStatusCode.Unauthorized)
+
         return outMsgs
     }
+
+
 }
