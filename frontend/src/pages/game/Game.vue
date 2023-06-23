@@ -16,7 +16,6 @@ import { defineComponent } from "vue";
 import { gameSocketIO } from "../..//main";
 
 import { store } from "../..//store/store";
-import { getGameApi } from "@/api/gameApi";
 
 export default defineComponent({
   name: "Game",

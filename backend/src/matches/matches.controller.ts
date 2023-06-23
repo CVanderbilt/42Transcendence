@@ -2,24 +2,20 @@ import { Controller, Get, Post, Param, Logger, HttpException, HttpStatus, Body }
 import { Match } from './match.interface';
 import { MatchesService } from './matches.service';
 import { HttpStatusCode } from 'axios';
+import { USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
+import Joi from 'joi';
+
+const POWERUPS_VALIDATOR = Joi.string().regex(/^[A-Z]+$/).required()
 
 @Controller('matches')
 export class MatchesController {
     constructor(private matchesService: MatchesService) { }
 
-    @Get(':id')
-    async findOne(
-        @Param('id') id: string): Promise<Match> {
-        return (await this.matchesService.findOne(id)).match;
-    }
-
-    @Get()
-    async find(): Promise<Match[]> {
-        return this.matchesService.find();
-    }
-
     @Get('competitiveMatch/:userName')
     async getCompetitiveMatch(@Param('userName') userName: string): Promise<string> {
+        validateInput(Joi.object({
+            userName: USERNAME_VALIDATOR
+        }), { userName });
         try {
             console.log("getCompetitiveMatch called with userName: " + userName)
             const gameId = await this.matchesService.makeMatch(userName, 100, false, []);
@@ -40,6 +36,9 @@ export class MatchesController {
 
     @Get('user/:userId')
     async getMatches(@Param('userId') userId: string): Promise<Match[]> {
+        validateInput(Joi.object({
+            userName: USERNAME_VALIDATOR
+        }), { userName: userId });
         console.log("getMatches called with userId: " + userId)
         try {
             return await this.matchesService.getMatchesByUser(userId);
@@ -54,6 +53,10 @@ export class MatchesController {
         @Param('userName') userName: string,
         @Param('powerups') powerups: string,
     ): Promise<string> {
+        validateInput(Joi.object({
+            userName: USERNAME_VALIDATOR,
+            powerups: POWERUPS_VALIDATOR
+        }), { userName, powerups });
         try {
             console.log("getCompetitiveMatch called with userName: " + userName)
             const powerupsList: string[] = []
@@ -71,6 +74,11 @@ export class MatchesController {
 
     @Post('challenge')
     async challenge(@Body() data: { requesterName: string, opponentName: string, powerups: string }) {
+        validateInput(Joi.object({
+            requesterName: USERNAME_VALIDATOR,
+            opponentName: USERNAME_VALIDATOR,
+            powerups: POWERUPS_VALIDATOR
+        }), data);
         console.log("challenge y tal")
         const powerupsList: string[] = []
             for (let i = 0; i < data.powerups.length; i++)
@@ -85,6 +93,9 @@ export class MatchesController {
 
     @Post('getCurrentMatch')
     async getCurrentMatch(@Body() data: { userName: string }) {
+        validateInput(Joi.object({
+            userName: USERNAME_VALIDATOR
+        }), data);
         try {
             return this.matchesService.getCurrentMatch(data.userName)
         } catch (error) {

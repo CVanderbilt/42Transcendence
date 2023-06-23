@@ -22,7 +22,6 @@
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
 import { key, store } from "../..//store/store";
-import { getGameApi,  getPlayerOneApi, getPlayerTwoApi} from "../../api/gameApi";
 import "@/style/styles.css";
 declare var require: any;
 
