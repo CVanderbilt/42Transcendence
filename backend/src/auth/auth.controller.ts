@@ -6,7 +6,7 @@ import { User } from 'src/users/user.interface';
 import { EmailSignupDto, LoginEmailDto } from './auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import * as Joi from 'joi'
-import { validateInput } from 'src/utils/utils';
+import { EMAIL_VALIDATOR, PASSWORD_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
 import { getAuthToken } from 'src/utils/utils';
 import { debug } from 'console';
 
@@ -20,9 +20,9 @@ export class AuthController {
   @Post('esignup')
   async signup(@Body() data: EmailSignupDto) {
     validateInput(Joi.object({
-      email: Joi.string().email().required(),
-      password: Joi.string().required(),
-      username: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
+      email: EMAIL_VALIDATOR.required(),
+      password: PASSWORD_VALIDATOR.required,
+      username: USERNAME_VALIDATOR.required,
     }), data);
     return await this.authService.registerWithEmail(data)
   }
@@ -31,8 +31,8 @@ export class AuthController {
   @Post('elogin')
   async loginEmail(@Body() data: LoginEmailDto) {
     validateInput(Joi.object({
-      email: Joi.string().email().required(),
-      password: Joi.string().required(),
+      email: EMAIL_VALIDATOR.required(),
+      password: PASSWORD_VALIDATOR.required(),
     }), data);
     try {
       return this.authService.loginWithEmail(data);
@@ -45,9 +45,6 @@ export class AuthController {
 
   @Post('login')
   async login42(@Body() data: {code: string}) {
-    // validateInput(Joi.object({
-    //   code: Joi.string().required(), //todo: a lo mejor -> Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required()
-    // }), data);
     try {
       const res = await this.authService.signIn42(data.code)
       Logger.log(res)

@@ -7,6 +7,8 @@ import { User } from 'src/users/user.interface';
 
 export const USERNAME_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9-_]+$/)
 export const ID_VALIDATOR = Joi.string().guid()
+export const EMAIL_VALIDATOR = Joi.string().email()
+export const PASSWORD_VALIDATOR = Joi.string()
 
 export function validateInput(schema: Joi.ObjectSchema<any>, toValidate: any) {
   const validation = schema.validate(toValidate);

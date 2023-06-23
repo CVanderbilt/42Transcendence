@@ -8,13 +8,10 @@ import { Readable } from 'typeorm/platform/PlatformTools';
 var fs  = require('fs'),
 path    = require('path'),
 url     = require('url');
-import { getAuthToken, ID_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
+import { EMAIL_VALIDATOR, getAuthToken, ID_VALIDATOR, PASSWORD_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
 import * as Joi from 'joi';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
 import { UserDto } from './user.dto';
-
-const EMAIL_VALIDATOR = Joi.string().email()
-const PASSWORD_VALIDATOR = Joi.string()
 
 @Controller('users')
 export class UsersController {
