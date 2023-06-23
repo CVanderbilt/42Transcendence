@@ -10,6 +10,7 @@ import { User } from 'src/users/user.interface';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
 import { getAuthToken } from 'src/utils/utils';
 import { find } from 'rxjs';
+import { after } from 'node:test';
 
 @Injectable()
 export class Chats2Service {
@@ -265,6 +266,17 @@ export class Chats2Service {
     }
 
 
+    async findChatMembershipById(id: number): Promise<ChatMembership> {
+        const res = await this.chatMembershipsRepo.findOne({
+            where: { id: id },
+            relations: ['user', 'chatRoom'],
+        })
+        if (!res) {
+            throw new NotFoundException('Membership not found')
+        }
+        return res
+    }
+
     findChatRoomMembers(id: number): Promise<ChatMembership[]> {
         const res = this.chatMembershipsRepo.find({
             where: { chatRoom: { id: id } },
@@ -274,6 +286,7 @@ export class Chats2Service {
         // update isBanned and isMutted fields for each member depending on the date
         res.then(memberships => {
             memberships.forEach(membership => {
+                console.log(membership.bannedUntil)
                 if (membership.bannedUntil < new Date()) {
                     membership.isBanned = false
                     this.chatMembershipsRepo.save(membership)
@@ -289,13 +302,13 @@ export class Chats2Service {
     }
 
     async findUserMemberships(userId: string): Promise<ChatMembership[]> {
-
         const res = this.chatMembershipsRepo.find({
             where: { user: { id: userId } },
             relations: ['user', 'chatRoom'],
         })
 
         // update isBanned and isMutted fields for each member depending on the date
+        
         res.then(memberships => {
             memberships.forEach(membership => {
                 if (membership.bannedUntil < new Date()) {
@@ -314,6 +327,7 @@ export class Chats2Service {
 
     async updateMembership(id: number, data: ChatMembershipDto) {
         delete data.chatRoomId
+        delete data.user
         const res = this.chatMembershipsRepo.update({ id: id }, data)
         return res
     }

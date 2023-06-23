@@ -43,6 +43,7 @@
                 </div>
 
                 <!-- ------------------ chat area ------------------ -->
+                <!-- <div v-if="!isPastDate(currentMembership.bannedUntil)"> -->
                 <div v-if="!currentMembership.isBanned">
                   <div ref="chatArea" class="chat-area" style="margin-bottom: 20px;">
                     <div v-for="message in messages" v-bind:key="message.content">
@@ -85,7 +86,7 @@
                 </div>
                 <div v-else>
                   <h3>You are banned until</h3>
-                  <h3>{{ getNiceDate(currentMembership.bannedUntil) }}</h3>
+                  <h3>{{ getNiceDate( currentMembership.bannedUntil) }}</h3>
                 </div>
 
               </div>
@@ -393,6 +394,7 @@ export default defineComponent({
     },
 
     getNiceDate(date: string) {
+      console.log(date)
       return moment(date).format('MMMM Do YYYY, h:mm:ss a')
     },
 
@@ -645,18 +647,8 @@ export default defineComponent({
         this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.user.id !== this.user?.id)
         // transform date to string and remove z at the end so it can be parsed by datepicker
         this.managedChatMemberships.forEach((membership) => {
-          if (membership.bannedUntil) {
-            const date = moment(membership.bannedUntil).tz('UTC');
-            const localDate = date.clone().tz(moment.tz.guess())
-            const localDateTimeString = localDate.format('YYYY-MM-DDTHH:mm');
-            membership.bannedUntil = localDateTimeString;
-          }
-          if (membership.mutedUntil) {
-            const date = moment(membership.mutedUntil).tz('UTC');
-            const localDate = date.clone().tz(moment.tz.guess())
-            const localDateTimeString = localDate.format('YYYY-MM-DDTHH:mm');
-            membership.mutedUntil = localDateTimeString;
-          }
+          membership.bannedUntil = this.time2local(membership.bannedUntil)
+          membership.mutedUntil = this.time2local(membership.mutedUntil)
         })
         const room = (await getChatRoomByNameReq(this.chatRoomName)).data
         if (room) {
@@ -668,6 +660,22 @@ export default defineComponent({
       }
     },
 
+    time2local(time: string) {
+      let date, localDate, localDateTimeString
+      date = moment(time).tz('UTC');
+      localDate = date.clone().tz(moment.tz.guess())
+      localDateTimeString = localDate.format('YYYY-MM-DDTHH:mm');
+      return localDateTimeString
+    },
+
+    time2utc(time: string) {
+      let localDate, utcDate, utcDateTimeString
+      localDate = moment(time);
+      utcDate = localDate.clone().tz('UTC')
+      utcDateTimeString = utcDate.format('YYYY-MM-DDTHH:mm:ss')
+      return utcDateTimeString
+    },
+
     async handleManageChat() {
       // update password      
       if (this.managedChatPassword !== "") {
@@ -676,6 +684,8 @@ export default defineComponent({
 
       // update current chat members
       this.managedChatMemberships.forEach(async (membership) => {
+        membership.bannedUntil = this.time2utc(membership.bannedUntil)
+        membership.mutedUntil = this.time2utc(membership.mutedUntil)  
         await updateChatRoomMembershipsReq(membership.id, membership)
       })
 
@@ -691,6 +701,8 @@ export default defineComponent({
         console.log("Can not invite users to chat room: " + error);
         alert("Can not invite users to chat room: " + error);
       }
+
+
     },
 
     async showUserActions(clickedUserId: string) {
@@ -723,9 +735,11 @@ export default defineComponent({
         this.$router.push("/game?id=" + response.data);
       })
     },
-    view() {
-      alert("VIEW")
+
+    isPastDate(date: string) {
+      return moment(date).isBefore(moment());
     },
+
     modifyProfileRoute() {
       this.$router.push("/settings");
     },
