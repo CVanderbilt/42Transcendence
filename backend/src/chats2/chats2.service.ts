@@ -297,6 +297,17 @@ export class Chats2Service {
         return res
     }
 
+    async findMembershipByUserAndRoom(userId: string, roomId: number): Promise<ChatMembership> {
+        const res = await this.chatMembershipsRepo.findOne({
+            where: {
+                user: { id: userId },
+                chatRoom: { id: roomId }
+            },
+            relations: ['user', 'chatRoom'],
+        })
+        return res
+    }
+
     async findUserMemberships(userId: string): Promise<ChatMembership[]> {
         const res = this.chatMembershipsRepo.find({
             where: { user: { id: userId } },
@@ -389,12 +400,18 @@ export class Chats2Service {
         if (membership.isOwner) {
             return this.deleteRoom(chatRoomId)
         }
+
         const res = await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId }, user: { id: userId } })
         // if the user is the last member of the room, delete the room
         const memberships = await this.findChatRoomMembers(chatRoomId)
         if (memberships.length == 0) {
             this.chatRoomsRepo.delete(chatRoomId)
         }
+        // if it was a direct room, delete the room
+        if (membership.chatRoom.isDirect) {
+            this.chatRoomsRepo.delete(chatRoomId)
+        }
+
         return res
     }
 
@@ -403,6 +420,9 @@ export class Chats2Service {
         await this.chatMsgsRepo.delete({ chatRoom: { id: chatRoomId } })
         this.chatRoomsRepo.delete(chatRoomId);
     }
+
+
+    //-------------------------------------------- messages
 
     async createChatRoomMessage(token: any, msg: ChatMsgDto): Promise<ChatMsg> {
         const sender = await this.usersRepo.findOne({ where: { id: msg.senderId } });
@@ -470,4 +490,6 @@ export class Chats2Service {
 
         return outMsgs
     }
+
+
 }

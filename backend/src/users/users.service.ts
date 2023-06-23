@@ -110,6 +110,7 @@ export class UsersService {
     }
 
     async setUserAsAdmin(id: string) {
+        console.log("setUserAsAdmin", id)
         const user = await this.usersRepo.findOneBy({ id })
         if (!user)
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
