@@ -72,7 +72,6 @@ import { IUser, store } from "../../store/store";
 import { AUTHENTICATE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";
 import { apiClient } from "@/api/baseApi";
 import { elogin, get42Token } from "@/api/auth";
-import { publishNotification } from "@/utils/utils";
 
 export default defineComponent({
   name: "Login",

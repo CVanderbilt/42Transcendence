@@ -4,7 +4,6 @@ import { App } from "vue";
 
 export function generateImageURL(): string {
   if (!store.state.user) {
-    console.error("no hay id y esta intentando modificar, no debería ni pasar");
     return "";
   }
 

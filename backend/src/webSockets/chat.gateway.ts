@@ -7,6 +7,7 @@ import {
     WebSocketServer,
   } from '@nestjs/websockets';
   import { Server, Socket } from 'socket.io';
+  import { Chats2Service } from 'src/chats2/chats2.service';
   
   @WebSocketGateway(81, {
     cors: { origin: '*' },
@@ -14,6 +15,8 @@ import {
   export class ChatGateway
     implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
   {
+    // constructor(private chats2service: Chats2Service) {}
+
     @WebSocketServer() server: Server;
   
     afterInit(server: any) {
@@ -22,7 +25,6 @@ import {
   
     handleConnection(client: any, ...args: any[]) {
       console.log('Client connected to socket👌')
-
     }
   
     handleDisconnect(client: any) {
@@ -31,18 +33,24 @@ import {
   
   
     @SubscribeMessage('event_join')
-    handleJoinRoom(client: Socket, room: string) {
+    handleJoinRoom(client: Socket, room: string, userId: string) {
+      // TODO: check if user is banned
       console.log(`alguien se unió al chat ${room}`)
-      client.join(`room_${room}`);
+      client.join(`room_${room}`)
     }
   
     @SubscribeMessage('event_message')
-    handleIncommingMessage(
+    async handleIncommingMessage(
       client: Socket,
       payload: { room: string; message: string, username: string, senderId: string, roomId: number },
     ) {
       const { room, message, username, senderId, roomId } = payload;
-      console.log(username + " manda el mensaje " + message + " por el chat " + room)
+      
+      // TODO: check if user is muted or banned      
+      // const roomMembers = await this.chats2service.findChatRoomMembers(roomId) as any[];
+      // const membership = roomMembers.find((m) => m.user.id === senderId);
+      // console.log(`membership: ${membership}`)
+
       this.server.to(`room_${room}`).emit('new_message',message, username, senderId, roomId);
     }
   

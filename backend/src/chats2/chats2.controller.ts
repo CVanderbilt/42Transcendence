@@ -6,7 +6,6 @@ import { ChatMembership, ChatRoom } from './chats.interface';
 import { Chats2Service } from './chats2.service';
 import * as Joi from 'joi'
 import { UsersService } from 'src/users/users.service';
-import { gameRooms } from 'src/gameSocket/game.gateway';
 
 @Controller('chats')
 export class Chats2Controller {
@@ -177,6 +176,7 @@ export class Chats2Controller {
     
     @Post('memberhsips/promote')
     async promoteUser(@Body() input: { userName: string, roomId: number }) {
+        console.log(input)
         const user = await this.usersService.findOneByName(input.userName);
         
         if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
@@ -184,7 +184,7 @@ export class Chats2Controller {
         this.chatsService.setIsAdmin(user.id, input.roomId, true);
     }
 
-    @Post('memberhsips/promote')
+    @Post('memberhsips/demote')
     async demoteUser(@Body() input: { userName: string, roomId: number }) {
         const user = await this.usersService.findOneByName(input.userName);
         
@@ -215,13 +215,14 @@ export class Chats2Controller {
 
     // get chat messages for room
     @Get('/messages/:roomId')
-    async findRoomMessages(@Param('roomId') roomId: number): Promise<ChatMsgDto[]> {
-        return await (this.chatsService.findChatRoomMessages(roomId))
+    async findRoomMessages(@Req() req, @Param('roomId') roomId: number): Promise<ChatMsgDto[]> {
+        const token = getAuthToken(req, false)
+        return await (this.chatsService.findChatRoomMessages(token, roomId))
     }
 
     // post chat message for room
     @Post('/messages/:roomId')
-    async postRoomMessage(@Param('roomId') roomId: number, @Body() msg: ChatMsgDto) {
+    async postRoomMessage(@Req() req, @Param('roomId') roomId: number, @Body() msg: ChatMsgDto) {
         validateInput(Joi.object({
             senderId: Joi.string().guid().required(),
             chatRoomId: Joi.number().required(),
@@ -229,8 +230,7 @@ export class Chats2Controller {
             // senderName: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
             createdAt: Joi.string().isoDate(), // todo: revisar a lo mejor no funciona correctamente
         }), msg);
-        return this.chatsService.createChatRoomMessage(msg)
+
+        return this.chatsService.createChatRoomMessage(getAuthToken(req, false), msg)
     }
-
-
 }

@@ -36,8 +36,8 @@
                       <button class="allow" @click="allowUserInChatAction(chat)">Allow</button>
                     </div>
                     <div class="list-attribute-box">
-                      <button class="allow" @click="banUserInChatAction(chat)">Promote</button>
-                      <button class="ban" @click="allowUserInChatAction(chat)">Demote</button>
+                      <button class="allow" @click="promoteUserInChatAction(chat)">Promote</button>
+                      <button class="ban" @click="demoteUserInChatAction(chat)">Demote</button>
                     </div>
                   </div>
                 </div>
@@ -55,6 +55,8 @@ import { IUser, store } from '@/store/store';
 import { defineComponent } from 'vue';
 import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'
 import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, demoteUserInChat, getAllChatRoomsReq, promoteUserInChat } from '@/api/chatApi';
+import { publishNotification } from '@/utils/utils';
+import { app } from '@/main';
 
 interface ChatRoomRow extends ChatRoom {
   userName: string
@@ -76,44 +78,47 @@ export default defineComponent({
   
   methods: {
     promoteUserAction(user: IUser) {
-      console.log(`Promoting user ${user.id}`);
+      publishNotification(``, false)
       promoteUser(user.id)
     },
     demoteUserAction(user: IUser) {
-      console.log(`Demoting user ${user.id}`);
+      publishNotification(`Promoting user ${user.id}`, false)
       demoteUser(user.id)
     },
     banUserAction(user: IUser) {
-      console.log(`Banning user ${user.id}`);
+      publishNotification(`Banning user ${user.id}`, false)
       banUser(user.id)
     },
     allowUserAction(user: IUser) {
-      console.log(`Allowing user ${user.id}`);
+      publishNotification(`Allowing user ${user.id}`, false)
       allowUser(user.id)
     },
     banUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
-        console.log(`Banning user: ${chat.userName} in chat: ${chat.name}`)
+        publishNotification(`Banning user: ${chat.userName} in chat: ${chat.name}`, false)
         banUserFromChat(chat.userName, chat.id)
       }
     },
     allowUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
-        console.log(`Allowing user: ${chat.userName} in chat: ${chat.name}`)
+        publishNotification(`Allowing user: ${chat.userName} in chat: ${chat.name}`, false)
         allowUserFromChat(chat.userName, chat.id)
       }
     },
     promoteUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
+        publishNotification(`Promoting user: ${chat.userName} in chat: ${chat.name}`, false)
         promoteUserInChat(chat.userName, chat.id)
       }
     },
     demoteUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
+        publishNotification(`Demoting user: ${chat.userName} in chat: ${chat.name}`, false)
         demoteUserInChat(chat.userName, chat.id)
       }
     },
     destroyChat(chat: ChatRoomRow) {
+      publishNotification(`Deleting chat ${chat.name}`, false)
       deleteChatRoom(chat.id);
     },
     hasAdminRights(user: IUser) {
@@ -124,8 +129,8 @@ export default defineComponent({
   mounted() {
     if (!store.state.user || !this.hasAdminRights(store.state.user))
       this.$router.push("/");
-    const usersList = this.$refs.usersList as HTMLElement;
-    usersList.style.height = `${window.innerHeight - usersList.offsetTop}px`;
+    // const usersList = this.$refs.usersList as HTMLElement;
+    // usersList.style.height = `${window.innerHeight - usersList.offsetTop}px`;
     getAllUsers()
       .then(list => this.userList = list)
       .catch(() => alert("Unhandled error when fetching all users for admin page"))
@@ -141,12 +146,13 @@ export default defineComponent({
     align-items: center;
 }
 .mainCont {
-    height: 80vh;
+    height: 100%;
     width: 99%;
     justify-content: center;
     display: flex;
     flex-wrap: nowrap;
 }
+
 .admin-page {
   display: block;
   justify-content: center;
@@ -162,7 +168,7 @@ export default defineComponent({
   align-items: center;
   height: 100%;
   padding: 20px;
-}
+} 
 
 .users-list {
   border: 1px solid #ccc;

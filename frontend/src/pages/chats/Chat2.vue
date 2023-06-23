@@ -11,9 +11,14 @@
               <!-- ------------------ chats list ------------------ -->
               <div class="col chats-list">
                 <!-- chat rooms -->
+                <b-button v-on:click='changeRoom("1", "general")'
+                  style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0; margin-top: 30px;">
+                  chat general
+                </b-button>
+
                 <h6 style="color: white; margin-top: 30px;">Group chats</h6>
                 <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name">
-                  <div v-if="!item.chatRoom.isDirect" style="display: flex;">
+                  <div v-if="!item.chatRoom.isDirect && item.chatRoom.id != '1'" style="display: flex;">
                     <b-button v-on:click="changeRoom(item.chatRoom.id, item.chatRoom.name)"
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                       {{ item.chatRoom.name }}
@@ -43,8 +48,7 @@
                 </div>
 
                 <!-- ------------------ chat area ------------------ -->
-                <!-- <div v-if="!isPastDate(currentMembership.bannedUntil)"> -->
-                <div v-if="!currentMembership.isBanned">
+                <div v-if="dateOK(currentMembership.bannedUntil)">
                   <div ref="chatArea" class="chat-area" style="margin-bottom: 20px;">
                     <div v-for="message in messages" v-bind:key="message.content">
                       <div v-if="isDisplayMessage(message.senderId as string)" class="message" :class="{
@@ -65,10 +69,9 @@
                       </div>
                     </div>
                   </div>
-                  <div v-if="!currentMembership.isMuted" class="form-outline form-white chat-footer">
+                  <div v-if="dateOK(currentMembership.mutedUntil)" class="form-outline form-white chat-footer">
                     <input type="username" id="typeusernameX" v-on:keyup.enter="sendMessage()" v-model="message"
                       class="chat-input" />
-
                     <!-- send -->
                     <b-button class="chat-button" v-on:click="sendMessage()">
                       Send message
@@ -86,7 +89,7 @@
                 </div>
                 <div v-else>
                   <h3>You are banned until</h3>
-                  <h3>{{ getNiceDate( currentMembership.bannedUntil) }}</h3>
+                  <h3>{{ getNiceDate(currentMembership.bannedUntil) }}</h3>
                 </div>
 
               </div>
@@ -326,9 +329,11 @@ export default defineComponent({
       this.challengePlayer(this.$route.query.challenge as string)
     }
     this.chatRoomName = "general"; // default room
+    this.chatRoomId = "1"; // default general room
     this.isAdmin = false;
 
-    this.chatRoomId = "1"; // default general room
+    this.joinRoomWithId("1");
+
     const requestedRoomId = this.$route.query.roomId as string;
     if (requestedRoomId) {
       const chatRoom = await (await getChatRoomByIdReq(requestedRoomId)).data
@@ -408,13 +413,16 @@ export default defineComponent({
     },
 
     async sendMessage() {
+      console.log("sending message")
       // get all user memberships
       try {
         this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
       } catch {
-        console.log("Error getting user memberships")
+        throwFromAsync(app, "Error retrieving memberships")
+        return
       }
 
+      console.log("sending message2")
       // update current membership
       const membership = this.userMemberships.find((membership: any) => membership.chatRoom.name === this.chatRoomName)
       if (membership !== undefined) {
@@ -422,13 +430,18 @@ export default defineComponent({
       }
       else {
         throwFromAsync(app, "Not a member")
+        this.changeRoom("1", "general")
         return;
       }
 
-      if (this.currentMembership.isMuted || this.currentMembership.isBanned) {
+      console.log("sending message3")
+      console.log(this.currentMembership)
+      if (!this.dateOK(this.currentMembership.mutedUntil)  || !this.dateOK(this.currentMembership.bannedUntil) ) {
+        alert("You can not send messages here")
         return;
       }
 
+      console.log("sending message4")
       if (this.message !== "") {
         if (!this.user) {
           console.error("user not defined, esto no deberia pasar");
@@ -519,8 +532,14 @@ export default defineComponent({
         alert("Error joining the room: " + (errorMsg || "Unknown error"));
         return;
       }
+
+      try {
+        this.changeRoom(room.id, room.name);//TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
+      }
+      catch (error: any) {
+        throwFromAsync (app, "Error changing the room: " + (error.response?.data?.message || "Unknown error"))
+      }
       // change chat
-      this.changeRoom(room.id, room.name);//TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
     },
 
     async leaveRoom(roomId: any) {
@@ -545,10 +564,15 @@ export default defineComponent({
     async changeRoom(roomId: string, roomName: string) {
       getUserMembershipsReq(this.user?.id as string).then((response) => {
         this.userMemberships = response.data
-        const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
+        const membership = this.userMemberships.find((membership) => membership.chatRoom.id == roomId)
         if (!membership) {
           throwFromAsync(app, "You are not a member of this room")
           return
+        }
+
+        if (!this.dateOK(membership.bannedUntil)) {
+          throwFromAsync(app, "You are banned from room " + membership.chatRoom.name)
+          return;
         }
 
         this.currentMembership = membership
@@ -562,7 +586,9 @@ export default defineComponent({
           for (var i in response2.data) {
             this.messages.push(response2.data[i]);
           }
-        })
+        }).catch((error) => {
+          throwFromAsync(app, "Error getting messages: " + error.response?.data?.message || "Unknown error")
+        });
       })
     },
 
@@ -572,7 +598,6 @@ export default defineComponent({
         room = await (await createChatRoomReq(roomName, this.user?.id as string, password)).data
       }
       catch (err: any) {
-        console.log(err)
         throwFromAsync(app, JSON.stringify(err)) // TODO: revisar el throwFromAsync, cuando se intenta crear una sala con un nombre que ya está pillado
         // publishNotification("Error creating chat room: " + err , true)
         return;
@@ -591,19 +616,21 @@ export default defineComponent({
       }
 
       if (room) {
-        try {
-          // get user ids
-          userNames.forEach(async (username) => {
+        // invite users
+        userNames.forEach(async (username) => {
+          try {
             if (username !== this.user?.username && username !== "") {
               const invitee = await getUserByName(username)
               inviteUserReq(room.id, invitee.data.id)
             }
-          })
-        }
-        catch (err: any) {
-          console.log("Can not invite users to chat room: " + err.message);
-        }
+          }
+          catch (err: any) {
+            throwFromAsync(app, "Could not invite user")
+          }
+        })
 
+        const niceRoomName = { chatRoom: room as ChatRoom, niceName: room.name }
+        this.niceRoomNames.push( niceRoomName )
         this.changeRoom(room.id, room.name)
       }
     },
@@ -685,7 +712,7 @@ export default defineComponent({
       // update current chat members
       this.managedChatMemberships.forEach(async (membership) => {
         membership.bannedUntil = this.time2utc(membership.bannedUntil)
-        membership.mutedUntil = this.time2utc(membership.mutedUntil)  
+        membership.mutedUntil = this.time2utc(membership.mutedUntil)
         await updateChatRoomMembershipsReq(membership.id, membership)
       })
 
@@ -735,8 +762,12 @@ export default defineComponent({
       })
     },
 
-    isPastDate(date: string) {
-      return moment(date).isBefore(moment());
+    dateOK(date: string) {
+      if (date === "") 
+        return true
+
+      // check if date is in the past
+      return moment(date).isBefore(moment())
     },
 
     modifyProfileRoute() {
