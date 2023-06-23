@@ -8,12 +8,13 @@ import { Readable } from 'typeorm/platform/PlatformTools';
 var fs  = require('fs'),
 path    = require('path'),
 url     = require('url');
-import { getAuthToken, validateInput } from 'src/utils/utils';
+import { getAuthToken, ID_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
 import * as Joi from 'joi';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
-import { plainToClass } from 'class-transformer';
 import { UserDto } from './user.dto';
 
+const EMAIL_VALIDATOR = Joi.string().email()
+const PASSWORD_VALIDATOR = Joi.string()
 
 @Controller('users')
 export class UsersController {
@@ -22,11 +23,11 @@ export class UsersController {
     @Post()
     async create(@Body() user: User) {
         validateInput(Joi.object({
-            id: Joi.string().guid().required(),
-            email: Joi.string().email().required(),
-            password: Joi.string().required(),
-            login42: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
-            username: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
+            id: ID_VALIDATOR.required(),
+            email: EMAIL_VALIDATOR.required(),
+            password: PASSWORD_VALIDATOR.required(),
+            login42: USERNAME_VALIDATOR.required(),
+            username: USERNAME_VALIDATOR.required(),
         }), user);
         return this.usersService.createUser(user)
     }
@@ -34,24 +35,36 @@ export class UsersController {
     @UseGuards(JwtAdminGuard)
     @Post(':id/ban')
     async banUser(@Param('id') id: string): Promise<void> {
+        validateInput(Joi.object({
+            id: ID_VALIDATOR.required(),
+        }), { id });
         this.usersService.setUserIsBanned(id, true);
     }
     
     @UseGuards(JwtAdminGuard)
     @Post(':id/allow')
     async allowUser(@Param('id') id: string): Promise<void> {
+        validateInput(Joi.object({
+            id: ID_VALIDATOR.required(),
+        }), { id });
         this.usersService.setUserIsBanned(id, false);
     }
 
     @UseGuards(JwtAdminGuard)
     @Post(':id/promote')
     async promoteUser(@Param('id') id: string): Promise<void> {
+        validateInput(Joi.object({
+            id: ID_VALIDATOR.required(),
+        }), { id });
         this.usersService.setUserAsAdmin(id);
     }
     
     @UseGuards(JwtAdminGuard)
     @Post(':id/demote')
     async demoteUser(@Param('id') id: string): Promise<void> {
+        validateInput(Joi.object({
+            id: ID_VALIDATOR.required(),
+        }), { id });
         await this.usersService.setUserAsCustomer(id);
     }
     
@@ -65,6 +78,9 @@ export class UsersController {
 
     @Get('name/:username')
     async findUserByName(@Param('username') username: string): Promise<UserDto> {
+        validateInput(Joi.object({
+            username: USERNAME_VALIDATOR.required(),
+        }), { username });
         const user = await this.usersService.findOneByName(username)
         if (!user)
             throw new HttpException(`User ${username} not found`, 404)
@@ -74,6 +90,9 @@ export class UsersController {
     
     @Get(':id')
     async findUser(@Param('id') id: string): Promise<User> {
+        validateInput(Joi.object({
+            id: ID_VALIDATOR.required(),
+        }), { id });
         return new UserDto( await this.usersService.findOneById(id) )
     }
 
@@ -81,13 +100,14 @@ export class UsersController {
     @Put(':id')
     async update(@Body() user: User, @Param('id') id: string, @Req() request: Request): Promise<UpdateResult> {
         validateInput(Joi.object({
-            email: Joi.string().email(),
-            password: Joi.string(),
-            login42: Joi.string().regex(/^[a-zA-Z0-9-_]+$/),
-            username: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
+            id: ID_VALIDATOR.required(),
+            email: EMAIL_VALIDATOR,
+            password: PASSWORD_VALIDATOR,
+            login42: USERNAME_VALIDATOR,
+            username: USERNAME_VALIDATOR.required(),
             is2fa: Joi.boolean(), //todo: revisar que pasa si is2fa está pero twofaSecret no
             twofaSecret: Joi.boolean(),
-        }), user);
+        }), { ...user, id });
         const token = getAuthToken(request)
         if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
             return this.usersService.updateUser(id, user)
@@ -96,11 +116,17 @@ export class UsersController {
 
     @Delete(':id')
     delete(@Param('id') id: string): Promise<DeleteResult> {
+        validateInput(Joi.object({
+            id: ID_VALIDATOR.required(),
+        }), { id });
         return this.usersService.deleteUser(id)
     }
 
     @Get(':id/image')
     async getImageById(@Res({ passthrough: false }) response: Response, @Param('id') id: string) {
+        validateInput(Joi.object({
+            id: ID_VALIDATOR.required(),
+        }), { id });
         const image = await this.usersService.getFileById(id);
         const stream = !image ?
             fs.createReadStream(path.join(process.cwd(), 'public/noPictureProfile.png')) :
@@ -112,6 +138,9 @@ export class UsersController {
     @Put(':id/image')
     @UseInterceptors(FileInterceptor('file'))
     async setImage(@Param('id') id: string, @UploadedFile() file: Multer.File) {
+        validateInput(Joi.object({
+            id: ID_VALIDATOR.required(),
+        }), { id });
         return this.usersService.uploadDatabaseFile(file.buffer, id)
     }
 

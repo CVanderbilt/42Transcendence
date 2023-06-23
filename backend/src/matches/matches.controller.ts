@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Param, Logger, HttpException, HttpStatus, Body } from '@nestjs/common';
+import { Controller, Get, Post, Param, HttpException, Body } from '@nestjs/common';
 import { Match } from './match.interface';
 import { MatchesService } from './matches.service';
 import { HttpStatusCode } from 'axios';
 import { USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
 import Joi from 'joi';
 
-const POWERUPS_VALIDATOR = Joi.string().regex(/^[A-Z]+$/).required()
+const POWERUPS_VALIDATOR = Joi.string().regex(/^[A-Z]+$/)
 
 @Controller('matches')
 export class MatchesController {
@@ -14,7 +14,7 @@ export class MatchesController {
     @Get('competitiveMatch/:userName')
     async getCompetitiveMatch(@Param('userName') userName: string): Promise<string> {
         validateInput(Joi.object({
-            userName: USERNAME_VALIDATOR
+            userName: USERNAME_VALIDATOR.required()
         }), { userName });
         try {
             console.log("getCompetitiveMatch called with userName: " + userName)
@@ -37,7 +37,7 @@ export class MatchesController {
     @Get('user/:userId')
     async getMatches(@Param('userId') userId: string): Promise<Match[]> {
         validateInput(Joi.object({
-            userName: USERNAME_VALIDATOR
+            userName: USERNAME_VALIDATOR.required()
         }), { userName: userId });
         console.log("getMatches called with userId: " + userId)
         try {
@@ -54,8 +54,8 @@ export class MatchesController {
         @Param('powerups') powerups: string,
     ): Promise<string> {
         validateInput(Joi.object({
-            userName: USERNAME_VALIDATOR,
-            powerups: POWERUPS_VALIDATOR
+            userName: USERNAME_VALIDATOR.required(),
+            powerups: POWERUPS_VALIDATOR.required()
         }), { userName, powerups });
         try {
             console.log("getCompetitiveMatch called with userName: " + userName)
@@ -75,9 +75,9 @@ export class MatchesController {
     @Post('challenge')
     async challenge(@Body() data: { requesterName: string, opponentName: string, powerups: string }) {
         validateInput(Joi.object({
-            requesterName: USERNAME_VALIDATOR,
-            opponentName: USERNAME_VALIDATOR,
-            powerups: POWERUPS_VALIDATOR
+            requesterName: USERNAME_VALIDATOR.required(),
+            opponentName: USERNAME_VALIDATOR.required(),
+            powerups: POWERUPS_VALIDATOR.required()
         }), data);
         console.log("challenge y tal")
         const powerupsList: string[] = []
@@ -94,7 +94,7 @@ export class MatchesController {
     @Post('getCurrentMatch')
     async getCurrentMatch(@Body() data: { userName: string }) {
         validateInput(Joi.object({
-            userName: USERNAME_VALIDATOR
+            userName: USERNAME_VALIDATOR.required()
         }), data);
         try {
             return this.matchesService.getCurrentMatch(data.userName)

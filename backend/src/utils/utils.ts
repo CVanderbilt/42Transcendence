@@ -5,7 +5,9 @@ const { PNG } = require('pngjs');
 import * as jwt from 'jsonwebtoken';
 import { User } from 'src/users/user.interface';
 
-export const USERNAME_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required()
+export const USERNAME_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9-_]+$/)
+export const ID_VALIDATOR = Joi.string().guid()
+
 export function validateInput(schema: Joi.ObjectSchema<any>, toValidate: any) {
   const validation = schema.validate(toValidate);
   if (validation.error !== undefined)
