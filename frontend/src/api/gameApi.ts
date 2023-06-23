@@ -47,3 +47,7 @@ export async function challenge(userName: string, opponentName: string) {
         powerups: "N"
     })
 }
+
+export async function getCurrentMatch(userName: string) {
+    return apiClient.post(`${URL}/getCurrentMatch`, { userName })
+}

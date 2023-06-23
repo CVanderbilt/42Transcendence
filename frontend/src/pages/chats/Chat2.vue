@@ -213,7 +213,7 @@
           <div style="display: flex; gap: 20px;">
             <h2 style="cursor: pointer;" v-on:click="searchFriend()" class="fw-bold text-uppercase">{{
               modalUserActions.userName }}</h2>
-            <b-button style="background-color: rgb(0, 106, 255);" type="button" @click="WatchUserGame()">Watch</b-button>
+            <b-button style="background-color: rgb(0, 106, 255);" type="button" @click="WatchUserGame(modalUserActions.userName)">Watch</b-button>
             <b-button style="background-color: rgb(0, 0, 0);" type="button" @click="challengePlayer(modalUserActions.userName)">Duel</b-button>
           </div>
 
@@ -240,7 +240,7 @@ import { IFriendship } from "../../api/friendshipsApi";
 import moment from 'moment';
 import 'moment-timezone';
 import { throwFromAsync } from "@/utils/utils";
-import { challenge } from "@/api/gameApi";
+import { challenge, getCurrentMatch } from "@/api/gameApi";
 
 export default defineComponent({
   name: "Chat2",
@@ -717,12 +717,14 @@ export default defineComponent({
       this.$router.push("/user?uuid=" + this.modalUserActions.userId);
     },
 
-    WatchUserGame() {
-      if (this.modalUserActions.currentGameId) {
-        alert("User is not playing any game right now");
-        return;
-      }
-      this.$router.push("/match?uuid=" + this.modalUserActions.currentGameId);
+    WatchUserGame(player?: string) {
+      if (!player) return
+
+      getCurrentMatch(player)
+      .then(response => {
+        alert(JSON.stringify(response, null, 2))
+        this.$router.push("/game?id=" + response.data);
+      })
     },
     async challengePlayer(opponent?: string) {
       if (!opponent) return

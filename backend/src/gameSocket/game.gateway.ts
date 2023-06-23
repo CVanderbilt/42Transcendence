@@ -82,7 +82,7 @@ export class GameGateway
     if (activePlayer != null) {
       if (activePlayer == "player2") {
         // lock player in matchmaking, if locking it failed cancel this
-        if (!this.matchesService.acceptChallenge(_room.player2.user, _room.player1.user)) {
+        if (!this.matchesService.acceptChallenge(_room.id, _room.player2.user, _room.player1.user)) {
           gameServer.to(`room_${_room.id}`).emit('endGame', `Match_closed_because_${_room.player2.user}_couldnt_join`);
           this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
           delete gameRooms[_room.id]

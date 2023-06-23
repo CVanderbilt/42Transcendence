@@ -82,4 +82,14 @@ export class MatchesController {
             throw new HttpException("competitive matchmaking failed", HttpStatusCode.InternalServerError);
         }
     }
+
+    @Post('getCurrentMatch')
+    async getCurrentMatch(@Body() data: { userName: string }) {
+        try {
+            return this.matchesService.getCurrentMatch(data.userName)
+        } catch (error) {
+            if (error instanceof HttpException) throw (error)
+            throw new HttpException("get current match failed", HttpStatusCode.InternalServerError);
+        }
+    }
 }

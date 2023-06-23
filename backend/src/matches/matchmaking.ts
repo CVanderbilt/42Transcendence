@@ -31,6 +31,14 @@ export class MatchMaker {
         this.usersAlt = new Map<string, QueuedUser>()
     }
 
+    getCurrentMatch(userName: string): string {
+      const user = this.usersAlt.get(userName)
+
+      if (!user || !user.matchId)
+        throw new HttpException("User currently not in a match", HttpStatusCode.NotFound)
+      return user.matchId
+    }
+
     cancel(userName: string): boolean {
       console.log("canceling matchmaking for " + userName)
       const user = this.usersAlt.get(userName)
@@ -62,7 +70,7 @@ export class MatchMaker {
         }
     }
 
-    lockPlayerFromChallenge(id: string, challenging: string): boolean {
+    lockPlayerFromChallenge(matchId: string, id: string, challenging: string): boolean {
       let user = this.usersAlt.get(id);
       if (!user) {
         user = this.usersAlt.set(id, {
@@ -71,7 +79,8 @@ export class MatchMaker {
           mutex: new Mutex(),
           isFriendly: false,
           powerups: ["N"], // lo ignorará porq se está uniendo a una partida ya empezada
-          challenging
+          challenging,
+          matchId
         }).get(id)
       }
       return user.challenging === challenging
