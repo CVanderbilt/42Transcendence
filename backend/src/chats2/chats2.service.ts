@@ -345,19 +345,29 @@ export class Chats2Service {
     }
 
     async setIsBanned(userId: string, chatRoomId: number, isBanned: boolean) {
-        const membership = await this.getUserChatMembership(userId, chatRoomId)
-
-        membership.isBanned = isBanned;
-        membership.bannedUntil = isBanned ? new Date(3000, 0, 1) : new Date()
-        membership.save();
+        try {
+            const membership = await this.getUserChatMembership(userId, chatRoomId)
+    
+            membership.isBanned = isBanned;
+            membership.bannedUntil = isBanned ? new Date(3000, 0, 1) : new Date()
+            membership.save();
+        }
+        catch (e) {
+            throw new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
+        }
     }
 
     async setIsAdmin(userId: string, chatRoomId: number, isAdmin: boolean) {
-        const membership = await this.getUserChatMembership(userId, chatRoomId)
-
-        membership.isAdmin = isAdmin;
-        membership.save();
-        this.setIsBanned(userId, chatRoomId, !isAdmin)
+        try {
+            const membership = await this.getUserChatMembership(userId, chatRoomId)
+    
+            membership.isAdmin = isAdmin;
+            membership.save();
+            this.setIsBanned(userId, chatRoomId, !isAdmin)
+        }
+        catch (e) {
+            throw new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
+        }
     }
 
     async deleteMembership(id: number) {

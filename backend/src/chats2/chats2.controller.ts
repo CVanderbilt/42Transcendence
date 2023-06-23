@@ -176,6 +176,7 @@ export class Chats2Controller {
     
     @Post('memberhsips/promote')
     async promoteUser(@Body() input: { userName: string, roomId: number }) {
+        console.log(input)
         const user = await this.usersService.findOneByName(input.userName);
         
         if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
@@ -183,7 +184,7 @@ export class Chats2Controller {
         this.chatsService.setIsAdmin(user.id, input.roomId, true);
     }
 
-    @Post('memberhsips/promote')
+    @Post('memberhsips/demote')
     async demoteUser(@Body() input: { userName: string, roomId: number }) {
         const user = await this.usersService.findOneByName(input.userName);
         
