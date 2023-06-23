@@ -124,14 +124,16 @@ export default defineComponent({
   mounted() {
     if (!store.state.user || !this.hasAdminRights(store.state.user))
       this.$router.push("/");
-    const usersList = this.$refs.usersList as HTMLElement;
-    usersList.style.height = `${window.innerHeight - usersList.offsetTop}px`;
-    getAllUsers()
+    else {
+      const usersList = this.$refs.usersList as HTMLElement;
+      usersList.style.height = `${window.innerHeight - usersList.offsetTop}px`;
+      getAllUsers()
       .then(list => this.userList = list)
-      .catch(() => alert("Unhandled error when fetching all users for admin page"))
-    getAllChatRoomsReq()
+      //.catch(() => alert("Unhandled error when fetching all users for admin page"))
+      getAllChatRoomsReq()
       .then(list => { this.chatList = list; console.log(list); console.log(this.chatList) })
-      .catch(() => alert("Unhandled error when fetching all chats for admin page"))
+      //.catch(() => alert("Unhandled error when fetching all chats for admin page"))
+    }
   },
 })
 </script>
