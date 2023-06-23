@@ -214,7 +214,7 @@
             <h2 style="cursor: pointer;" v-on:click="searchFriend()" class="fw-bold text-uppercase">{{
               modalUserActions.userName }}</h2>
             <b-button style="background-color: rgb(0, 106, 255);" type="button" @click="WatchUserGame()">Watch</b-button>
-            <b-button style="background-color: rgb(0, 0, 0);" type="button" @click="MakeDuel()">Duel</b-button>
+            <b-button style="background-color: rgb(0, 0, 0);" type="button" @click="challengePlayer(modalUserActions.userName)">Duel</b-button>
           </div>
 
           <div class="form-outline form-white"></div>
@@ -709,10 +709,6 @@ export default defineComponent({
       this.modalUserActions.userId = clickedUserId;
       const clickedUser = await (await getUserById(clickedUserId)).data as IUser
       this.modalUserActions.userName = clickedUser.username;
-      // prepare game link
-      this.modalUserActions.matchUrl = "???"
-      // view current game
-      this.modalUserActions.currentGameId = "???"
 
       this.modalUserActions.show = !this.modalUserActions.show;
     },
@@ -732,6 +728,7 @@ export default defineComponent({
       if (!opponent) return
       challenge(store.state.user.username, opponent)
       .then(response => {
+        //todo: logica de mandar un mensaje con el link a la partida al jugador al que retamos
         this.$router.push("/game?id=" + response.data);
       })
     },
