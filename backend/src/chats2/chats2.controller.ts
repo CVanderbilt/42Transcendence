@@ -236,7 +236,7 @@ export class Chats2Controller {
         validateInput(Joi.object({
             senderId: Joi.string().guid().required(),
             chatRoomId: Joi.number().required(),
-            content: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
+            content: Joi.string().regex(/^[a-zA-Z0-9\s-_]+$/).required(),
             // senderName: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
             createdAt: Joi.string().isoDate(), // todo: revisar a lo mejor no funciona correctamente
             isChallenge: Joi.boolean(),

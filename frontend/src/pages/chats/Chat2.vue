@@ -783,8 +783,9 @@ export default defineComponent({
       getChatRoomMembershipsReq(this.currentMembership.chatRoom.id)
         .then(response => {
           const opponentMembership = response.data.find((membership: any) => membership.user.id != this.user.id)
+          console.log(opponentMembership)
           if (opponentMembership) {
-            challenge(store.state.user.username, opponentMembership.user.userName)
+            challenge(store.state.user.username, opponentMembership.user.username)
               .then(response => {
                 const gameId = response.data
                 this.message = gameId;

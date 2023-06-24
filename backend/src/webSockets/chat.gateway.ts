@@ -81,6 +81,8 @@ export class ChatGateway
     } catch (error) {
       console.log(error)
     }
+
+    console.log(`mensaje recibido: ${payload.message}`)
   }
 
   @SubscribeMessage('event_leave')

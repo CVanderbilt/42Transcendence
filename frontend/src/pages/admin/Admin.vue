@@ -56,7 +56,7 @@ import { IUser, store } from '@/store/store';
 import { defineComponent } from 'vue';
 import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'
 import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, demoteUserInChat, getAllChatRoomsReq, getChatRoomMembershipsReq, Membership, promoteUserInChat } from '@/api/chatApi';
-import { publishNotification, throwFromAsync, throwFromAsync } from '@/utils/utils';
+import { publishNotification, throwFromAsync } from '@/utils/utils';
 import { app } from '@/main';
 
 interface ChatRoomRow extends ChatRoom {
