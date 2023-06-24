@@ -62,8 +62,12 @@
                         </b-col>
                         <b-col>
                           <div v-if="message.senderName !== user?.username" class="message-text">
-                            <a style="cursor: pointer;" v-on:click="showUserActions(message.senderId as string)">{{
-                              message.senderName + ": " + message.content }}</a>
+                            <a v-if="message.isGame" style="cursor: pointer;">{{
+                              message.senderName + ": " + "GAME!" }}
+                            </a>
+                            <a v-else style="cursor: pointer;" v-on:click="showUserActions(message.senderId as string)">{{
+                              message.senderName + ": " + message.content }}
+                            </a>
                           </div>
                         </b-col>
                       </div>
@@ -367,12 +371,13 @@ export default defineComponent({
 
     // join message socket
     this.io.socket.offAny();
-    this.io.socket.on("new_message", (message, userName, senderId, roomId) => {
+    this.io.socket.on("new_message", (message, userName, senderId, roomId, isGame) => {
       const msg: ChatMessage = {
         content: message,
         senderName: userName,
         senderId: senderId,
         chatRoomId: roomId,
+        isGame: isGame,
       }
 
       this.messages.push(msg)
@@ -729,8 +734,6 @@ export default defineComponent({
       } catch (error) {
         alert("Can not invite users to chat room: " + error);
       }
-
-
     },
 
     async showUserActions(clickedUserId: string) {
