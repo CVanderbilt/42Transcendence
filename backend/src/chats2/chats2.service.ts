@@ -364,7 +364,7 @@ export class Chats2Service {
             membership.save();
         }
         catch (e) {
-            throw new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
+            return new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
         }
     }
 
@@ -377,7 +377,7 @@ export class Chats2Service {
             this.setIsBanned(userId, chatRoomId, !isAdmin)
         }
         catch (e) {
-            throw new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
+            return new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
         }
     }
 
