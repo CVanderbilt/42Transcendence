@@ -62,9 +62,9 @@
                         </b-col>
                         <b-col>
                           <div v-if="message.senderName !== user?.username" class="message-text">
-                            <a v-if="message.isGame" style="cursor: pointer;">{{
-                              message.senderName + ": " + "GAME!" }}
-                            </a>
+                            <router-link v-if="message.isChallenge" :to="message.content" style="cursor: pointer; color:black; font-weight: 900;">{{
+                              message.senderName + ": " + "DUEL!" }}
+                            </router-link>
                             <a v-else style="cursor: pointer;" v-on:click="showUserActions(message.senderId as string)">{{
                               message.senderName + ": " + message.content }}
                             </a>
@@ -371,13 +371,13 @@ export default defineComponent({
 
     // join message socket
     this.io.socket.offAny();
-    this.io.socket.on("new_message", (message, userName, senderId, roomId, isGame) => {
+    this.io.socket.on("new_message", (message, userName, senderId, roomId, isChallenge) => {
       const msg: ChatMessage = {
         content: message,
         senderName: userName,
         senderId: senderId,
         chatRoomId: roomId,
-        isGame: isGame,
+        isChallenge: isChallenge,
       }
 
       this.messages.push(msg)
@@ -423,7 +423,7 @@ export default defineComponent({
       return true
     },
 
-    async sendMessage() {
+    async sendMessage(isChallenge = false) {
       // get all user memberships
       try {
         this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
@@ -450,7 +450,7 @@ export default defineComponent({
 
       if (this.message !== "") {
         if (!this.user) {
-          console.error("user not defined, esto no deberia pasar");
+          console.error("user not defined");
           return;
         }
 
@@ -460,6 +460,7 @@ export default defineComponent({
           userName: this.user.username,
           message: this.message,
           token: localStorage.getItem("token"),
+          isChallenge: isChallenge,
         }
 
         this.io.socket.emit("event_message", msg2emit)
@@ -469,6 +470,7 @@ export default defineComponent({
           content: this.message,
           chatRoomId: this.roomId,
           senderId: this.user.id,
+          isChallenge: isChallenge,
         }
 
         postChatMessageReq(this.roomId, outMessage)
@@ -757,11 +759,15 @@ export default defineComponent({
         this.$router.push("/game?id=" + response.data);
       })
     },
+
     async challengePlayer(opponent?: string) {
       if (!opponent) return
       challenge(store.state.user.username, opponent)
       .then(response => {
-        //todo: logica de mandar un mensaje con el link a la partida al jugador al que retamos
+        const gameId = response.data
+        this.message = "/game?id=" + gameId;
+        this.sendMessage(true)
+
         this.$router.push("/game?id=" + response.data);
       })
     },

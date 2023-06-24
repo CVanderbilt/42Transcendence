@@ -434,13 +434,12 @@ export class Chats2Service {
             }
         })
 
-
-
         if (token.role === 'ADMIN' || token.role === 'OWNER') {
             const postedMsg = await this.chatMsgsRepo.save({
                 sender: sender,
                 chatRoom: room,
-                content: msg.content
+                content: msg.content,
+                isChallenge: msg.isChallenge,
             })
             return postedMsg
         }
@@ -453,7 +452,8 @@ export class Chats2Service {
         const postedMsg = await this.chatMsgsRepo.save({
             sender: sender,
             chatRoom: room,
-            content: msg.content
+            content: msg.content,
+            isChallenge: msg.isChallenge,
         })
 
         return postedMsg

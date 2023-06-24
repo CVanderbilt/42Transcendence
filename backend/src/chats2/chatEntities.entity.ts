@@ -80,4 +80,7 @@ export class ChatMsgEntity extends BaseEntity {
     
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date
+
+    @Column({default: false})
+    isChallenge: boolean
 }

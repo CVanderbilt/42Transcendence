@@ -13,7 +13,7 @@ export interface ChatMessage {
     senderName?: string,
     chatRoomId: string,
     content: string,
-    isGame?: boolean,
+    isChallenge?: boolean,
 }
 
 export interface ChatRoom {

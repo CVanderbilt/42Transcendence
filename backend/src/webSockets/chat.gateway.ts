@@ -77,7 +77,7 @@ export class ChatGateway
         return
       }
 
-      this.server.to(`room_${payload.roomId}`).emit('new_message', payload.message, payload.userName, decodedToken.userId, roomId, payload.isGame);
+      this.server.to(`room_${payload.roomId}`).emit('new_message', payload.message, payload.userName, decodedToken.userId, roomId, payload.isChallenge);
     } catch (error) {
       console.log(error)
     }
@@ -102,5 +102,5 @@ interface MessagePayload {
   userName: string;
   message: string;
   token: string;
-  isGame: boolean;
+  isChallenge: boolean;
 }

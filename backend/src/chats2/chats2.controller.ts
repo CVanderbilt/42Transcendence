@@ -239,6 +239,7 @@ export class Chats2Controller {
             content: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
             // senderName: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
             createdAt: Joi.string().isoDate(), // todo: revisar a lo mejor no funciona correctamente
+            isChallenge: Joi.boolean(),
         }), msg);
 
         return this.chatsService.createChatRoomMessage(getAuthToken(req, false), msg)
