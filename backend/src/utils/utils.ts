@@ -178,3 +178,5 @@ export function get42Token(request, validate = true) {
 export function isPastDate(date: Date): boolean {
   return date < new Date();
 }
+
+export const usersInGame = new Set<string>();

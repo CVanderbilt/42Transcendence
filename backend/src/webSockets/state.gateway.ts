@@ -8,21 +8,20 @@ import {
     WebSocketServer,
   } from '@nestjs/websockets';
   import { Server, Socket } from 'socket.io';
-import { gameRooms } from 'src/gameSocket/game.gateway';
-import { MatchesService } from 'src/matches/matches.service';
+import { usersInGame } from 'src/utils/utils';
   
   @WebSocketGateway(84, {
     cors: { origin: '*' },
   })
   
 
-
   export class StateGateway
     implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
   {
+    
     handleConnection(client: any, ...args: any[]) {}
     
-    states = new Array<State>();
+    states = new Array<Connections>();
     
     @WebSocketServer() server: Server;
 
@@ -50,43 +49,36 @@ import { MatchesService } from 'src/matches/matches.service';
     handleGetUsersStates(client: Socket) {
       const array = Array.from(this.states)
       const msg = array.map((item: any) => {
-        return {userId: item.userId, state: item.state}
+        return {userId: item.userId, state: usersInGame.has(item.userId) ? "inGame" : "online"}
       })
       client.emit('user_states', msg);
     }
 
     @SubscribeMessage('update_user_state')
     HandleUserUpdate(client: Socket, payload: { userId: string, state: string }) {
-      const state = this.states.find((item: any) => item.clientId === client.id)
-      if (!state) {
-        this.states.push({clientId: client.id, userId: payload.userId, state: payload.state})
-        const msg = {userId: payload.userId, state: payload.state}
+        this.states.push({clientId: client.id, userId: payload.userId})
+        const msg = {userId: payload.userId, state: usersInGame.has(payload.userId) ? "inGame" : "online"}
         client.broadcast.emit('user_state_updated', msg);
-      }
     }
-
+    
     UpdateGameState(userId: string, state: string)
     {
-      console.log("UpdateGameState: " + userId + " " + state)
-      if (this.states.find((item: any) => item.userId === userId && item.clientId === "0")) {
-        this.states = this.states.map((item: any) => {
-          if (item.userId === userId && item.clientId == 0) {
-            item.state = state
-          }
-          return item
-        })
-      }
-      else {
-        this.states.push({clientId: "0", userId: userId, state: state})
-      }
+      // console.log("UpdateGameState: " + userId + " " + state)
+      // if (this.states.find((item: any) => item.userId === userId && item.clientId === "0")) {
+      //   this.states = this.states.map((item: any) => {
+      //     if (item.userId === userId && item.clientId == 0) {
+      //       item.state = state
+      //     }
+      //     return item
+      //   })
+      // }
 
       const msg = {userId: userId, state: state}
       this.server.emit('user_state_updated', msg);
     }
   }
 
-  interface State {
+  interface Connections {
     clientId: string;
     userId: string;
-    state: string;
   }

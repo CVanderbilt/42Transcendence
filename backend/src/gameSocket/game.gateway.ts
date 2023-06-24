@@ -8,7 +8,7 @@ import {
 } from '@nestjs/websockets';
 import * as Joi from 'joi'
 import { Server, Socket } from 'socket.io';
-import { ID_VALIDATOR, validateInput } from 'src/utils/utils';
+import { ID_VALIDATOR, usersInGame, validateInput } from 'src/utils/utils';
 import { MatchesService} from '../matches/matches.service'; 
 import { StateGateway } from 'src/webSockets/state.gateway';
 
@@ -36,6 +36,7 @@ interface GameRoom {
   isChallenge: boolean
 }
 
+// export const usersInGame = new Set<string>();
 export const gameRooms: GameRoom[] = [];
 const canvasHeight = 300;
 const canvasWidth = 500;
@@ -91,6 +92,7 @@ export class GameGateway
     console.log("is challenge? " + _room.isChallenge)
     const activePlayer = getActivePlayer(_room, username)
     if (activePlayer != null) {
+      usersInGame.add(username);
       this.stateGateway.UpdateGameState(username, "inGame")
       console.log(`${username} is ${activePlayer}`)
       if (activePlayer == "player2") {
@@ -101,6 +103,7 @@ export class GameGateway
           console.log(`${username} deleting room ${room}(1)`)
           this.stateGateway.UpdateGameState(username, "online")
           delete gameRooms[_room.id]
+          usersInGame.delete(username);
         }
       }
       console.log(`${username} is ${activePlayer}`)
@@ -191,6 +194,7 @@ export class GameGateway
               console.log(`${username} deleting room ${room}(2)`)
               this.stateGateway.UpdateGameState(username, "online")
               delete gameRooms[_room.id]
+              usersInGame.delete(username);
             }
           }
         }, 1000 / 60);
@@ -204,7 +208,7 @@ export class GameGateway
         console.log("Viewer disconected")
         return ;
       }
-
+      usersInGame.delete(username);
       console.log(`${activePlayer} se va, quedan: ${_room.numPlayer - 1}`);
       clearInterval(_room.intervalRefreshId);
       _room[activePlayer].inGame = false;
@@ -217,6 +221,7 @@ export class GameGateway
         console.log(`${username} deleting room ${room}(3)`)
         this.stateGateway.UpdateGameState(username, "online")
         delete gameRooms[_room.id]
+        usersInGame.delete(username);
       }
 
       console.log(`socket ${client.id} disconnected due to ${reason}`);
@@ -234,6 +239,7 @@ export class GameGateway
     const _room: GameRoom = gameRooms[room]
     if (!_room) {
       this.stateGateway.UpdateGameState(username, "online")
+      usersInGame.delete(username);
       return;
     }
 
@@ -253,6 +259,7 @@ export class GameGateway
       console.log(`${username} deleting room ${room}(4)`)
       this.stateGateway.UpdateGameState(username, "online")
       delete gameRooms[_room.id]
+      usersInGame.delete(username);
       return;
     }
 
