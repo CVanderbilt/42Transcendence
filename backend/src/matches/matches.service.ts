@@ -54,8 +54,8 @@ export class MatchesService {
         if (existingMatch)
            return
         
-        const user = await this.usersRepo.findOne({ where: { username: players[0].name } })
-        const opponent = await this.usersRepo.findOne({ where: { username: players[1].name } })
+        const user = await this.usersRepo.findOne({ where: { id: players[0].name } })
+        const opponent = await this.usersRepo.findOne({ where: { id: players[1].name } })
         if (!user)
         {
             console.log(`no recieved player from: ${players} was user: ${user}`)

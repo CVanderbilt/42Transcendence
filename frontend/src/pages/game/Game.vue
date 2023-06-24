@@ -12,10 +12,11 @@
 </template>
 
 <script lang="ts">
+import { getUserById } from "@/api/user";
 import { defineComponent } from "vue";
 import { gameSocketIO } from "../..//main";
 
-import { store } from "../..//store/store";
+import { IUser, store } from "../..//store/store";
 
 export default defineComponent({
   name: "Game",
@@ -80,8 +81,23 @@ export default defineComponent({
       player1name: string,
       player2name: string,
     ) => {
-      this.rightUserName = player2name;
-      this.leftUserName = player1name;
+      //this.rightUserName = player2name; //todo: sacarlo de base de datos
+      //this.leftUserName = player1name;  //todo: sacarlo de base de datso
+      if (!this.rightUserName || !this.leftUserName) {
+        this.rightUserName = "loading..."
+        this.leftUserName = "loading..."
+        getUserById(player1name)
+        .then((res => { 
+          //alert(JSON.stringify(res.data, null, 2))
+          this.leftUserName = (res.data as IUser).username 
+        }))
+        getUserById(player2name)
+        .then((res => {
+           this.rightUserName = (res.data as IUser).username 
+        }))
+      } else {
+        console.log("hola aqui llega")
+      }
       this.leftUserScore = player1score;
       this.rightUserScore = player2score;
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
