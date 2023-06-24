@@ -220,8 +220,8 @@
           <div style="display: flex; gap: 20px;">
             <h2 style="cursor: pointer;" v-on:click="searchFriend()" class="fw-bold text-uppercase">{{
               modalUserActions.userName }}</h2>
-            <b-button style="background-color: rgb(0, 106, 255);" type="button" @click="WatchUserGame(modalUserActions.userName)">Watch</b-button>
-            <b-button style="background-color: rgb(0, 0, 0);" type="button" @click="challengePlayer(modalUserActions.userName)">Duel</b-button>
+            <b-button style="background-color: rgb(0, 106, 255);" type="button" @click="WatchUserGame(modalUserActions.userId)">Watch</b-button>
+            <b-button style="background-color: rgb(0, 0, 0);" type="button" @click="challengePlayer(modalUserActions.userId)">Duel</b-button>
           </div>
 
           <div class="form-outline form-white"></div>
@@ -759,7 +759,7 @@ export default defineComponent({
     },
     async challengePlayer(opponent?: string) {
       if (!opponent) return
-      challenge(store.state.user.username, opponent)
+      challenge(store.state.user.id, opponent)
       .then(response => {
         //todo: logica de mandar un mensaje con el link a la partida al jugador al que retamos
         this.$router.push("/game?id=" + response.data);

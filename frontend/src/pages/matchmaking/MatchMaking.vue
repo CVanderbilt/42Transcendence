@@ -97,7 +97,7 @@ export default defineComponent({
       this.$router.push("/settings");
     },
     async enterCompetitiveMatch() {
-      enterCompetitiveGameApi(this.user.username)
+      enterCompetitiveGameApi(this.user.id)
       .then(response => {
         this.$router.push("/game?id=" + response.data);
       })
@@ -109,7 +109,7 @@ export default defineComponent({
       if (powerups === "") {
         powerups = "N";
       }
-      enterExhibitionGameApi(this.user.username, powerups)
+      enterExhibitionGameApi(this.user.id, powerups)
       .then(response => {
         this.$router.push("/game?id=" + response.data);
       })

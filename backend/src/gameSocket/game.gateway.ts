@@ -6,7 +6,9 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import * as Joi from 'joi'
 import { Server, Socket } from 'socket.io';
+import { ID_VALIDATOR, validateInput } from 'src/utils/utils';
 import { MatchesService} from '../matches/matches.service'; 
 
 interface Player {
@@ -70,6 +72,11 @@ export class GameGateway
   async handleJoinRoom(client: Socket, payload: { room: string, username: string }) {
     const { room, username } = payload
     
+    console.log("validating: " + JSON.stringify(payload, null, 2))
+    validateInput(Joi.object({
+      room: ID_VALIDATOR.required(),
+      username: ID_VALIDATOR.required()
+  }), payload);
     //todo: revisar, error interno cuando un usuario intenta entrar en uan room o antigua o inexistente, no está claro -> creo q ya está bien
     const _room = gameRooms[room]
     const gameServer = this.server;

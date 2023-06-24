@@ -92,9 +92,9 @@ export class MatchMaker {
           console.log(`contestants: (${userName} and ${opponentName})`)
           console.log("usersRepo: " + this.usersRepo)
           console.log("matchesRepo: " + this.matchesRepo)
-          const user = await this.usersRepo.findOne({ where: { username: userName } })
+          const user = await this.usersRepo.findOne({ where: { id: userName } })
           console.log("user: " + user)
-          const opponent = await this.usersRepo.findOne({ where: { username: opponentName } })
+          const opponent = await this.usersRepo.findOne({ where: { id: opponentName } })
           console.log("opponent: " + opponent)
           if (!user)
             throw new HttpException("Create match failed, user: " + userName + " not found", HttpStatusCode.NotFound)
@@ -109,7 +109,7 @@ export class MatchMaker {
             gameStatus: "WAITING",
             numPlayers: 0,
             player1: {
-              user: user.username,
+              user: user.id,
               paddlePos: 115,
               paddleHeight,
               upPressed: false,
@@ -118,7 +118,7 @@ export class MatchMaker {
               score: 0
             },
             player2: {
-              user: opponent.username,
+              user: opponent.id,
               paddlePos: 115,
               paddleHeight,
               upPressed: false,

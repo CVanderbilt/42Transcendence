@@ -57,7 +57,7 @@ export default defineComponent({
     }
 
     this.room = this.$route.query.id
-    this.io.socket.emit("event_join_game", { room: this.$route.query.id, username: this.user.username })
+    this.io.socket.emit("event_join_game", { room: this.$route.query.id, username: this.user.id })
 
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
@@ -108,13 +108,13 @@ export default defineComponent({
       if (e.key == "Down" || e.key == "ArrowDown") {
         if (this.leftUserDownPressed == false) {
           this.io.socket.emit("move", {
-            room: this.room, username: this.user.username, movement: "down", type: "press", time: Date.now()
+            room: this.room, username: this.user.id, movement: "down", type: "press", time: Date.now()
           });
         }
       } else if (e.key == "Up" || e.key == "ArrowUp") {
         if (this.leftUserUpPressed == false) {
           this.io.socket.emit("move", {
-            room: this.room, username: this.user.username, movement: "up", type: "press", time: Date.now()
+            room: this.room, username: this.user.id, movement: "up", type: "press", time: Date.now()
           });
         }
       }
@@ -122,11 +122,11 @@ export default defineComponent({
     keyUpHandler(e: KeyboardEvent): void {
       if (e.key == "Up" || e.key == "ArrowUp") {
         this.io.socket.emit("move", {
-          room: this.room, username: this.user.username, movement: "up", type: "release", time: Date.now()
+          room: this.room, username: this.user.id, movement: "up", type: "release", time: Date.now()
         });
       } else if (e.key == "Down" || e.key == "ArrowDown") {
         this.io.socket.emit("move", {
-          room: this.room, username: this.user.username, movement: "down", type: "release", time: Date.now()
+          room: this.room, username: this.user.id, movement: "down", type: "release", time: Date.now()
         });
       }
     }
