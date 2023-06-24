@@ -116,6 +116,7 @@ export default defineComponent({
           this.lookedUpEmail = response.data.email;
         })
         .catch((error) => {
+          //todo: revisar esto, y ya puestos revisar todos los alerts
           alert("usuario o contraseña incorrectos");
         });
     },

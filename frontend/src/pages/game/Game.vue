@@ -12,10 +12,11 @@
 </template>
 
 <script lang="ts">
+import { getUserById } from "@/api/user";
 import { defineComponent } from "vue";
 import { gameSocketIO } from "../..//main";
 
-import { store } from "../..//store/store";
+import { IUser, store } from "../..//store/store";
 
 export default defineComponent({
   name: "Game",
@@ -57,7 +58,7 @@ export default defineComponent({
     }
 
     this.room = this.$route.query.id
-    this.io.socket.emit("event_join_game", { room: this.$route.query.id, username: this.user.username })
+    this.io.socket.emit("event_join_game", { room: this.$route.query.id, username: this.user.id })
 
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext("2d");
@@ -80,8 +81,23 @@ export default defineComponent({
       player1name: string,
       player2name: string,
     ) => {
-      this.rightUserName = player2name;
-      this.leftUserName = player1name;
+      //this.rightUserName = player2name; //todo: sacarlo de base de datos
+      //this.leftUserName = player1name;  //todo: sacarlo de base de datso
+      if (!this.rightUserName || !this.leftUserName) {
+        this.rightUserName = "loading..."
+        this.leftUserName = "loading..."
+        getUserById(player1name)
+        .then((res => { 
+          //alert(JSON.stringify(res.data, null, 2))
+          this.leftUserName = (res.data as IUser).username 
+        }))
+        getUserById(player2name)
+        .then((res => {
+           this.rightUserName = (res.data as IUser).username 
+        }))
+      } else {
+        console.log("hola aqui llega")
+      }
       this.leftUserScore = player1score;
       this.rightUserScore = player2score;
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -108,13 +124,13 @@ export default defineComponent({
       if (e.key == "Down" || e.key == "ArrowDown") {
         if (this.leftUserDownPressed == false) {
           this.io.socket.emit("move", {
-            room: this.room, username: this.user.username, movement: "down", type: "press", time: Date.now()
+            room: this.room, username: this.user.id, movement: "down", type: "press", time: Date.now()
           });
         }
       } else if (e.key == "Up" || e.key == "ArrowUp") {
         if (this.leftUserUpPressed == false) {
           this.io.socket.emit("move", {
-            room: this.room, username: this.user.username, movement: "up", type: "press", time: Date.now()
+            room: this.room, username: this.user.id, movement: "up", type: "press", time: Date.now()
           });
         }
       }
@@ -122,11 +138,11 @@ export default defineComponent({
     keyUpHandler(e: KeyboardEvent): void {
       if (e.key == "Up" || e.key == "ArrowUp") {
         this.io.socket.emit("move", {
-          room: this.room, username: this.user.username, movement: "up", type: "release", time: Date.now()
+          room: this.room, username: this.user.id, movement: "up", type: "release", time: Date.now()
         });
       } else if (e.key == "Down" || e.key == "ArrowDown") {
         this.io.socket.emit("move", {
-          room: this.room, username: this.user.username, movement: "down", type: "release", time: Date.now()
+          room: this.room, username: this.user.id, movement: "down", type: "release", time: Date.now()
         });
       }
     }

@@ -86,15 +86,15 @@ export class MatchMaker {
       return user.challenging === challenging
     }
     
-    async createMatch(userName: string, opponentName: string, isCompetitive: boolean, powerups: string[], isChallenge: boolean = false): Promise<string> {
+    private async createMatch(userName: string, opponentName: string, isCompetitive: boolean, powerups: string[], isChallenge: boolean = false): Promise<string> {
       try {
           console.log("creating competitive match")
           console.log(`contestants: (${userName} and ${opponentName})`)
           console.log("usersRepo: " + this.usersRepo)
           console.log("matchesRepo: " + this.matchesRepo)
-          const user = await this.usersRepo.findOne({ where: { username: userName } })
+          const user = await this.usersRepo.findOne({ where: { id: userName } })
           console.log("user: " + user)
-          const opponent = await this.usersRepo.findOne({ where: { username: opponentName } })
+          const opponent = await this.usersRepo.findOne({ where: { id: opponentName } })
           console.log("opponent: " + opponent)
           if (!user)
             throw new HttpException("Create match failed, user: " + userName + " not found", HttpStatusCode.NotFound)
@@ -109,7 +109,7 @@ export class MatchMaker {
             gameStatus: "WAITING",
             numPlayers: 0,
             player1: {
-              user: user.username,
+              user: user.id,
               paddlePos: 115,
               paddleHeight,
               upPressed: false,
@@ -118,7 +118,7 @@ export class MatchMaker {
               score: 0
             },
             player2: {
-              user: opponent.username,
+              user: opponent.id,
               paddlePos: 115,
               paddleHeight,
               upPressed: false,
@@ -149,13 +149,13 @@ export class MatchMaker {
         this.usersAlt.delete(user2)
     }
   
-    powerupsAreEquivalent(powerups1: string[], powerups2: string[]): boolean {
+    private powerupsAreEquivalent(powerups1: string[], powerups2: string[]): boolean {
       if (powerups1.length != powerups2.length)
         return false
       return powerups1.every(p => powerups2.includes(p))
     }
   
-    async matchUsers(user: QueuedUser, otherUser: QueuedUser): Promise<string> {
+    private async matchUsers(user: QueuedUser, otherUser: QueuedUser): Promise<string> {
         let oneMutexAquired = false;
         try {
             console.log(`${user.id} attempting to match with ${otherUser.id}`)
@@ -183,7 +183,7 @@ export class MatchMaker {
         console.log("mathing users failed")
       }
 
-      async checkMatch(user: QueuedUser, threshold: number): Promise<string> {
+      private async checkMatch(user: QueuedUser, threshold: number): Promise<string> {
         console.log("checknig para user: " + user.id)
         console.log("matchId?: " + user.matchId)
         if (user.matchId){
@@ -201,7 +201,7 @@ export class MatchMaker {
         return null;
       }
 //todo random: hacer que si un usuario ya está en matchmaking pero no ha encontrado partida, las requests de hacer matchmaking devuelvan already created o algo así, si un usuario ha empezado matchmaking y cerró la request la manera de encontrar la partida será ir probando varias llamadas hasta que una le diga el matchId normal
-      async checkForMatch(id: string, score: number, isFriendly: boolean, powerups: string[]): Promise<string> {
+      private async checkForMatch(id: string, score: number, isFriendly: boolean, powerups: string[]): Promise<string> {
         // crear o encontrar usuario
         let user = this.usersAlt.get(id)
         if (!user) {
@@ -222,13 +222,9 @@ export class MatchMaker {
         return this.checkForMatchLoop(user, 10);
       }
 
-      //todo: arreglar lo de que usuarios desconectados que vuelvan a meterse en el matchmaking se metan automaticamente en esta partida
-      //    en teoría tendría que funcionar porq el usuario ya está en el mapa con la roomId correcta pero no
       //todo: hacer que no se fíe del nombre del usuario (esto en verdad va en gamegateway) en vez de eso espera recibir un token válido con el nombre del usuario (el de 2fa no vale)
-      //todo: revisar porq pasa que a veces un usuario entra en la habitación y juega mientras que el otro no. Creo que pasa cuando o pasa mucho tiemp en matchmaking
-      //    o ha entrado dos veces el mismo usuario en matchmaking, cuando arreglemos el primer todo esto lo mismo se arregla solo 
-      //todo: al parecer crea varios matches que luego no usa, revisar porq (en gamegateway revisar como llamos a create match)
-      async checkForMatchLoop(user: QueuedUser, threshold: number): Promise<string> {
+      //todo: al parecer crea varios matches que luego no usa, revisar porq (en gamegateway revisar como llamos a create match) <- creo que ya no pasa
+      private async checkForMatchLoop(user: QueuedUser, threshold: number): Promise<string> {
         let match = null
         do {
           match = await this.checkMatch(user, threshold);
@@ -246,6 +242,12 @@ export class MatchMaker {
             } catch (error) {
               console.log("Couldnt timeout because mutex is locked")
             } //todo: mecanismo seguridad por si se quedan locks bloqueados mucho tiempo -> cancelar igualmente, borrar queued user y cancelar la partida en la que esté
+            /* para esto podemos hacer que un usuario pueda cancelar una partida, se borra la partida si:
+              - No hay room con ese id
+              - Hay room pero el otro jugador no está
+              - Ha pasado 10 mins desde que la partida fue creada
+              En cualquier caso no es prioritario porq esto no debería pasar
+            */
             if (didCancel)
               throw new HttpException("Cant find a match right now, not enough players. Try againg later", HttpStatusCode.RequestTimeout)
           }

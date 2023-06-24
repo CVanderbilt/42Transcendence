@@ -232,7 +232,7 @@
           <div style="display: flex; gap: 20px;">
             <b-button style="cursor: pointer;" v-on:click="searchFriend()" class="fw-bold text-uppercase">Info</b-button>
             <b-button style="background-color: rgb(0, 106, 255);" type="button"
-              @click="WatchUserGame(modalUserActions.userName)">Watch</b-button>
+              @click="WatchUserGame(modalUserActions.userId)">Watch</b-button>
             <b-button v-if="!currentMembership.chatRoom.isDirect" style="background-color: rgb(0, 0, 0);" type="button"
               @click="openDirectChat(modalUserActions.userId)">Private chat</b-button>
           </div>
@@ -785,7 +785,7 @@ export default defineComponent({
           const opponentMembership = response.data.find((membership: any) => membership.user.id != this.user.id)
           console.log(opponentMembership)
           if (opponentMembership) {
-            challenge(store.state.user.username, opponentMembership.user.username)
+            challenge(store.state.user.id, opponentMembership.user.id)
               .then(response => {
                 const gameId = response.data
                 this.message = gameId;

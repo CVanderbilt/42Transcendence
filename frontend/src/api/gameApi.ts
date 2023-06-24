@@ -16,26 +16,27 @@ export interface Match {
 }
 
 
-export async function enterCompetitiveGameApi(userName: string) {
-    return apiClient.get(`${URL}/competitiveMatch/${userName}`)
+export async function enterCompetitiveGameApi(userId: string) {
+    return apiClient.get(`${URL}/competitiveMatch/${userId}`)
 }
 
+//todo: revisar con pablo. Usamos esto? Si no lo vamos a usar lo borramos aquí y en el backend
 export async function getMatchesReq(userId: string) {
     return apiClient.get(`${URL}/user/${userId}`)
 }
 
-export async function enterExhibitionGameApi(userName: string, powerups: string) {
-    return apiClient.get(`${URL}/exhibitionMatch/${userName}/${powerups.toString()}`)
+export async function enterExhibitionGameApi(userId: string, powerups: string) {
+    return apiClient.get(`${URL}/exhibitionMatch/${userId}/${powerups.toString()}`)
 }
 
-export async function challenge(userName: string, opponentName: string) {
+export async function challenge(userId: string, opponentName: string) {
     return apiClient.post(`${URL}/challenge`, {
-        requesterName: userName,
+        requesterName: userId,
         opponentName: opponentName,
         powerups: "N"
     })
 }
 
-export async function getCurrentMatch(userName: string) {
-    return apiClient.post(`${URL}/getCurrentMatch`, { userName })
+export async function getCurrentMatch(userId: string) {
+    return apiClient.post(`${URL}/getCurrentMatch`, { userName: userId })
 }
