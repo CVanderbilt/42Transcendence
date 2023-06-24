@@ -10,10 +10,11 @@ import { GameGateway } from './gameSocket/game.gateway'
 import { FriendshipsModule } from './friendships/friendships.module';
 import { MatchesModule } from './matches/matches.module';
 import { Chats2Module } from './chats2/chats2.module';
-import { GameModule } from './gameSocket/game.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_FILTER } from '@nestjs/core';
 import { GlobalExceptionFilter } from './GlobalExceptionFilter';
+import { MatchesService } from './matches/matches.service';
+import { GameModule } from './gameSocket/game.module';
 
 @Module({
   imports: [
@@ -27,14 +28,13 @@ import { GlobalExceptionFilter } from './GlobalExceptionFilter';
       database: process.env.POSTGRES_DATABASE,
       autoLoadEntities: true,
       synchronize: true,
-    }),    
+    },
+    ),    
     UsersModule,
-    // ChatsModule,
     FriendshipsModule,
     MatchesModule,
     Chats2Module,
     AuthModule,
-    StateGateway
   ],
   providers: [
     ChatGateway,
@@ -43,7 +43,7 @@ import { GlobalExceptionFilter } from './GlobalExceptionFilter';
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
-    }
+    },
   ],
 })
 export class AppModule {}

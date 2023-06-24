@@ -8,6 +8,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { MatchesService} from '../matches/matches.service'; 
+import { StateGateway } from 'src/webSockets/state.gateway';
 
 interface Player {
   user: string;
@@ -42,6 +43,7 @@ const ballMaxY = canvasHeight - ballRadius;
 const ballMinY = ballRadius;
 // const ballSpeed = 4; // Configure the ball speed here
 // const paddleHeight = 75;
+const goalsForVictory = 30;
 
 @WebSocketGateway(82, {
   cors: { origin: '*' },
@@ -50,7 +52,7 @@ export class GameGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 
-  constructor(private matchesService: MatchesService) {}
+  constructor(private matchesService: MatchesService, private stateGateway: StateGateway) {}
 
   afterInit(server: any) {
     console.log('Iniciamos server para pong');
@@ -68,6 +70,7 @@ export class GameGateway
 
   @SubscribeMessage('event_join_game')
   async handleJoinRoom(client: Socket, payload: { room: string, username: string }) {
+    console.log('event_join_game' + client.id)
     const { room, username } = payload
     
     //todo: revisar, error interno cuando un usuario intenta entrar en uan room o antigua o inexistente, no está claro -> creo q ya está bien
@@ -78,14 +81,18 @@ export class GameGateway
       gameServer.to(`room_${room}`).emit('endGame', "Match_doesnt_exist_(si_eso_buscar_en_db_y_diferente_mensaje_para_unexistent_match_y_para_old_match)");
       return
     }
+    console.log("is challenge? " + _room.isChallenge)
     const activePlayer = getActivePlayer(_room, username)
     if (activePlayer != null) {
+      this.stateGateway.UpdateGameState(username, "inGame")
+      console.log(`${username} is ${activePlayer}`)
       if (activePlayer == "player2") {
         // lock player in matchmaking, if locking it failed cancel this
         if (_room.isChallenge && !this.matchesService.acceptChallenge(_room.id, _room.player2.user, _room.player1.user)) {
           gameServer.to(`room_${_room.id}`).emit('endGame', `Match_closed_because_${_room.player2.user}_couldnt_join`);
           this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
           console.log(`${username} deleting room ${room}(1)`)
+          this.stateGateway.UpdateGameState(username, "online")
           delete gameRooms[_room.id]
         }
       }
@@ -162,11 +169,11 @@ export class GameGateway
             _room.ballpos.y += _room.ballpos.dy;
             gameServer.to(`room_${_room.id}`).emit('info', _room.id);
             gameServer.to(`room_${_room.id}`).emit('draw', _room.ballpos.x, _room.ballpos.y, _room.player1.paddlePos, _room.player1.paddleHeight, _room.player2.paddlePos, _room.player2.paddleHeight, _room.player1.score, _room.player2.score, _room.player1.user, _room.player2.user);
-            if (_room.player1.score == 5 || _room.player2.score == 5){
+            if (_room.player1.score == goalsForVictory || _room.player2.score == goalsForVictory){
               _room.gameStatus = "FINISHED"
 
               clearInterval(_room.intervalRefreshId);
-              const winner = _room.player1.score == 5 ? _room.player1.user : _room.player2.user
+              const winner = _room.player1.score == goalsForVictory ? _room.player1.user : _room.player2.user
               gameServer.to(`room_${_room.id}`).emit('endGame', "winner_is_" + winner);
               this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
               this.matchesService.matchAftermath(_room.id, [
@@ -175,6 +182,7 @@ export class GameGateway
               ], 
               _room.isCompetitive ? "Competitive" : "Exhibition")
               console.log(`${username} deleting room ${room}(2)`)
+              this.stateGateway.UpdateGameState(username, "online")
               delete gameRooms[_room.id]
             }
           }
@@ -200,6 +208,7 @@ export class GameGateway
         //todo: añadir aqui la logica de ver la recompensa/penalización para cada usuario
         this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
         console.log(`${username} deleting room ${room}(3)`)
+        this.stateGateway.UpdateGameState(username, "online")
         delete gameRooms[_room.id]
       }
 
@@ -217,6 +226,7 @@ export class GameGateway
     const { room, username, movement, type } = payload;
     const _room: GameRoom = gameRooms[room]
     if (!_room) {
+      this.stateGateway.UpdateGameState(username, "online")
       return;
     }
 
@@ -234,6 +244,7 @@ export class GameGateway
       this.server.to(`room_${_room.id}`).emit('endGame', "Lag_detected");
       this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
       console.log(`${username} deleting room ${room}(4)`)
+      this.stateGateway.UpdateGameState(username, "online")
       delete gameRooms[_room.id]
       return;
     }

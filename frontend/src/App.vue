@@ -52,7 +52,6 @@ import Login from "./pages/login/Login.vue";
 import NotificationBanner from "./components/NotificationBanner.vue"
 import { useStore } from "vuex";
 import { key, store } from "./store/store";
-import { BDropdown, BDropdownItem, BDropdownDivider } from "bootstrap-vue-3";
 import { RouterView } from "vue-router";
 import { getUserByName } from "./api/user";
 import { generateImageURL } from "./utils/utils";

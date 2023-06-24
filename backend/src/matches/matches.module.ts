@@ -14,4 +14,4 @@ import { UsersModule } from 'src/users/users.module';
     providers: [MatchesService],
     exports: [MatchesService]
 })
-export class MatchesModule {}
+export class MatchesModule { }

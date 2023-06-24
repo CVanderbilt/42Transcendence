@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+
 import {
     OnGatewayConnection,
     OnGatewayDisconnect,
@@ -8,34 +8,42 @@ import {
     WebSocketServer,
   } from '@nestjs/websockets';
   import { Server, Socket } from 'socket.io';
+import { gameRooms } from 'src/gameSocket/game.gateway';
+import { MatchesService } from 'src/matches/matches.service';
   
   @WebSocketGateway(84, {
     cors: { origin: '*' },
   })
   
+
+
   export class StateGateway
     implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
   {
+    handleConnection(client: any, ...args: any[]) {}
     
-    states = new Set();
+    states = new Array<State>();
     
     @WebSocketServer() server: Server;
+
+    // constructor(private readonly  matchesService: MatchesService) {}
+
     afterInit(server: any) {
       console.log('State Socket initialized')
     }
 
-    handleConnection(client: any, ...args: any[]) {
-      //console.log('Client connected to state socket👋')
-    }
     handleDisconnect(client: any) {
       console.log('Client disconnected from state socket')
-      const userState = Array.from(this.states).find((item: any) => item.clientId === client.id) as any
-      if (!userState) 
-        return
-      const msg = {userId: userState.userId, state: "offline"}
-      this.states.delete(userState)
 
-      client.broadcast.emit('user_state_updated', msg);
+      const userId = this.states.find((item: any) => item.clientId === client.id)?.userId
+      if (!userId) 
+        return
+      
+      const msg = {userId: userId, state: "offline"}
+      this.states = this.states.filter((item: any) => item.clientId !== client.id)
+      if (!this.states.find((item: any) => item.userId === userId)) {
+        client.broadcast.emit('user_state_updated', msg);
+      }
     }
     
     @SubscribeMessage('get_users_states')
@@ -44,17 +52,41 @@ import {
       const msg = array.map((item: any) => {
         return {userId: item.userId, state: item.state}
       })
-      Logger.log(msg)
       client.emit('user_states', msg);
     }
 
     @SubscribeMessage('update_user_state')
     HandleUserUpdate(client: Socket, payload: { userId: string, state: string }) {
-      this.states.add({clientId: client.id, userId: payload.userId, state: payload.state})
-
-      const msg = {userId: payload.userId, state: payload.state}
-      client.broadcast.emit('user_state_updated', msg);
+      const state = this.states.find((item: any) => item.clientId === client.id)
+      if (!state) {
+        this.states.push({clientId: client.id, userId: payload.userId, state: payload.state})
+        const msg = {userId: payload.userId, state: payload.state}
+        client.broadcast.emit('user_state_updated', msg);
+      }
     }
 
+    UpdateGameState(userId: string, state: string)
+    {
+      console.log("UpdateGameState: " + userId + " " + state)
+      if (this.states.find((item: any) => item.userId === userId && item.clientId === "0")) {
+        this.states = this.states.map((item: any) => {
+          if (item.userId === userId && item.clientId == 0) {
+            item.state = state
+          }
+          return item
+        })
+      }
+      else {
+        this.states.push({clientId: "0", userId: userId, state: state})
+      }
 
+      const msg = {userId: userId, state: state}
+      this.server.emit('user_state_updated', msg);
+    }
+  }
+
+  interface State {
+    clientId: string;
+    userId: string;
+    state: string;
   }

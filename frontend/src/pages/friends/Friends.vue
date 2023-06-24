@@ -5,8 +5,11 @@
       <div class="friend-block">
         <h2>{{ fshp.friend.username }}</h2>
 
-        <p>{{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}</p>
         <p v-if="!friendsStates.find(x => x.userId == fshp.friend.id)">offline</p>
+        <p v-else-if="friendsStates.find(x => x.userId == fshp.friend.id)?.state==='offline'">offline</p>
+        <p v-else style="color: rgb(0, 255, 72); font-weight: 900;">
+          {{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}
+        </p>
 
         <h3>Member since<br>{{ fshp.friend.createdAt }}</h3>
         <h3>Victories: {{ fshp.friend.victories }}</h3>
