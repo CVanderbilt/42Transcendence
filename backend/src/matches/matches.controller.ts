@@ -3,7 +3,7 @@ import { Match } from './match.interface';
 import { MatchesService } from './matches.service';
 import { HttpStatusCode } from 'axios';
 import { USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
-import Joi from 'joi';
+import * as Joi from 'joi'
 
 const POWERUPS_VALIDATOR = Joi.string().regex(/^[A-Z]+$/)
 

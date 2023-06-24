@@ -82,9 +82,10 @@ export class GameGateway
     if (activePlayer != null) {
       if (activePlayer == "player2") {
         // lock player in matchmaking, if locking it failed cancel this
-        if (!this.matchesService.acceptChallenge(_room.id, _room.player2.user, _room.player1.user)) {
+        if (_room.isChallenge && !this.matchesService.acceptChallenge(_room.id, _room.player2.user, _room.player1.user)) {
           gameServer.to(`room_${_room.id}`).emit('endGame', `Match_closed_because_${_room.player2.user}_couldnt_join`);
           this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
+          console.log(`${username} deleting room ${room}(1)`)
           delete gameRooms[_room.id]
         }
       }
@@ -173,6 +174,7 @@ export class GameGateway
                 { name: _room.player2.user, score: _room.player2.score },
               ], 
               _room.isCompetitive ? "Competitive" : "Exhibition")
+              console.log(`${username} deleting room ${room}(2)`)
               delete gameRooms[_room.id]
             }
           }
@@ -188,7 +190,7 @@ export class GameGateway
         return ;
       }
 
-      console.log(`${activePlayer} se va`);
+      console.log(`${activePlayer} se va, quedan: ${_room.numPlayer - 1}`);
       clearInterval(_room.intervalRefreshId);
       _room[activePlayer].inGame = false;
       _room.numPlayers--;
@@ -197,6 +199,7 @@ export class GameGateway
       if (_room.numPlayers <= 0) {
         //todo: añadir aqui la logica de ver la recompensa/penalización para cada usuario
         this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
+        console.log(`${username} deleting room ${room}(3)`)
         delete gameRooms[_room.id]
       }
 
@@ -230,6 +233,7 @@ export class GameGateway
       clearInterval(_room.refreshIntervalId);
       this.server.to(`room_${_room.id}`).emit('endGame', "Lag_detected");
       this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
+      console.log(`${username} deleting room ${room}(4)`)
       delete gameRooms[_room.id]
       return;
     }

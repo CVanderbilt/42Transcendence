@@ -183,7 +183,7 @@ export class MatchMaker {
         console.log("mathing users failed")
       }
 
-      checkMatch(user: QueuedUser, threshold: number): string {
+      async checkMatch(user: QueuedUser, threshold: number): Promise<string> {
         console.log("checknig para user: " + user.id)
         console.log("matchId?: " + user.matchId)
         if (user.matchId){
@@ -231,7 +231,7 @@ export class MatchMaker {
       async checkForMatchLoop(user: QueuedUser, threshold: number): Promise<string> {
         let match = null
         do {
-          match = this.checkMatch(user, threshold);
+          match = await this.checkMatch(user, threshold);
           console.log("en verdad ha returneado: " + match)
           
           if (match) break ;
