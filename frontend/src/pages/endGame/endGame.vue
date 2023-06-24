@@ -10,7 +10,6 @@
             <h2> 
               {{ message }}
             </h2>
-            
           </div>
         </main>
       </div>
@@ -20,31 +19,19 @@
   
   <script lang="ts">
 import { computed, defineComponent } from "vue";
-import { useStore, mapActions } from "vuex";
-import { key, store } from "../..//store/store";
 import "@/style/styles.css";
 declare var require: any;
 
 export default defineComponent({
   name: "EndGame",
-  setup() {
-    const store = useStore(key);
-    const user = computed(() => store.state.user);
-    const message = ""
-    return {
-      user,
-      room: "",
-      player1: "",
-      player2: "",
-      message,
-    };
+  data() {
+    let message = "NO MESSAGE TO SHOW"
+    return { message }
   },
 
   async mounted(): Promise<void> {
-    if (this.$route.query.id !== undefined ) {
-      this.message = this.$route.query.message as string;
-      this.message = this.message.replace(/_/g, " ");
-      this.room = this.$route.query.id as string;
+    if (this.$route.query.reason !== undefined ) {
+      this.message = (this.$route.query.reason as string).replace(/_/g, " ");
     }
   },
 
