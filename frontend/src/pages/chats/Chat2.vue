@@ -799,7 +799,6 @@ export default defineComponent({
     async openDirectChat(friendId: string) {
       // Search if chat already exists
       const chatRoom = await (await getDirectChatRoomReq(this.user.id, friendId)).data
-      console.log("pusing")
 
       this.changeRoom(chatRoom.id, chatRoom.name)
 

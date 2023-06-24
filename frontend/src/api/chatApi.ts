@@ -1,5 +1,4 @@
 import { apiClient } from "./baseApi";
-import { IUserAPI } from "./user";
 
 const URL = "/chats";
 
@@ -37,18 +36,6 @@ export interface Membership {
     bannedUntil?: any
     mutedUntil?: any
 }
-
-// export function makeid(length: number) { //TODO esto debería ser innecesario ya que se encarga el backend
-//     let result = '';
-//     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-//     const charactersLength = characters.length;
-//     let counter = 0;
-//     while (counter < length) {
-//       result += characters.charAt(Math.floor(Math.random() * charactersLength));
-//       counter += 1;
-//     }
-//     return result;
-// }
 
 // ----------------------------------------------
 
@@ -138,8 +125,6 @@ export async function demoteUserInChat(userName: string, roomId: string) {
 }
 
 export async function getDirectChatRoomReq(user1: string, user2: string) {
-    console.log("findDirectChatRoomReq")
-    console.log(user1)
     return apiClient.post(`${URL}/rooms/direct`, {user1, user2})
 }
 

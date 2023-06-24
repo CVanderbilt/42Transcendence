@@ -120,8 +120,9 @@ export default defineComponent({
     },
 
     logOut() {
-      store.commit("changeUser", undefined)
       localStorage.removeItem("token");
+      store.commit("logout");
+      
       this.$router.push("/login");
       console.log("Bye bye");
     },
