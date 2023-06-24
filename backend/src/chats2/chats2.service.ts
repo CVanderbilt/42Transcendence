@@ -364,7 +364,7 @@ export class Chats2Service {
             membership.save();
         }
         catch (e) {
-            throw new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
+            return new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
         }
     }
 
@@ -377,7 +377,7 @@ export class Chats2Service {
             this.setIsBanned(userId, chatRoomId, !isAdmin)
         }
         catch (e) {
-            throw new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
+            return new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
         }
     }
 
@@ -397,6 +397,9 @@ export class Chats2Service {
     async leaveRoom(chatRoomId: number, userId: string) {
         // if user is owner of the room, delete the room
         const membership = await this.getUserChatMembership(userId, chatRoomId)
+        if (!membership) {
+            return new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
+        }
         if (membership.isOwner) {
             return this.deleteRoom(chatRoomId)
         }
@@ -434,13 +437,12 @@ export class Chats2Service {
             }
         })
 
-
-
         if (token.role === 'ADMIN' || token.role === 'OWNER') {
             const postedMsg = await this.chatMsgsRepo.save({
                 sender: sender,
                 chatRoom: room,
-                content: msg.content
+                content: msg.content,
+                isChallenge: msg.isChallenge,
             })
             return postedMsg
         }
@@ -453,7 +455,8 @@ export class Chats2Service {
         const postedMsg = await this.chatMsgsRepo.save({
             sender: sender,
             chatRoom: room,
-            content: msg.content
+            content: msg.content,
+            isChallenge: msg.isChallenge,
         })
 
         return postedMsg
@@ -473,7 +476,8 @@ export class Chats2Service {
                 senderName: element.sender.username,
                 chatRoomId: element.chatRoom.id,
                 content: element.content,
-                createdAt: element.createdAt
+                createdAt: element.createdAt,
+                isChallenge: element.isChallenge,
             })
         }
 

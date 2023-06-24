@@ -1,6 +1,5 @@
 <template>
   <section class="vh-100 gradient-custom">
-
     <div class="container py-5 h-100">
       <div class="row d-flex justify-content-center align-items-center h-100">
         <div class="col-12 col-md-8 col-lg-6 col-xl-5">
@@ -55,7 +54,6 @@ import { key, store } from "../../store/store";
 import { generateImageURL, publishNotification } from "@/utils/utils";
 import { IUserAPI, putImage, updateUserReq } from "@/api/user";
 
-declare var require: any;
 //todo: que cuando se modifique el usuario se recarge la informacion del usuario (la imagen se tiene que volver a descargar y el store.user tiene que actualizarse)
 export default defineComponent({
   name: "Settings",
@@ -120,8 +118,9 @@ export default defineComponent({
     },
 
     logOut() {
-      store.commit("changeUser", undefined)
       localStorage.removeItem("token");
+      store.commit("logout");
+      
       this.$router.push("/login");
       console.log("Bye bye");
     },

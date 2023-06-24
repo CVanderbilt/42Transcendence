@@ -11,10 +11,10 @@
               <div class="list-attribute-name">{{ user.id }}</div>
               <div class="manage">
                 <div class="list-attribute-box">
-                  <button class="allow" v-if="user.isBanned" @click="allowUserAction(user)">Allow</button>
-                  <button class="ban" v-if="!user.isBanned" @click="banUserAction(user)">Ban</button>
-                  <button class="allow" v-if="!hasAdminRights(user)" @click="promoteUserAction(user)">Promote</button>
-                  <button class="ban" v-if="hasAdminRights(user)" @click="demoteUserAction(user)">Demote</button>
+                  <button class="allow" v-if="user.isBanned" @click="executeAction(allowUserAction, user)">Allow</button>
+                  <button class="ban" v-else @click="executeAction(banUserAction, user)">Ban</button>
+                  <button class="allow" v-if="!hasAdminRights(user)" @click="executeAction(promoteUserAction, user)">Promote</button>
+                  <button class="ban" v-else @click="executeAction(demoteUserAction ,user)">Demote</button>
                 </div>
               </div>
             </div>
@@ -33,12 +33,12 @@
                 <div class="manage">
                   <input class="list-attribute-input" type="text" placeholder="userName" v-model="chat.userName">
                   <div class="list-attribute-box">
-                    <button class="ban" @click="banUserInChatAction(chat)">Ban</button>
-                    <button class="allow" @click="allowUserInChatAction(chat)">Allow</button>
+                    <button class="ban" @click="executeAction(banUserInChatAction, chat)">Ban</button>
+                    <button class="allow" @click="executeAction(allowUserInChatAction,chat)">Allow</button>
                   </div>
                   <div class="list-attribute-box">
-                    <button class="allow" @click="promoteUserInChatAction(chat)">Promote</button>
-                    <button class="ban" @click="demoteUserInChatAction(chat)">Demote</button>
+                    <button class="allow" @click="executeAction(promoteUserInChatAction, chat)">Promote</button>
+                    <button class="ban" @click="executeAction(demoteUserInChatAction, chat)">Demote</button>
                   </div>
                 </div>
               </div>
@@ -53,15 +53,20 @@
 
 <script lang="ts">
 import { IUser, store } from '@/store/store';
-import { defineComponent, onMounted } from 'vue';
+import { defineComponent } from 'vue';
 import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'
 import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, demoteUserInChat, getAllChatRoomsReq, getChatRoomMembershipsReq, Membership, promoteUserInChat } from '@/api/chatApi';
-import { publishNotification, throwFromAsync } from '@/utils/utils';
+import { publishNotification, throwFromAsync, throwFromAsync } from '@/utils/utils';
 import { app } from '@/main';
 
 interface ChatRoomRow extends ChatRoom {
   userName: string
 }
+
+interface Action {
+  (param: any): void
+}
+
 //todo:
 // - hacer que list-row-header no scrollee con el contenido de la lista si no hace falta, debería ser estático
 // - updatear pagina de chats para aceptar una query con el nombre/id del chat, al entrar si el usuario pertenece al chat, el chat es público o el usuario es un admin entra en el chat y puede participar/leer
@@ -105,13 +110,22 @@ export default defineComponent({
           })
       })
     },
+
+    async executeAction(action: Action, param: any) {
+      try {
+        await action(param)
+        this.updateInfo()
+      } catch (error: any) {
+        throwFromAsync(app, error.message)
+      }
+    },
+
     promoteUserAction(user: IUser) {
-      publishNotification(``, false)
+      publishNotification(`Promoting user ${user.id}`, false)
       promoteUser(user.id)
-      
     },
     demoteUserAction(user: IUser) {
-      publishNotification(`Promoting user ${user.id}`, false)
+      publishNotification(`Demoting user ${user.id}`, false)
       demoteUser(user.id)
     },
     banUserAction(user: IUser) {
@@ -137,7 +151,6 @@ export default defineComponent({
     promoteUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
         publishNotification(`Promoting user: ${chat.userName} in chat: ${chat.name}`, false)
-        console.log("promoting user in chat")
         promoteUserInChat(chat.userName, chat.id)
       }
     },
@@ -163,7 +176,7 @@ export default defineComponent({
     // usersList.style.height = `${window.innerHeight - usersList.offsetTop}px`;
 
     this.updateInfo()
-    
+
   },
 })
 </script>
@@ -330,4 +343,5 @@ export default defineComponent({
   border: 1px solid #ccc;
   border-radius: 5px;
   margin-right: 10px;
-}</style>
+}
+</style>

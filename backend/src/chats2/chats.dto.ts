@@ -23,6 +23,7 @@ export interface ChatMsgDto {
     content: string
     senderName?: string
     createdAt?: Date
+    isChallenge?: boolean
 }
 
 export interface JoinChatRoomDto {

@@ -23,7 +23,8 @@
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                       {{ item.chatRoom.name }}
                     </b-button>
-                    <button v-if="item.chatRoom.name !== generalRoom.name" @click="leaveRoom(item.chatRoom.id)"> x </button>
+                    <button v-if="item.chatRoom.name !== generalRoom.name" @click="leaveRoom(item.chatRoom.id)"> x
+                    </button>
                   </div>
                 </div>
 
@@ -57,14 +58,16 @@
                       }">
                         <b-col>
                           <p v-if="message.senderName === user?.username" class="message-text">
-                            <a>{{ message.content }}</a>
+                            <a v-if="message.isChallenge">Challenge sent</a>
+                            <a v-else>{{ message.content }}</a>
                           </p>
                         </b-col>
                         <b-col>
                           <div v-if="message.senderName !== user?.username" class="message-text">
-                            <a v-if="message.isGame" style="cursor: pointer;">{{
-                              message.senderName + ": " + "GAME!" }}
-                            </a>
+                            <router-link v-if="message.isChallenge" :to="'/game?id=' + message.content"
+                            style="cursor: pointer; color:black; font-weight: 900;">{{
+                                message.senderName + ": " + "DUEL!" }}
+                            </router-link>
                             <a v-else style="cursor: pointer;" v-on:click="showUserActions(message.senderId as string)">{{
                               message.senderName + ": " + message.content }}
                             </a>
@@ -74,17 +77,26 @@
                     </div>
                   </div>
                   <div v-if="dateOK(currentMembership.mutedUntil)" class="form-outline form-white chat-footer">
-                    <input type="username" id="typeusernameX" v-on:keyup.enter="sendMessage()" v-model="message"
-                      class="chat-input" />
-                    <!-- send -->
-                    <b-button class="chat-button" v-on:click="sendMessage()">
-                      Send message
-                    </b-button>
-                    <!-- manage -->
-                    <b-button v-if="currentMembership.isAdmin === true || currentMembership.isOwner === true"
-                      class="chat-button" @click="updateManagedChat()" style="margin-left: 10px">
-                      Manage chat
-                    </b-button>
+                    <div>
+                      <input type="username" id="typeusernameX" v-on:keyup.enter="sendMessage()" v-model="message"
+                        class="chat-input" />
+                    </div>
+                    <div>
+                      <!-- send -->
+                      <b-button class="chat-button" v-on:click="sendMessage()">
+                        Send message
+                      </b-button>
+                      <!-- duel -->
+                      <b-button v-if="currentMembership.chatRoom.isDirect" style="background-color: rgb(0, 0, 0);"
+                        type="button" @click="challengePlayer()">
+                        Duel
+                      </b-button>
+                      <!-- manage -->
+                      <b-button v-if="currentMembership.isAdmin === true || currentMembership.isOwner === true"
+                        class="chat-button" @click="updateManagedChat()" style="margin-left: 10px">
+                        Manage chat
+                      </b-button>
+                    </div>
 
                   </div>
                   <div v-else>
@@ -100,7 +112,7 @@
             </div>
 
             <!-- ------------------ search chat ------------------ -->
-            <div class="form-outline form-white mb-4">
+            <div class="form-outline form-white mb-4 find-room-form">
               <input type="username" id="typeusernameX" class="form-control form-control-lg" v-model="searchedChat"
                 placeholder="Chat name" />
               <input type="password" class="typePasswordX form-control form-control-lg" placeholder="Password"
@@ -218,10 +230,11 @@
       <b-modal id="modal-center" centered="true" v-model="modalUserActions.show">
         <div class=" pb-9">
           <div style="display: flex; gap: 20px;">
-            <h2 style="cursor: pointer;" v-on:click="searchFriend()" class="fw-bold text-uppercase">{{
-              modalUserActions.userName }}</h2>
-            <b-button style="background-color: rgb(0, 106, 255);" type="button" @click="WatchUserGame(modalUserActions.userName)">Watch</b-button>
-            <b-button style="background-color: rgb(0, 0, 0);" type="button" @click="challengePlayer(modalUserActions.userName)">Duel</b-button>
+            <b-button style="cursor: pointer;" v-on:click="searchFriend()" class="fw-bold text-uppercase">Info</b-button>
+            <b-button style="background-color: rgb(0, 106, 255);" type="button"
+              @click="WatchUserGame(modalUserActions.userName)">Watch</b-button>
+            <b-button v-if="!currentMembership.chatRoom.isDirect" style="background-color: rgb(0, 0, 0);" type="button"
+              @click="openDirectChat(modalUserActions.userId)">Private chat</b-button>
           </div>
 
           <div class="form-outline form-white"></div>
@@ -238,7 +251,7 @@ import { useStore } from "vuex";
 import { IUser, key, store } from "../../store/store";
 import "@/style/styles.css";
 import { app, useSocketIO } from "../../main";
-import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom, getChatRoomByIdReq, getGeneralRoom } from "../../api/chatApi";
+import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom, getChatRoomByIdReq, getGeneralRoom, getDirectChatRoomReq } from "../../api/chatApi";
 import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserById, getUserByName } from "../../api/user";
@@ -248,9 +261,14 @@ import moment from 'moment';
 import 'moment-timezone';
 import { throwFromAsync } from "@/utils/utils";
 import { challenge, getCurrentMatch } from "@/api/gameApi";
+import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
 
 export default defineComponent({
   name: "Chat2",
+
+  components: {
+    OpenDirectChatButton,
+  },
 
   data() {
     let chatMessages: ChatMessage[] = []
@@ -275,7 +293,7 @@ export default defineComponent({
       isMuted: false,
     }
 
-    var generalRoom : ChatRoom = {
+    var generalRoom: ChatRoom = {
       id: "",
       name: "",
     }
@@ -334,10 +352,10 @@ export default defineComponent({
   },
 
   async mounted() {
-    if (this.$route.query.challenge) {
-      console.log("challenge in query")
-      this.challengePlayer(this.$route.query.challenge as string)
-    }
+    // if (this.$route.query.challenge) { // ???
+    //   console.log("challenge in query")
+    //   this.challengePlayer(this.$route.query.challenge as string)
+    // }
 
     this.generalRoom = await (await getGeneralRoom()).data
 
@@ -371,19 +389,17 @@ export default defineComponent({
 
     // join message socket
     this.io.socket.offAny();
-    this.io.socket.on("new_message", (message, userName, senderId, roomId, isGame) => {
+    this.io.socket.on("new_message", (message, userName, senderId, roomId, isChallenge) => {
       const msg: ChatMessage = {
         content: message,
         senderName: userName,
         senderId: senderId,
         chatRoomId: roomId,
-        isGame: isGame,
+        isChallenge: isChallenge,
       }
 
       this.messages.push(msg)
     });
-
-    this.fetchNiceRoomNames()
   },
 
   beforeRouteLeave() {
@@ -392,6 +408,7 @@ export default defineComponent({
 
   methods: {
     async fetchNiceRoomNames() {
+      this.niceRoomNames = []
       let chatRooms: ChatRoom[] =
         this.userMemberships.map((membership) => membership.chatRoom)
 
@@ -423,7 +440,7 @@ export default defineComponent({
       return true
     },
 
-    async sendMessage() {
+    async sendMessage(isChallenge = false) {
       // get all user memberships
       try {
         this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
@@ -439,18 +456,18 @@ export default defineComponent({
       }
       else {
         throwFromAsync(app, "Not a member")
-        this.changeRoom(this.generalRoom.id , this.generalRoom.name)
+        this.changeRoom(this.generalRoom.id, this.generalRoom.name)
         return;
       }
 
-      if (!this.dateOK(this.currentMembership.mutedUntil)  || !this.dateOK(this.currentMembership.bannedUntil) ) {
+      if (!this.dateOK(this.currentMembership.mutedUntil) || !this.dateOK(this.currentMembership.bannedUntil)) {
         alert("You can not send messages here")
         return;
       }
 
       if (this.message !== "") {
         if (!this.user) {
-          console.error("user not defined, esto no deberia pasar");
+          console.error("user not defined");
           return;
         }
 
@@ -460,6 +477,7 @@ export default defineComponent({
           userName: this.user.username,
           message: this.message,
           token: localStorage.getItem("token"),
+          isChallenge: isChallenge,
         }
 
         this.io.socket.emit("event_message", msg2emit)
@@ -469,6 +487,7 @@ export default defineComponent({
           content: this.message,
           chatRoomId: this.roomId,
           senderId: this.user.id,
+          isChallenge: isChallenge,
         }
 
         postChatMessageReq(this.roomId, outMessage)
@@ -538,7 +557,7 @@ export default defineComponent({
         this.changeRoom(room.id, room.name);//TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
       }
       catch (error: any) {
-        throwFromAsync (app, "Error changing the room: " + (error.response?.data?.message || "Unknown error"))
+        throwFromAsync(app, "Error changing the room: " + (error.response?.data?.message || "Unknown error"))
       }
       // change chat
     },
@@ -590,6 +609,8 @@ export default defineComponent({
         this.io.socket.emit("event_join", payload);
         this.chatRoomName = roomName;
 
+        this.fetchNiceRoomNames()
+
         getChatRoomMessagesReq(roomId).then((response) => {
           for (var i in response.data) {
             this.messages.push(response.data[i]);
@@ -638,7 +659,7 @@ export default defineComponent({
         })
 
         const niceRoomName = { chatRoom: room as ChatRoom, niceName: room.name }
-        this.niceRoomNames.push( niceRoomName )
+        this.niceRoomNames.push(niceRoomName)
         this.changeRoom(room.id, room.name)
       }
     },
@@ -752,25 +773,41 @@ export default defineComponent({
       if (!player) return
 
       getCurrentMatch(player)
-      .then(response => {
-        alert(JSON.stringify(response, null, 2))
-        this.$router.push("/game?id=" + response.data);
-      })
+        .then(response => {
+          alert(JSON.stringify(response, null, 2))
+          this.$router.push("/game?id=" + response.data);
+        })
     },
-    async challengePlayer(opponent?: string) {
-      if (!opponent) return
-      challenge(store.state.user.username, opponent)
-      .then(response => {
-        //todo: logica de mandar un mensaje con el link a la partida al jugador al que retamos
-        this.$router.push("/game?id=" + response.data);
-      })
+
+    async challengePlayer() {
+      getChatRoomMembershipsReq(this.currentMembership.chatRoom.id)
+        .then(response => {
+          const opponentMembership = response.data.find((membership: any) => membership.user.id != this.user.id)
+          if (opponentMembership) {
+            challenge(store.state.user.username, opponentMembership.user.userName)
+              .then(response => {
+                const gameId = response.data
+                this.message = gameId;
+                this.sendMessage(true)
+
+                this.$router.push("/game?id=" + response.data);
+              })
+          }
+        })
+    },
+
+    async openDirectChat(friendId: string) {
+      // Search if chat already exists
+      const chatRoom = await (await getDirectChatRoomReq(this.user.id, friendId)).data
+
+      this.changeRoom(chatRoom.id, chatRoom.name)
+
+      this.$router.push("/chats?roomId=" + chatRoom.id);
     },
 
     dateOK(date: string) {
-      if (date === "") 
+      if (date == null)
         return true
-
-      // check if date is in the past
       return moment(date).isBefore(moment())
     },
 
@@ -820,13 +857,20 @@ export default defineComponent({
 .chat-button {
   background: #3466cb;
   color: #dfdfdf;
-
 }
 
 .chat-input {
   width: 73%;
   height: 4vh;
   background: #d1d1d1;
+}
+
+.direct-chat-button {
+  all: unset;
+  background: burlywood;
+  color: white;
+  margin: 0 !important;
+  border-radius: 5px;
 }
 
 .chat-header {
@@ -904,8 +948,14 @@ export default defineComponent({
 }
 
 .action-button {
- border: 1px solid gray;
- color: black;
- background: rgba(0,0,0,0.5);
+  border: 1px solid gray;
+  color: black;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.find-room-form {
+  margin-top: 100px;
+  display: flex;
+  margin-bottom: 0;
 }
 </style>
