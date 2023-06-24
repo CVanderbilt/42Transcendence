@@ -397,6 +397,9 @@ export class Chats2Service {
     async leaveRoom(chatRoomId: number, userId: string) {
         // if user is owner of the room, delete the room
         const membership = await this.getUserChatMembership(userId, chatRoomId)
+        if (!membership) {
+            return new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
+        }
         if (membership.isOwner) {
             return this.deleteRoom(chatRoomId)
         }
@@ -473,7 +476,8 @@ export class Chats2Service {
                 senderName: element.sender.username,
                 chatRoomId: element.chatRoom.id,
                 content: element.content,
-                createdAt: element.createdAt
+                createdAt: element.createdAt,
+                isChallenge: element.isChallenge,
             })
         }
 
