@@ -56,7 +56,7 @@ import { IUser, store } from '@/store/store';
 import { defineComponent, onMounted } from 'vue';
 import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'
 import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, demoteUserInChat, getAllChatRoomsReq, getChatRoomMembershipsReq, Membership, promoteUserInChat } from '@/api/chatApi';
-import { publishNotification } from '@/utils/utils';
+import { publishNotification, throwFromAsync } from '@/utils/utils';
 import { app } from '@/main';
 
 interface ChatRoomRow extends ChatRoom {
@@ -80,25 +80,30 @@ export default defineComponent({
   methods: {
     updateInfo() {
       getAllUsers()
-      .then(list => this.userList = list)
-      .catch(() => alert("Unhandled error when fetching all users for admin page"))
-    getAllChatRoomsReq()
       .then(list => {
-        this.chatList = list;
-        this.chatList.forEach(async element => {
-          console.log(element.name)
-          if (element.isDirect) {
-            console.log("is direct")
-            const memberships: Membership[] = await (await getChatRoomMembershipsReq(element.id)).data
-            let name = memberships[0].user.username
-            if (memberships.length > 1)
-              name += " - " + memberships[1].user.username
-            element.name = name
-            console.log(element.name)
-          }
-        });
+        this.userList = list
+        getAllChatRoomsReq()
+          .then(list => {
+            this.chatList = list;
+            this.chatList.forEach(async element => {
+              console.log(element.name)
+              if (element.isDirect) {
+                console.log("is direct")
+                getChatRoomMembershipsReq(element.id)
+                .then(response => {
+                  const memberships: Membership[] = response.data
+                  if (!memberships.length) {
+                    let name = memberships[0].user.username
+                    if (memberships.length > 1)
+                      name += " - " + memberships[1].user.username
+                    element.name = name
+                    console.log(element.name)
+                  } else throwFromAsync(app, new Error("Cant get chatRoomMemberships"))
+                })
+              }
+            });
+          })
       })
-      .catch(() => alert("Unhandled error when fetching all chats for admin page"))
     },
     promoteUserAction(user: IUser) {
       publishNotification(``, false)
@@ -154,24 +159,11 @@ export default defineComponent({
   mounted() {
     if (!store.state.user || !this.hasAdminRights(store.state.user))
       this.$router.push("/");
-<<<<<<< HEAD
-    else {
-      const usersList = this.$refs.usersList as HTMLElement;
-      usersList.style.height = `${window.innerHeight - usersList.offsetTop}px`;
-      getAllUsers()
-      .then(list => this.userList = list)
-      //.catch(() => alert("Unhandled error when fetching all users for admin page"))
-      getAllChatRoomsReq()
-      .then(list => { this.chatList = list; console.log(list); console.log(this.chatList) })
-      //.catch(() => alert("Unhandled error when fetching all chats for admin page"))
-    }
-=======
     // const usersList = this.$refs.usersList as HTMLElement;
     // usersList.style.height = `${window.innerHeight - usersList.offsetTop}px`;
 
     this.updateInfo()
     
->>>>>>> 44505dd9c28600fd646e52de63005652e21963c4
   },
 })
 </script>
