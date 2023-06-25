@@ -18,7 +18,7 @@ export class JwtAdminGuard extends AuthGuard('jwt') {
     if ((token.role === 'ADMIN' || token.role === 'OWNER')) {
       return super.canActivate(context);
     }
-    throw new UnauthorizedException('Role not allowed')
+    throw new UnauthorizedException(`${token.role} not allowed`)
   }
   
   handleRequest(err, userInToken, info) {
