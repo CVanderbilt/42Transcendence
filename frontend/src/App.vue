@@ -74,12 +74,12 @@ export default defineComponent({
     this.notificationMessage = "message";
     this.isError = false;
 
-    // join state socket
-    // lo pongo aquí para que se registre contra el servidor nada mas cargar la página
-    // y que el resto de los usuarios sepan que esta online
     this.io.socket.offAny();
-    this.io.socket.emit("update_user_state", {userId: this.user.id, state:"online"});
+    this.io.socket.emit("user_state_updated", {userId: this.user.id, state:"online"});
+
+    console.log("created");
   },
+
   data() {
     return {
       searchUsername: "",

@@ -7,11 +7,21 @@
 <script lang="ts">
 import { ref, defineComponent } from 'vue';
 import { store } from '@/store/store';
+import { stateSocketIO } from '@/main';
+
+interface UserState {
+  userId: string;
+  state: string;
+}
 
 export default defineComponent({
   name: 'NotificationBanner',
+
   data() {
+    const io = stateSocketIO()
+
     return {
+      io,
       showBanner: false,
       message: '',
       isError: false,
@@ -24,6 +34,12 @@ export default defineComponent({
         this.showMessage(notification);
       }
     );
+
+    this.io.socket.on("user_state_updated", (state: UserState) => {
+      if (state.userId == store.state.user.id && state.state == "offline")
+        this.io.socket.emit("user_state_updated", {userId: store.state.user.id, state:"online"});
+    });
+
   },
   methods: {
     showMessage(notification: { message: string, isError: boolean }) {

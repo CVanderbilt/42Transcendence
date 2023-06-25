@@ -38,7 +38,7 @@
                   Change
                 </button>
               </div>
-              <button class="btn btn-outline-light mt-3 btn-lg px-5"  v-on:click="logOut()">Logout</button>
+              <button class="btn btn-outline-light mt-3 btn-lg px-5" v-on:click="logOut()">Logout</button>
             </div>
           </div>
         </div>
@@ -53,6 +53,7 @@ import { useStore } from "vuex";
 import { key, store } from "../../store/store";
 import { generateImageURL, publishNotification } from "@/utils/utils";
 import { IUserAPI, putImage, updateUserReq } from "@/api/user";
+import { stateSocketIO } from "@/main";
 
 //todo: que cuando se modifique el usuario se recarge la informacion del usuario (la imagen se tiene que volver a descargar y el store.user tiene que actualizarse)
 export default defineComponent({
@@ -60,9 +61,11 @@ export default defineComponent({
   setup() {
     const store = useStore(key);
     const user = computed(() => store.state.user);
+    const io = stateSocketIO()
 
     return {
-      user
+      user,
+      io,
     };
   },
   data() {
@@ -70,6 +73,7 @@ export default defineComponent({
       username: '',
       is2fa: false,
     }
+
 
     var selectedFile: File | undefined
     return {
@@ -120,7 +124,10 @@ export default defineComponent({
     logOut() {
       localStorage.removeItem("token");
       store.commit("logout");
-      
+
+      this.io.socket.offAny();
+      this.io.socket.emit("user_logout", { userId: this.user.id, state: "offline" });
+
       this.$router.push("/login");
       console.log("Bye bye");
     },

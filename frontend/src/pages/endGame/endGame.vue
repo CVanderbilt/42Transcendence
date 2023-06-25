@@ -10,6 +10,9 @@
             <h2> 
               {{ message }}
             </h2>
+            <h2> 
+              {{ userName }}
+            </h2>
           </div>
         </main>
       </div>
@@ -20,18 +23,27 @@
   <script lang="ts">
 import { computed, defineComponent } from "vue";
 import "@/style/styles.css";
+import { getUserById } from "@/api/user";
 declare var require: any;
 
 export default defineComponent({
   name: "EndGame",
   data() {
     let message = "NO MESSAGE TO SHOW"
-    return { message }
+    let userName = ""
+    return { 
+      message,
+      userName,
+    }
   },
 
   async mounted(): Promise<void> {
     if (this.$route.query.reason !== undefined ) {
       this.message = (this.$route.query.reason as string).replace(/_/g, " ");
+      // get everything after the second space
+      const winnerId = this.message.split(" ").slice(2).join(" "); 
+      this.userName = await (await getUserById(winnerId)).data.username;
+      this.message = this.message.split(" ").slice(0, 2).join(" ");
     }
   },
 

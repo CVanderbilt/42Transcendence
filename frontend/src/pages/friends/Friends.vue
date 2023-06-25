@@ -5,9 +5,13 @@
       <div class="friend-block">
         <h2>{{ fshp.friend.username }}</h2>
 
-        <p v-if="!friendsStates.find(x => x.userId == fshp.friend.id)">offline</p>
-        <p v-else-if="friendsStates.find(x => x.userId == fshp.friend.id)?.state==='offline'">offline</p>
-        <p v-else style="color: rgb(0, 255, 72); font-weight: 900;">
+        <!-- <p :style="{ color: friendsStates.find(x => x.userId == fshp.friend.id)?.state == 'offline' ?  'gray' : 'rgb(0, 255, 72)'}">
+          {{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}
+        </p> -->
+        <p v-if="friendsStates.find(x => x.userId == fshp.friend.id)?.state === 'online'" style="color: rgb(0, 255, 72);">
+          {{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}
+        </p>
+        <p v-if="friendsStates.find(x => x.userId == fshp.friend.id)?.state === 'inGame'" style="color: rgb(0, 255, 72);">
           {{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}
         </p>
 
@@ -84,7 +88,7 @@ export default defineComponent({
       io,
       friendsStates,
       updateStates,
-    };
+    }
   },
 
   async mounted() {
@@ -96,14 +100,16 @@ export default defineComponent({
           userId: element.userId,
           state: element.state,
         }
+
         this.updateStates(state)
       })
-    });
+    })
 
     this.io.socket.emit("get_users_states", this.user.id)
 
     this.io.socket.on("user_state_updated", (state: UserState) => {
       this.updateStates(state)
+      console.log(this.friendsStates)
     });
   },
 

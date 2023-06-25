@@ -72,10 +72,13 @@ import { IUser, store } from "../../store/store";
 import { AUTHENTICATE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";
 import { apiClient } from "@/api/baseApi";
 import { elogin, get42Token } from "@/api/auth";
+import { stateSocketIO } from "@/main";
 
 export default defineComponent({
   name: "Login",
+
   data() {
+    const io = stateSocketIO()
     return {
       username: "",
       email: "",
@@ -83,7 +86,8 @@ export default defineComponent({
       code: "",
       login42page: LOGIN_42_URL,
       is2faEnabled: false,
-      twoFactorCode: ""
+      twoFactorCode: "",
+      io,
     };
   },
   async mounted() {
@@ -136,8 +140,7 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned
             }
-            store.commit("changeUser", user)
-            this.$router.push("/");
+            this.DoLogin(user)
           }
         })
     },
@@ -167,8 +170,7 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned
             }
-            store.commit("changeUser", user)
-            this.$router.push("/");
+            this.DoLogin(user)
           }
         })
     },
@@ -200,10 +202,16 @@ export default defineComponent({
         console.log("2fa token: " + localStorage.getItem("token"))
         localStorage.setItem("token", response.data.token)
 
-        store.commit("changeUser", user)
-        this.$router.push("/");
+        this.DoLogin(user)
       })
     },
+
+    DoLogin(user: any){
+      this.io.socket.offAny();
+      this.io.socket.emit("user_state_updated", {userId: user.id, state:"online"});
+      store.commit("changeUser", user)
+      this.$router.push("/");
+    }
   },
 
 
