@@ -46,7 +46,7 @@ const ballMaxY = canvasHeight - ballRadius;
 const ballMinY = ballRadius;
 // const ballSpeed = 4; // Configure the ball speed here
 // const paddleHeight = 75;
-const goalsForVictory = 30;
+const goalsForVictory = 5;
 
 @WebSocketGateway(82, {
   cors: { origin: '*' },
@@ -199,7 +199,7 @@ export class GameGateway
           }
         }, 1000 / 60);
 
-      console.log(_room);
+      // console.log(_room);
     }
 
     client.on("disconnect", (reason) => {

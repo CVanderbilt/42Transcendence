@@ -56,8 +56,6 @@ export class AuthController {
 
   @Get('2fa/qr')
   async generateQr(@Req() req, @Res() response: Response) {    
-    Logger.log('generateQr')
-    Logger.log(response)
     const authToken = getAuthToken(req)
     const user : User = await this.authService.getUserById(authToken.userId)
 
@@ -71,14 +69,14 @@ export class AuthController {
     
     const secret = await this.authService.generateTwoFactorAuthenticationSecret(user)
     // update user secret
-    this.usersService.setTwofaSecret(user.id, secret.secret)
+    this.usersService.setTentativeTwofaSecret(user.id, secret.secret)
     // return qr
     this.authService.pipeQrCodeStream(response, secret.otpauthUrl)
   }
 
   @Post('2fa/turn-on/:code')
-  @HttpCode(200) // cambia el código por defecto que en post es 201
-  @UseGuards(Jwt2faAuthGuard)
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
   async turnOnTwoFactorAuthentication(@Req() req, @Param('code') twoFactorCode: string) {
     const authToken = getAuthToken(req)
     const user : User = await this.authService.getUserById(authToken.userId)
@@ -90,24 +88,24 @@ export class AuthController {
     //   id: Joi.string().guid().required()
     // }), user);
 
-    const isCodeValid = await this.authService.isTwoFactorAuthenticationCodeValid(user, twoFactorCode)
+    const isCodeValid = await this.authService.isTwoFactorAuthenticationCodeValid(twoFactorCode, user.tentativeTwofaSecret)
     if (!isCodeValid) {
       throw new UnauthorizedException('Wrong authentication code');
     }
-
     return await this.usersService.EnableTwofa(user.id, true);
   }
 
   @Post('2fa/authenticate/:code')
-  @HttpCode(200) // cambia el código por defecto que en post es 201
+  @HttpCode(200)
   // @UseGuards(JwtAuthGuard)
   async authenticate(@Req() request, @Param('code') twoFactorCode: string) {
-    //TODO: validar code son siempre 6 digitos
-    validateInput(Joi.object({
-      twoFactorCode: Joi.string().pattern(/^\d{6}$/).required()
-    }), {twoFactorCode});
+    // validateInput(Joi.object({
+    //   twoFactorCode: Joi.string().pattern(/^\d{6}$/).required()
+    // }), {twoFactorCode});
+
     try {
       const authToken = getAuthToken(request)
+      console.log(authToken)
       return await this.authService.loginWith2fa(authToken.userId, twoFactorCode);
     }
     catch (cause: any) {

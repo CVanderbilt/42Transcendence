@@ -9,6 +9,7 @@ export class User {
     username: string
     is2fa?: boolean
     twofaSecret?: string
+    tentativeTwofaSecret?: string
 
     victories?: number
     defeats?: number

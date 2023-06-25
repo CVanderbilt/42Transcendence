@@ -174,7 +174,7 @@ export class AuthService {
     public async generateTwoFactorAuthenticationSecret(user: User) {
         const secret = authenticator.generateSecret();
         const otpauthUrl = authenticator.keyuri(user.login42, process.env.TFA_APP_NAME, secret);
-        await this.usersService.setTwofaSecret(user.id, secret);
+        await this.usersService.setTentativeTwofaSecret(user.id, secret);
 
         return { secret, otpauthUrl }
     }
@@ -183,10 +183,10 @@ export class AuthService {
         return toFileStream(stream, otpauthUrl)
     }
 
-    public async isTwoFactorAuthenticationCodeValid(user: User, code: string) {
+    public async isTwoFactorAuthenticationCodeValid(code: string, secret: string) {
         const isCodeValid = authenticator.verify({
             token: code,
-            secret: user.twofaSecret,
+            secret: secret,
         })
         return isCodeValid
     }
@@ -202,7 +202,7 @@ export class AuthService {
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
         }
 
-        const isCodeValid = await this.isTwoFactorAuthenticationCodeValid(user, code)
+        const isCodeValid = await this.isTwoFactorAuthenticationCodeValid(code, user.twofaSecret)
         if (!isCodeValid) {
             throw new HttpException("INVALID_CODE", HttpStatus.FORBIDDEN)
         }
@@ -228,32 +228,5 @@ export class AuthService {
 
         return res
     }
-
-    // --------------------------------------------
-
-    // async me(req : any) : Promise<any>{
-    //     const token42 = getAuthToken(req, false);
-
-    //     user = await this.usersService.findBy42Login(token42.)
-    //         const payload = {
-    //             userId: user.id,
-    //             email: user.email,
-    //             name: user.username,
-    //             role: user.role,
-    //             isTwoFactorAuthenticationEnabled: !!user.is2fa,
-    //             isTwoFactorAuthenticated: false,
-    //         }
-    
-    //         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY })
-    //         const res : LoginResDto = {
-    //             "userId": user.id,
-    //             "email": user.email,
-    //             "name": user.username,
-    //             "pic": pic,
-    //             "token": token,
-    //             "is2fa": user.is2fa,
-    //             "role": user.role,
-    //         }
-    // }
 }
 

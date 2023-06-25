@@ -14,7 +14,7 @@
 <script lang="ts">
 import { getUserById } from "@/api/user";
 import { defineComponent } from "vue";
-import { gameSocketIO } from "../..//main";
+import { gameSocketIO, stateSocketIO } from "../..//main";
 
 import { IUser, store } from "../..//store/store";
 
@@ -22,10 +22,12 @@ export default defineComponent({
   name: "Game",
   data(): any {
     const io = gameSocketIO();
+    const stateIo = stateSocketIO();
     const user = store.state.user;
     return {
       room: "",
       io,
+      stateIo,
       user,
       canvas: null,
       ctx: null,
@@ -50,6 +52,12 @@ export default defineComponent({
       // playing: false
     };
   },
+
+  async beforeRouteLeave(to, from, next) {
+    this.stateIo.socket.emit("user_state_updated", { userId: this.user.id, state: "online" });
+    next()
+  },
+  
   async mounted(): Promise<void> {
     if (this.$route.query.id === undefined) {
       console.log("no id, redirecting to matchmaking")

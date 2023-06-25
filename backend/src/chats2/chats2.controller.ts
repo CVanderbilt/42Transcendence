@@ -60,7 +60,7 @@ export class Chats2Controller {
         //     name: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(), // todo: revisar a lo mejor no funciona correctamente
         //     isPrivate: Joi.boolean, // todo: revisar a lo mejor no funciona correctamente
         //     isDirect: Joi.boolean // todo: revisar a lo mejor no funciona correctamente
-        // }), dto);
+        // }), dto); // TODO: no permitir caracteres raros
         try {
             const token = getAuthToken(request)
             const user = await this.usersService.findOneById(token.userId)

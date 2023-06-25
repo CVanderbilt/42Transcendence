@@ -30,18 +30,23 @@ export class FriendshipsService {
             friendship.user = await this.usersRepo.findOneBy({id: data.userId});
             friendship.friend = await this.usersRepo.findOneBy({id: data.friendId}); 
             friendship.isBlocked = false;
-            friendship = await this.friendshipsRepo.save(friendship);
         }
-        
+        friendship.isFriend = true;
+        friendship = await this.friendshipsRepo.save(friendship);
+
         return friendship
     }
 
     //update a friendship
-    async updateFriendship(friendshipId: string, isBlocked: boolean) {
+    async updateFriendship(friendshipId: string, data: FriendshipDto) {
+        console.log(data);
+        console.log({data})
         try {
             const friendship = await this.friendshipsRepo.findOneOrFail({where: {id: friendshipId}})
-            Logger.log(friendship);
-            friendship.isBlocked = isBlocked;
+            if (data.isBlocked !== undefined) 
+                friendship.isBlocked = data.isBlocked;
+            if (data.isFriend !== undefined)
+                friendship.isFriend = data.isFriend;
             await this.friendshipsRepo.save(friendship);
             return friendship;
         }
@@ -50,8 +55,8 @@ export class FriendshipsService {
         }
     }
 
-    //delete a friendship
-    deleteFriendship(friendshipId: string) {
-        return this.friendshipsRepo.delete(friendshipId);
-    }
+    // //delete a friendship
+    // deleteFriendship(friendshipId: string) {
+    //     return this.friendshipsRepo.delete(friendshipId);
+    // }
 }

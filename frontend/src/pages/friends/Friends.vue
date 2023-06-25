@@ -3,11 +3,10 @@
   <div style="display: flex; flex-direction: row;">
     <div v-for="fshp in friendships" v-bind:key="fshp.id">
       <div class="friend-block">
+        <img :src="generateImageURL(fshp.friend.id)" class="rounded-circle" height="80
+                " style="border-radius: 50%" alt="" loading="lazy" />
         <h2>{{ fshp.friend.username }}</h2>
 
-        <!-- <p :style="{ color: friendsStates.find(x => x.userId == fshp.friend.id)?.state == 'offline' ?  'gray' : 'rgb(0, 255, 72)'}">
-          {{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}
-        </p> -->
         <p v-if="friendsStates.find(x => x.userId == fshp.friend.id)?.state === 'online'" style="color: rgb(0, 255, 72);">
           {{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}
         </p>
@@ -18,12 +17,9 @@
         <h3>Member since<br>{{ fshp.friend.createdAt }}</h3>
         <h3>Victories: {{ fshp.friend.victories }}</h3>
         <h3>Defeats: {{ fshp.friend.defeats }}</h3>
-        <h3>Ladder position: ??</h3>
+        <h3>Score: {{ fshp.friend.score }}</h3>
         <div v-if="!fshp.isBlocked">
           <OpenDirectChatButton :userId="user.id" :friendId="fshp.friend.id" />
-          <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="createGame(fshp.friend.id)">
-            Game
-          </button>
         </div>
 
         <div>
@@ -49,6 +45,7 @@ import { getFriendshipsRequest, IFriendship, setBlockFriendRequest, unfriendRequ
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
 import { stateSocketIO } from "@/main";
 import "@/style/styles.css";
+import { generateImageURL } from "@/utils/utils";
 
 interface UserState {
   userId: string;
@@ -117,23 +114,23 @@ export default defineComponent({
     async getFriendships() {
       try {
         const res = await getFriendshipsRequest(this.user?.id as string)
-        res.forEach((fshp) => {
-          const friend = fshp.friend
-          // get nice date
-          const date = new Date(friend.createdAt)
-          const since = date.getDay() + "/" + date.getMonth() + "/" + date.getFullYear()
-          friend.createdAt = since
-          this.friendships.push(fshp)
+        console.log(res)
+        res.forEach(async (fshp) => {
+          if (fshp.isFriend)
+          {
+            const friend = fshp.friend
+            // get nice date
+            const date = new Date(friend.createdAt)
+            const since = date.getDay() + "/" + date.getMonth() + "/" + date.getFullYear()
+            friend.createdAt = since
+            this.friendships.push(fshp)
+          }
         })
       } catch (err) {
         console.log(err)
       }
     },
-
-    createGame(friendId: string) {
-      this.$router.push(`/chats?challenge=${friendId}`);
-    },
-
+    generateImageURL,
     setBlock(friendshipId: string, isBlocked: boolean) {
       try {
         setBlockFriendRequest(friendshipId, isBlocked)

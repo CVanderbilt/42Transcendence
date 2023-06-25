@@ -30,20 +30,20 @@ export default defineComponent({
   name: "EndGame",
   data() {
     let message = "NO MESSAGE TO SHOW"
-    let userName = ""
     return { 
       message,
-      userName,
     }
   },
 
   async mounted(): Promise<void> {
     if (this.$route.query.reason !== undefined ) {
       this.message = (this.$route.query.reason as string).replace(/_/g, " ");
-      // get everything after the second space
-      const winnerId = this.message.split(" ").slice(2).join(" "); 
-      this.userName = await (await getUserById(winnerId)).data.username;
-      this.message = this.message.split(" ").slice(0, 2).join(" ");
+
+      // parse message
+      if (this.message.split(" ")[0] === "winner") {
+        const winnerId = this.message.split(" ").slice(2).join(" "); 
+        this.message = "Winner is " + await (await getUserById(winnerId)).data.username;
+      }
     }
   },
 

@@ -92,7 +92,7 @@
                         Duel
                       </b-button>
                       <!-- manage -->
-                      <b-button v-if="currentMembership.isAdmin === true || currentMembership.isOwner === true"
+                      <b-button v-if="(currentMembership.isAdmin === true || currentMembership.isOwner === true) && !currentMembership.chatRoom.isDirect"
                         class="chat-button" @click="updateManagedChat()" style="margin-left: 10px">
                         Manage chat
                       </b-button>
@@ -619,6 +619,8 @@ export default defineComponent({
           throwFromAsync(app, "Error getting messages: " + error.response?.data?.message || "Unknown error")
         });
       })
+
+      console.log(this.currentMembership)
     },
 
     async createChatRoom(roomName: string, password: string, userNames: string[]) {

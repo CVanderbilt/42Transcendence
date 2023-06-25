@@ -2,12 +2,15 @@ import { API_END_POINT } from "@/config";
 import { store } from "@/store/store";
 import { App } from "vue";
 
-export function generateImageURL(): string {
-  if (!store.state.user) {
+export function generateImageURL(userId = ""): string {
+  if (!userId) {
+    userId = store.state.user.id;
+  }
+  if (!userId) {
     return "";
   }
 
-  return `${API_END_POINT}/users/${store.state.user.id}/image`;
+  return `${API_END_POINT}/users/${userId}/image`;
 }
 
 export function throwFromAsync(app: App<Element>, e: Error | string) {
@@ -22,7 +25,8 @@ export function publishNotification(message: string, isError: boolean) {
 }
 
 export function isAuthenticated() {
-  if (!localStorage.getItem('token'))
+  const token = localStorage.getItem('token')
+  if (!token)
     return false
   if (store.state.user.is2faEnabled && !store.state.user.is2fa)
     return false

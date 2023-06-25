@@ -14,26 +14,36 @@
                     mb-5
                     pt-1
                   ">
-                  <img :src="generateImageURL()" height="200" style="border-radius: 50%" />
+                  <img :src="generateImageURL(lookedUpId)" height="200" style="border-radius: 50%" />
                 </div>
                 <h2 class="fw-bold mt-1 mb-5 text-uppercase">{{ lookedUpUserName }}</h2>
                 <h4 class="fw-bold mt-1 mb-5">Email: {{ lookedUpEmail }}</h4>
 
-                <button v-if="!areFriends" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
-                  v-on:click="makeFriend()">
-                  Make friend
-                </button>
-                <button v-if="areFriends" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
+                <div>
+                <!-- <div style="display: flex; flex-direction: column;"> -->
+                  <OpenDirectChatButton v-if="!isBlocked" :userId="userId" :friendId="lookedUpId" />
+                  <button v-if="!isBlocked" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
+                    v-on:click="setBlock(true)">
+                    Block
+                  </button>
+                  <button v-else class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
+                    v-on:click="setBlock(false)">
+                    Unblock
+                  </button>
+                  <button v-if="!areFriends" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
+                    v-on:click="makeFriend()">
+                    Make friend
+                  </button>
+                  <button v-if="areFriends" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
                   v-on:click="unfriend()">
                   Unfriend
-                </button>
-                <p v-if="areFriends">you guys are friends</p>
-                <p v-if="!areFriends"> </p>
-
-                <OpenDirectChatButton :userId="userId" :friendId="lookedUpId" />
-                <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="createGame()">
-                  Game
-                </button>
+                  </button>
+                  <p v-if="areFriends">already in friends list</p>
+                  <p v-if="!areFriends"> </p>
+                  
+                  <p v-if="isBlocked">user blocked</p>
+                  
+                </div>
               </div>
             </div>
           </div>
@@ -48,7 +58,7 @@ import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
 import { key } from "../store/store";
 import { getUserById } from "../api/user";
-import { getFriendshipsRequest, makeFriendshipRequest, unfriendRequest } from "@/api/friendshipsApi";
+import { getFriendshipsRequest, makeFriendshipRequest, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
 import { generateImageURL } from "@/utils/utils";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
 
@@ -81,6 +91,7 @@ export default defineComponent({
       areFriends: false,
       friendshipId: "",
       userId: user.id,
+      isBlocked: false,
     };
   },
 
@@ -90,7 +101,6 @@ export default defineComponent({
       console.log("looked id: " + this.lookedUpId)
       this.getUserInfo(this.lookedUpId)
       this.getFriendship()
-
     }
   },
 
@@ -100,8 +110,9 @@ export default defineComponent({
         const friendships = await getFriendshipsRequest(this.currentUser?.id as string)
         const found = friendships.find(f => f.friend.id == this.lookedUpId)
         if (found) {
-          this.areFriends = true
           this.friendshipId = found.id as string
+          this.areFriends = found.isFriend
+          this.isBlocked = found.isBlocked
         }
       } catch (err) {
         console.log(err)
@@ -115,25 +126,15 @@ export default defineComponent({
           this.lookedUpUserName = response.data.username;
           this.lookedUpEmail = response.data.email;
         })
-        .catch((error) => {
-          //todo: revisar esto, y ya puestos revisar todos los alerts
-          alert("usuario o contraseña incorrectos");
+        .catch(() => {
+          alert("User not found");
         });
-    },
-
-    createGame() {
-      if (this.$data.lookedUpUserName)
-        this.$router.push(`/chats?challenge=${this.$data.lookedUpUserName}`);
-    },
-
-    onUpload() {
-      //const storageRef= storage.ref(`${this.imageData.name}`).put(this.imageData);
     },
 
     async makeFriend() {
       const res = await makeFriendshipRequest(this.currentUser?.id as string, this.lookedUpId)
       if (res.status === 201) {
-        this.areFriends = true;
+        this.areFriends = res.data.isFriend
         this.friendshipId = res.data.id
       }
     },
@@ -147,7 +148,16 @@ export default defineComponent({
       catch (err) {
         alert("could not unfriend")
       }
+    },
 
+    setBlock(isBlocked: boolean) {
+      try {
+        setBlockFriendRequest(this.friendshipId, isBlocked)
+        this.isBlocked = isBlocked
+      }
+      catch (err) {
+        console.log(err)
+      }
     },
   },
 });

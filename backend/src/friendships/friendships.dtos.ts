@@ -3,4 +3,5 @@ export interface FriendshipDto {
     userId?: string
     friendId?: string
     isBlocked?: boolean
+    isFriend?: boolean
 }
