@@ -8,7 +8,6 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import * as Joi from 'joi'
 import { EMAIL_VALIDATOR, PASSWORD_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
 import { getAuthToken } from 'src/utils/utils';
-import { debug } from 'console';
 
 @Controller('auth')
 export class AuthController {
@@ -21,8 +20,8 @@ export class AuthController {
   async signup(@Body() data: EmailSignupDto) {
     validateInput(Joi.object({
       email: EMAIL_VALIDATOR.required(),
-      password: PASSWORD_VALIDATOR.required,
-      username: USERNAME_VALIDATOR.required,
+      password: PASSWORD_VALIDATOR.required(),
+      username: USERNAME_VALIDATOR.required(),
     }), data);
     return await this.authService.registerWithEmail(data)
   }
@@ -65,7 +64,6 @@ export class AuthController {
     //   login42: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
     //   id: Joi.string().guid().required(),
     // }), user);
-
     
     const secret = await this.authService.generateTwoFactorAuthenticationSecret(user)
     // update user secret

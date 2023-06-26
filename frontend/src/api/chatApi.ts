@@ -83,9 +83,9 @@ export async function postChatMessageReq(roomId: string, message: ChatMessage) {
     return apiClient.post(`${URL}/messages/${roomId}`, message)
 }
 
-export async function leaveChatRoomReq(roomId: string, userId: string) {
-    return apiClient.post(`${URL}/rooms/${roomId}/leave`, { userId })
-}
+// export async function leaveChatRoomReq(roomId: string, userId: string) {
+//     return apiClient.post(`${URL}/rooms/${roomId}/leave`, { userId })
+// }
 
 export async function deleteChatRoom(roomId: string) {
     return apiClient.delete(`${URL}/rooms/${roomId}`)

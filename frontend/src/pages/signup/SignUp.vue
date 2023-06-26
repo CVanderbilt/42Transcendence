@@ -24,17 +24,6 @@
                     <input type="email" id="typeEmailX" class="form-control form-control-lg" v-model="email" required />
                     <label class="form-label" for="typeEmailX">Email</label>
                   </div>
-                  <!-- <div class="form-outline form-white mb-2">
-                  <input
-                    type="repemail"
-                    id="typeRepEmailX"
-                    class="form-control form-control-lg"
-                    v-model="repeatedemail"
-                  />
-                  <label class="form-label" for="typeRepEmailX"
-                    >Repeat Email</label
-                  >
-                </div> -->
 
                   <div class="form-outline form-white mb-2">
                     <input type="password" id="typePasswordX" class="form-control form-control-lg" v-model="password"
@@ -57,7 +46,7 @@
 import { signup } from "@/api/auth";
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
-import { IUser, key, store } from "../../store/store";
+import { key } from "../../store/store";
 
 export default defineComponent({
   name: "SignUp",
@@ -84,21 +73,17 @@ export default defineComponent({
       // prevents the form from redirecting to a resource
     },
     signUpNewUser() {
-      // if (this.email !== this.repeatedemail) {
-      if (this.email !== undefined) {
+      try {
         signup({
           username: this.username,
           password: this.password,
           email: this.email,
         })
-          .then((response) => {
-            alert("You can now login!");
-            this.$router.push("/login");
-          }).catch(error => alert("Can not sign up! (" + error + ")"));
-
-      } else {
-        // alert("email and repeated email are not the same");
-        alert("email is not valid");
+        alert("You can now login!");
+        this.$router.push("/login");
+      }
+      catch (error) {
+        console.log(error);
       }
     },
     ...mapActions(["mockLogin"]),

@@ -43,9 +43,9 @@ export class Chats2Controller {
     // get private chat for users
     @Post('rooms/direct')
     async getPrivateRoom(@Body() body: any): Promise<ChatRoom> {
-        Logger.log("getPrivateRoom")
-        //TODO validar que los ids sean validos
-        Logger.log(`body: ${body}`)
+        //TODO añadir validacion de ids
+        console.log("getPrivateRoom")
+        Logger.log({ body })
         const id1 = body.user1
         const id2 = body.user2
         Logger.log(`id1: ${id1}, id2: ${id2}`)
@@ -110,23 +110,22 @@ export class Chats2Controller {
     @Delete('rooms/:id')
     async deleteRoom(@Param('id') id: number) {
         this.chatsService.deleteRoom(id)
-    }77
-
-    // leave chat room
-    @Post('rooms/:id/leave')
-    async leaveRoom(@Param('id') id: number, @Body() data: ChatMembershipDto) {
-        validateInput(Joi.object({
-            userId: Joi.string().guid().required(),
-        }), data);
-        return this.chatsService.leaveRoom(id, data.userId)
     }
+
+    // // leave chat room
+    // @Post('rooms/:id/leave')
+    // async leaveRoom(@Param('id') id: number, @Body() data: ChatMembershipDto) {
+    //     validateInput(Joi.object({
+    //         userId: Joi.string().guid().required(),
+    //     }), data);
+    //     return this.chatsService.leaveRoom(id, data.userId)
+    // }
 
     // get one memebership
     @Get('memberships/:id')
     async findMembership(@Param('id') id: number): Promise<ChatMembership> {
         return await (this.chatsService.findChatMembershipById(id))
     }
-
 
     // get chat room members
     @Get('rooms/:id/members')
@@ -142,7 +141,7 @@ export class Chats2Controller {
         if (token.role === 'ADMIN' || token.role === 'OWNER') {
             const rooms = await this.chatsService.findAllChatRooms()
 
-            const memberships : ChatMembership[] = rooms .map(room => {
+            const memberships : ChatMembership[] = rooms.map(room => {
                 return {
                     id: -1,
                     isOwner: true,
@@ -219,7 +218,8 @@ export class Chats2Controller {
     // delete membership
     @Delete('memberships/:id')
     async deleteMembership(@Param('id') id: number) {
-        Logger.log(`delete membership ${id}`)
+        if (id < 0)  // admin gets memberships for all rooms with id = -1
+            return null 
         return this.chatsService.deleteMembership(id)
     }
 
