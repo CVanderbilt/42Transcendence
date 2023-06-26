@@ -1,4 +1,3 @@
-import { UUIDVersion } from "class-validator";
 import { UserEntity } from "src/users/user.entity";
 import { BaseEntity, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
@@ -17,4 +16,7 @@ export class FriendshipEntity extends BaseEntity{
 
     @Column({default: false})
     isBlocked: boolean
+
+    @Column({default: true})
+    isFriend: boolean
 }

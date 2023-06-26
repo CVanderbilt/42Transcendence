@@ -25,8 +25,11 @@ export class UserEntity extends BaseEntity {
     is2fa: boolean;
 
     @Exclude()
-    @Column({ default: "", }) // si añado nullable: true después no TS me deja darle un valor
+    @Column({ default: "", })
     twofaSecret: string
+    @Exclude()
+    @Column({ default: "", })
+    tentativeTwofaSecret: string
 
     @Column({ default: 0})
     victories: number;

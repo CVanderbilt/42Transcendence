@@ -47,7 +47,7 @@
           Short paddles: Paddle length is reduced by 50%.
         </li>
         <li>
-          Fast ball: Ball speed is increased by 100%.
+          Fast serve: Ball speed is increased by 100% during the first serve.
         </li>
       </ul>
     </div>

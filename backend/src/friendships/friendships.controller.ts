@@ -18,28 +18,27 @@ export class FriendshipsController {
 
     @Post()
     createFriendship(@Body() data: FriendshipDto) {
-        validateInput(Joi.object({
-            userId: ID_VALIDATOR.required(),
-            friendId: ID_VALIDATOR.required(),
-        }), data);
-        Logger.log(data);
+        // validateInput(Joi.object({
+        //     userId: ID_VALIDATOR.required(),
+        //     // friendId: ID_VALIDATOR.required(),
+        // }), data);
         return this.friendsipsService.createFriendship(data);
     }
 
     @Post("/:friendshipId")
     updateFriendship(@Param('friendshipId') friendshipId: string, @Body() data: FriendshipDto) {
-        validateInput(Joi.object({
-            friendshipId: ID_VALIDATOR.required(),
-            isBlocked: Joi.boolean().required()
-        }), {...data, friendshipId });
-        return this.friendsipsService.updateFriendship(friendshipId, data.isBlocked);
+        // validateInput(Joi.object({
+        //     friendshipId: Joi.string.regex(/^-?\d+(\.\d+)?$/).required(),
+        //     isBlocked: Joi.boolean().required()
+        // }), {...data, friendshipId });
+        return this.friendsipsService.updateFriendship(friendshipId, data);
     }
 
-    @Delete("/:friendshipId")
-    deleteFriendship(@Param('friendshipId') friendshipId: string) { 
-        validateInput(Joi.object({
-            friendshipId: ID_VALIDATOR.required(),
-        }), {friendshipId });
-        return this.friendsipsService.deleteFriendship(friendshipId);
-    }
+    // @Delete("/:friendshipId")
+    // deleteFriendship(@Param('friendshipId') friendshipId: string) { 
+    //     // validateInput(Joi.object({
+    //         // friendshipId: ID_VALIDATOR.required(),
+    //     // }), {friendshipId });
+    //     return this.friendsipsService.deleteFriendship(friendshipId);
+    // }
 }

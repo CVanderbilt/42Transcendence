@@ -13,6 +13,10 @@ export class IUser {
   is2faEnabled = true;
   role = "";
   isBanned = false;
+  createdAt? = "";
+  victories? = 0
+  defeats? = 0
+  score? = 0
 }
 
 // define your typings for the store state

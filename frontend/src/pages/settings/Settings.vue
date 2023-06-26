@@ -51,9 +51,9 @@
 import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
 import { key, store } from "../../store/store";
-import { generateImageURL, publishNotification } from "@/utils/utils";
+import { generateImageURL, publishNotification, throwFromAsync } from "@/utils/utils";
 import { IUserAPI, putImage, updateUserReq } from "@/api/user";
-import { stateSocketIO } from "@/main";
+import { app, stateSocketIO } from "@/main";
 
 //todo: que cuando se modifique el usuario se recarge la informacion del usuario (la imagen se tiene que volver a descargar y el store.user tiene que actualizarse)
 export default defineComponent({
@@ -82,24 +82,25 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.options.username = store.state.user?.username as string
-    this.options.is2fa = store.state.user?.is2fa
+    console.log("Settings mounted");
+    console.log(this.user);
+    this.options.username = this.user.username as string
+    this.options.is2fa = this.user?.is2fa
   },
 
   methods: {
-    submit() {
+    async submit() {
       if (!store.state.user) {
-        console.error("no hay id y esta intentando modificar, no debería ni pasar");
+        console.error("Something went wrong, logout and login again");
         return;
       }
 
       try {
-        updateUserReq(store.state.user.id, this.options) // TODO: no captura el error del servidor cuando los nobre sde usuarios son iguales
-          .then(() => { publishNotification("User updated", false) })
+        const res = await (await updateUserReq(store.state.user.id, this.options)).data
+        publishNotification("User updated", false)
       }
-      catch (e) {
-        publishNotification("User already exists", true)
-        return;
+      catch (error: any) {
+        return
       }
 
       store.commit("changeUserName", this.options.username)
@@ -107,9 +108,8 @@ export default defineComponent({
       if (this.selectedFile)
         putImage(store.state.user.id, this.selectedFile);
 
-
       // si el usuario quiere activar 2fa llevarlo a la pagina de 2fa
-      if (this.options.is2fa && !store.state.user.is2fa) {
+      if (this.options.is2fa && !store.state.user.is2faEnabled) {
         this.$router.push("/qr");
       }
 

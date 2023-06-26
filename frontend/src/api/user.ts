@@ -9,11 +9,11 @@ export interface IUserAPI {
     password?: string
     username: string
     is2fa?: boolean
-    twofaSecret?: string // todo: no estoy seguro
+    twofaSecret?: string
     victories?: number
     defeats?: number
+    score?: number
 }
-
 
 // async function createUser(options: IUserAPI) {
 //     return apiClient.post(URL, {...options, chats: [{name: "general", role: "user"}]});
@@ -21,7 +21,6 @@ export interface IUserAPI {
 
 export async function updateUserReq(id: string, options: IUserAPI) {    
     const res = await apiClient.put(`${URL}/${id}`, options)
-    console.log(res)
     return res
 }
 
@@ -37,8 +36,9 @@ export async function updateUserChats(id: string, options: string){
     return apiClient.put(`${URL}/${id}`, options)
 }
 
-export async function getImage(id: string) {
-    return apiClient.get(`${URL}/${id}${IMAGE_URL}`)
+export async function getAvatarUrl(userId: string) {
+    console.log(`${URL}/${userId}/image`)
+    return apiClient.get(`${URL}/${userId}/image`)
 }
 
 export async function putImage(id: string, image: File) {

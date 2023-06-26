@@ -80,6 +80,12 @@ export default defineComponent({
     console.log("created");
   },
 
+  onmounted() {
+    this.io.socket.offAny();
+    this.io.socket.emit("user_state_updated", {userId: this.user.id, state:"online"});
+    console.log("mounted");
+  },
+
   data() {
     return {
       searchUsername: "",

@@ -22,12 +22,23 @@
 
 import { apiClient } from '@/api/baseApi';
 import { ENABLE_2FA_ENDPOINT, QR_ENDPOINT } from '@/config';
-import { store } from '@/store/store';
-import { defineComponent } from 'vue';
+import { key, store } from '@/store/store';
+import { publishNotification } from '@/utils/utils';
+import { computed, defineComponent } from 'vue';
+import { useStore } from 'vuex';
 
 
 export default defineComponent({
     name: "qr",
+    setup() {
+        const store = useStore(key);
+        const user = computed(() => store.state.user);
+
+        return {
+            user,
+        };
+    },
+
     data() {
         return {
             qrCodeUrl: '',
@@ -35,7 +46,9 @@ export default defineComponent({
         }
     },
     mounted() {
+
         this.getQRCode();
+
     },
     methods: {
         async getQRCode() {
@@ -49,13 +62,15 @@ export default defineComponent({
         async submitCode() {
             //Validate the user's code and redirect them to the appropriate page
 
-            const response = await apiClient.post(ENABLE_2FA_ENDPOINT + "/" + this.code);
-            
-            if (response.status === 200) {
-                store.commit('set2fa', true);
-                this.$router.push('/');
-            } else {
-                alert('Invalid code, please try again.');
+            try {
+                const response = await (await apiClient.post(ENABLE_2FA_ENDPOINT + "/" + this.code));
+                if (response.status === 200) {
+                    store.commit('set2fa', true);
+                    this.$router.push('/');
+                }
+            }
+            catch (error) {
+                publishNotification('Invalid code, please try again.', true);
             }
         }
     }

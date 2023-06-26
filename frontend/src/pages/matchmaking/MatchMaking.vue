@@ -25,8 +25,8 @@
                           <input type="checkbox" v-model="options.smallPaddle" />
                         </div>
                         <div>
-                          <label for="isFast" style="margin-right: 20px;">Fast ball</label>
-                          <input type="checkbox" v-model="options.fastBall" />
+                          <label for="isFast" style="margin-right: 20px;">Fast Serve</label>
+                          <input type="checkbox" v-model="options.fastServe" />
                         </div>
                       </form>
                     </div>
@@ -63,14 +63,10 @@
 
 <script lang="ts">
 import { computed, defineComponent } from "vue";
-import { useStore, mapActions } from "vuex";
-import { key, store } from "../..//store/store";
+import { useStore } from "vuex";
+import { key } from "../..//store/store";
 import { enterCompetitiveGameApi, enterExhibitionGameApi } from "../../api/gameApi";
 import "@/style/styles.css";
-import { onUnmounted } from 'vue'
-
-import { chatSocketIO } from "../../main";
-declare var require: any;
 
 export default defineComponent({
   name: "Matchmaking",
@@ -86,7 +82,7 @@ export default defineComponent({
     return {
       options: {
         smallPaddle: false,
-        fastBall: false,
+        fastServe: false,
       },
     };
   },
@@ -105,7 +101,7 @@ export default defineComponent({
     async enterExhibitionMatch() {
       let powerups = "";
       powerups = powerups.concat(this.options.smallPaddle ? "S" : "");
-      powerups = powerups.concat(this.options.fastBall ? "F" : "");
+      powerups = powerups.concat(this.options.fastServe ? "F" : "");
       if (powerups === "") {
         powerups = "N";
       }

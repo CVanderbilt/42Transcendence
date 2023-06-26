@@ -18,12 +18,12 @@
 
                 <h6 style="color: white; margin-top: 30px;">Group chats</h6>
                 <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name">
-                  <div v-if="!item.chatRoom.isDirect && item.chatRoom.id != '1'" style="display: flex;">
+                  <div v-if="!item.chatRoom.isDirect && item.chatRoom.id != generalRoom.id" style="display: flex;">
                     <b-button v-on:click="changeRoom(item.chatRoom.id, item.chatRoom.name)"
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                       {{ item.chatRoom.name }}
                     </b-button>
-                    <button v-if="item.chatRoom.name !== generalRoom.name" @click="leaveRoom(item.chatRoom.id)"> x
+                    <button v-if="item.chatRoom.name !== generalRoom.name && user.role !== 'ADMIN'" @click="leaveRoom(item.chatRoom.id)"> x
                     </button>
                   </div>
                 </div>
@@ -38,7 +38,7 @@
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                       {{ item.niceName }}
                     </b-button>
-                    <button @click="leaveRoom(item.chatRoom.id)"> x </button>
+                    <button v-if="user.role !== 'ADMIN'" @click="leaveRoom(item.chatRoom.id)"> x </button>
                   </div>
                 </div>
               </div>
@@ -65,7 +65,7 @@
                         <b-col>
                           <div v-if="message.senderName !== user?.username" class="message-text">
                             <router-link v-if="message.isChallenge" :to="'/game?id=' + message.content"
-                            style="cursor: pointer; color:black; font-weight: 900;">{{
+                              style="cursor: pointer; color:black; font-weight: 900;">{{
                                 message.senderName + ": " + "DUEL!" }}
                             </router-link>
                             <a v-else style="cursor: pointer;" v-on:click="showUserActions(message.senderId as string)">{{
@@ -92,7 +92,8 @@
                         Duel
                       </b-button>
                       <!-- manage -->
-                      <b-button v-if="currentMembership.isAdmin === true || currentMembership.isOwner === true"
+                      <b-button
+                        v-if="(currentMembership.isAdmin === true || currentMembership.isOwner === true) && !currentMembership.chatRoom.isDirect"
                         class="chat-button" @click="updateManagedChat()" style="margin-left: 10px">
                         Manage chat
                       </b-button>
@@ -199,7 +200,7 @@
                 </div>
 
                 <b-button style="background-color: brown;" type="button"
-                  @click="removeChatMembership(item.id)">Kick</b-button>
+                  @click="kickChatMember(item.id)">Kick</b-button>
               </form>
             </div>
           </div>
@@ -251,7 +252,7 @@ import { useStore } from "vuex";
 import { IUser, key, store } from "../../store/store";
 import "@/style/styles.css";
 import { app, useSocketIO } from "../../main";
-import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, leaveChatRoomReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom, getChatRoomByIdReq, getGeneralRoom, getDirectChatRoomReq } from "../../api/chatApi";
+import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom, getChatRoomByIdReq, getGeneralRoom, getDirectChatRoomReq } from "../../api/chatApi";
 import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserById, getUserByName } from "../../api/user";
@@ -378,6 +379,7 @@ export default defineComponent({
 
     // get all user memberships
     this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
+    console.log(this.userMemberships)
 
     // get current membership
     const membership = this.userMemberships.find((membership: any) => membership.chatRoom.name === this.chatRoomName)
@@ -562,22 +564,26 @@ export default defineComponent({
       // change chat
     },
 
+
     async leaveRoom(roomId: any) {
       // remove membership
-      const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
-      if (membership) {
-        this.userMemberships.splice(this.userMemberships.indexOf(membership), 1)
-      }
-      try {
-        await leaveChatRoomReq(roomId, this.user?.id as string)
-      } catch (error: any) {
-        const errorMsg = (error).response?.data?.message
-        alert("Error leaving the room: " + (errorMsg || "Unknown error"));
-        // return
-      }
+      console.log(this.userMemberships)
 
-      // change to general chat
-      this.changeRoom(this.generalRoom.id, this.generalRoom.name)
+      const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
+      console.log(membership)
+      if (membership) {
+        // remove membership from list
+        this.userMemberships = this.userMemberships.filter((m) => m !== membership)
+        try {
+          await deleteChatRoomMembershipsReq(membership.id)
+        } catch (error: any) {
+          const errorMsg = (error).response?.data?.message
+          alert("Error leaving the room: " + (errorMsg || "Unknown error"));
+          return
+        }
+      }
+      // // change to general chat
+      // this.changeRoom(this.generalRoom.id, this.generalRoom.name)
     },
 
     async changeRoom(roomId: string, roomName: string) {
@@ -619,6 +625,8 @@ export default defineComponent({
           throwFromAsync(app, "Error getting messages: " + error.response?.data?.message || "Unknown error")
         });
       })
+
+      console.log(this.currentMembership)
     },
 
     async createChatRoom(roomName: string, password: string, userNames: string[]) {
@@ -664,7 +672,7 @@ export default defineComponent({
       }
     },
 
-    async removeChatMembership(membershipId: string) {
+    async kickChatMember(membershipId: string) {
       try {
         await deleteChatRoomMembershipsReq(membershipId)
         this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.id !== membershipId)

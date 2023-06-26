@@ -1,3 +1,4 @@
+
 import { apiClient } from "./baseApi";
 
 const URL = "/friendships";
@@ -5,11 +6,11 @@ const URL = "/friendships";
 export interface IFriend {
     id: string,
     username: string,
-    pic?: string,
     createdAt: string,
     victories: number,
     defeats: number,
-    achievements: string,
+    score: number,
+    email: string,
 }
 
 export interface IFriendship {
@@ -17,7 +18,8 @@ export interface IFriendship {
     userId: string,
     friendId: string,
     isBlocked: boolean,
-    friend: IFriend
+    friend: IFriend,
+    isFriend: boolean,
 }
 
 async function getFriendshipsRequest(userId: string): Promise<IFriendship[]> {
@@ -30,12 +32,10 @@ async function makeFriendshipRequest(userId: string, friendId: string) {
 }
 
 async function unfriendRequest(friendshipId: string) {
-    return apiClient.delete(`${URL}/${friendshipId}`);
+    return apiClient.post(`${URL}/${friendshipId}`, { isFriend: false });
 }
 
 async function setBlockFriendRequest(friendshipId: string, isBlocked: boolean) {
-    console.log("setBlockFriendRequest")
-    console.log(friendshipId)
     return apiClient.post(`${URL}/${friendshipId}`, { isBlocked: isBlocked });
 }
 

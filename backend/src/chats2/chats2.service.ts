@@ -99,7 +99,7 @@ export class Chats2Service {
     }
 
     async getDirectChatRoom(userId1: string, userId2: string): Promise<ChatRoom> {
-        // find the chat room with the two users that is private
+        // find the chat room with the two users that is direct
         const chatRoom = await this.chatRoomsRepo
             .createQueryBuilder('chatRoom')
             .innerJoin('chatRoom.memberships', 'membership1')
@@ -358,7 +358,7 @@ export class Chats2Service {
     async setIsBanned(userId: string, chatRoomId: number, isBanned: boolean) {
         try {
             const membership = await this.getUserChatMembership(userId, chatRoomId)
-    
+
             membership.isBanned = isBanned;
             membership.bannedUntil = isBanned ? new Date(3000, 0, 1) : new Date()
             membership.save();
@@ -371,7 +371,7 @@ export class Chats2Service {
     async setIsAdmin(userId: string, chatRoomId: number, isAdmin: boolean) {
         try {
             const membership = await this.getUserChatMembership(userId, chatRoomId)
-    
+
             membership.isAdmin = isAdmin;
             membership.save();
             this.setIsBanned(userId, chatRoomId, !isAdmin)
@@ -383,40 +383,58 @@ export class Chats2Service {
 
     async deleteMembership(id: number) {
         const membership = await this.chatMembershipsRepo.findOne({ where: { id: id }, relations: ['chatRoom'] })
-        const room = membership.chatRoom
+        if (!membership)
+            return new HttpException('Membership not found', HttpStatusCode.NotFound)
 
+        const room = membership.chatRoom
         const res = await this.chatMembershipsRepo.delete({ id: id })
+
         // if the user is the last member of the room, delete the room
         const memberships = await this.findChatRoomMembers(room.id)
         if (memberships.length == 0) {
             this.chatRoomsRepo.delete(room.id)
         }
-        return res
-    }
 
-    async leaveRoom(chatRoomId: number, userId: string) {
-        // if user is owner of the room, delete the room
-        const membership = await this.getUserChatMembership(userId, chatRoomId)
-        if (!membership) {
-            return new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
-        }
-        if (membership.isOwner) {
-            return this.deleteRoom(chatRoomId)
-        }
-
-        const res = await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId }, user: { id: userId } })
-        // if the user is the last member of the room, delete the room
-        const memberships = await this.findChatRoomMembers(chatRoomId)
-        if (memberships.length == 0) {
-            this.chatRoomsRepo.delete(chatRoomId)
-        }
         // if it was a direct room, delete the room
         if (membership.chatRoom.isDirect) {
-            this.chatRoomsRepo.delete(chatRoomId)
+            this.findChatRoomMembers(membership.chatRoom.id).then(memberships => {
+                memberships.forEach(async membership => {
+                    console.log("deleting membership" + membership.id)
+                    await this.deleteMembership(membership.id)
+                })
+            }).then(async () => {
+                console.log("left mebmers?")
+                const memberships = await this.findChatRoomMembers(room.id)
+                console.log(memberships)
+                this.chatRoomsRepo.delete(room.id)
+            })
         }
-
         return res
     }
+
+    // async leaveRoom(chatRoomId: number, userId: string) {
+    //     // if user is owner of the room, delete the room
+    //     const membership = await this.getUserChatMembership(userId, chatRoomId)
+    //     if (!membership) {
+    //         return new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
+    //     }
+    //     if (membership.isOwner) {
+    //         return this.deleteRoom(chatRoomId)
+    //     }
+
+    //     const res = await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId }, user: { id: userId } })
+    //     // if the user is the last member of the room, delete the room
+    //     const memberships = await this.findChatRoomMembers(chatRoomId)
+    //     if (memberships.length == 0) {
+    //         this.chatRoomsRepo.delete(chatRoomId)
+    //     }
+    //     // if it was a direct room, delete the room
+    //     if (membership.chatRoom.isDirect) {
+    //         this.chatRoomsRepo.delete(chatRoomId)
+    //     }
+
+    //     return res
+    // }
 
     async deleteRoom(chatRoomId: number) {
         await this.chatMembershipsRepo.delete({ chatRoom: { id: chatRoomId } })
