@@ -56,6 +56,7 @@ import { RouterView } from "vue-router";
 import { getUserByName } from "./api/user";
 import { generateImageURL } from "./utils/utils";
 import { stateSocketIO } from "./main";
+import { UserStateSocket } from "./utils/types";
 
 export default defineComponent({
   name: "App",
@@ -66,7 +67,7 @@ export default defineComponent({
 
     return {
       user,
-      io,
+      ioUserState: io,
     };
   },
 
@@ -74,15 +75,21 @@ export default defineComponent({
     this.notificationMessage = "message";
     this.isError = false;
 
-    this.io.socket.offAny();
-    this.io.socket.emit("user_state_updated", {userId: this.user.id, state:"online"});
+    this.ioUserState.socket.offAny();
+    this.ioUserState.socket.emit("user_state_updated", {userId: this.user.id, state:"online"});
 
     console.log("created");
   },
 
   onmounted() {
-    this.io.socket.offAny();
-    this.io.socket.emit("user_state_updated", {userId: this.user.id, state:"online"});
+    this.ioUserState.socket.offAny();
+    this.ioUserState.socket.emit("user_state_updated", {userId: this.user.id, state:"online"});
+
+    this.ioUserState.socket.on("user_state_updated", (state: UserStateSocket) => {
+      if (state.userId == store.state.user.id && state.state == "offline")
+        this.ioUserState.socket.emit("user_state_updated", {userId: store.state.user.id, state:"online"});
+    });
+
     console.log("mounted");
   },
 
