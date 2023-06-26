@@ -54,9 +54,4 @@ export class FriendshipsService {
             console.log(err);
         }
     }
-
-    // //delete a friendship
-    // deleteFriendship(friendshipId: string) {
-    //     return this.friendshipsRepo.delete(friendshipId);
-    // }
 }
