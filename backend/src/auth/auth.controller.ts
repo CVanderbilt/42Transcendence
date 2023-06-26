@@ -1,17 +1,21 @@
 import { Body, Controller, Get, HttpCode, HttpException, Logger, Param, Post, Query, Redirect, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
-import { Jwt2faAuthGuard } from './jwt-2fa-auth.guard';
 import { User } from 'src/users/user.interface';
 import { EmailSignupDto, LoginEmailDto } from './auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import * as Joi from 'joi'
 import { EMAIL_VALIDATOR, PASSWORD_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
 import { getAuthToken } from 'src/utils/utils';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from 'src/users/user.entity';
+import { Repository } from 'typeorm';
 
 @Controller('auth')
 export class AuthController {
   constructor(
+    @InjectRepository(UserEntity)
+    private readonly usersRepo: Repository<UserEntity>,
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
   ) { }
@@ -76,10 +80,16 @@ export class AuthController {
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
   async turnOnTwoFactorAuthentication(@Req() req, @Param('code') twoFactorCode: string) {
+    console.log("turnOnTwoFactorAuthentication")
+
+
     const authToken = getAuthToken(req)
-    const user : User = await this.authService.getUserById(authToken.userId)
+    const user = await this.usersRepo.findOne({ 
+      where: { id: authToken.userId },
+      select: ["id", "email", "username", "password", "role", "is2fa", "twofaSecret", "tentativeTwofaSecret"] })
 
     Logger.log("turnOnTwoFactorAuthentication with 2fa code : " + twoFactorCode + " for user " + user.username)
+    console.log(user)
     
     // validateInput(Joi.object({
     //   login42: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),

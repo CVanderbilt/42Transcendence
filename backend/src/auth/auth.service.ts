@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { authenticator } from 'otplib';
 import { UsersService } from 'src/users/users.service';
@@ -7,13 +7,18 @@ import { LoginResDto, EmailSignupDto, LoginEmailDto } from './auth.dto';
 import axios from 'axios';
 import { User } from 'src/users/user.interface';
 import * as bcrypt from 'bcrypt';
-import { generateRandomSquaresImage, getAuthToken } from 'src/utils/utils';
+import { generateRandomSquaresImage } from 'src/utils/utils';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from 'src/users/user.entity';
+import { Repository } from 'typeorm';
 const PNG = require('pngjs').PNG;
 
 
 @Injectable()
 export class AuthService {
     constructor(
+        @InjectRepository(UserEntity)
+        private readonly usersRepo: Repository<UserEntity>,
         private readonly usersService: UsersService,
         private jwtService: JwtService,
     ) { }
@@ -52,7 +57,12 @@ export class AuthService {
         if (login === undefined)
             throw new HttpException("INVALID_DATA", HttpStatus.BAD_REQUEST)
 
-        const user : User = await this.usersService.findByEmail(login.email)
+        const user = await this.usersRepo.findOne({ 
+            where: { email: login.email },
+            select: ["id", "email", "username", "password", "role", "is2fa"] })
+
+        console.log("user", {user})
+
         if (!user) {
             throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.NOT_FOUND)
         }
@@ -62,8 +72,6 @@ export class AuthService {
             throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.FORBIDDEN)
         }
 
-        const pic : string = "" // TODO: get generic pic?
-        
         const payload = {
             userId: user.id,
             email: user.email,
@@ -110,7 +118,6 @@ export class AuthService {
             Logger.error("Failed getting token from 42: " + JSON.stringify( error ))            
             throw new HttpException("Failed getting token from 42", HttpStatus.BAD_REQUEST)
         }
-        
     }
 
     async exchange42TokenForUserData(token: string): Promise<any> {
@@ -133,9 +140,7 @@ export class AuthService {
         const me42 = await this.exchange42TokenForUserData(accessData.access_token)
         const name = me42.first_name + " " + me42.last_name
         const login42 = me42.login
-        const pic = me42.image.link
 
-        // get user
         var user: User = await this.usersService.findBy42Login(me42.login)
         if (!user) {
             // create user
@@ -184,6 +189,7 @@ export class AuthService {
     }
 
     public async isTwoFactorAuthenticationCodeValid(code: string, secret: string) {
+        console.log("isTwoFactorAuthenticationCodeValid", {code, secret})
         const isCodeValid = authenticator.verify({
             token: code,
             secret: secret,
@@ -197,7 +203,9 @@ export class AuthService {
         if (userId === undefined)
             throw new HttpException("USER_NOT_FOUND", HttpStatus.BAD_REQUEST)
 
-        const user = await this.usersService.findOneById(userId)
+            const user = await this.usersRepo.findOne({ 
+                where: { id: userId },
+                select: ["id", "email", "username", "password", "role", "is2fa", "twofaSecret", "tentativeTwofaSecret"] })
         if (!user) {
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
         }

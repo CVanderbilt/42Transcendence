@@ -69,7 +69,6 @@ export class UsersController {
     @UseGuards(JwtAuthenticatedGuard)
     @Get()
     async findAll(): Promise<UserDto[]> {
-        // transforma el array de usuarios en un array de UserDto
         const users = await this.usersService.findAllUsers()
         return users.map(user => new UserDto(user))
     }
@@ -84,7 +83,7 @@ export class UsersController {
         if (!user)
             throw new HttpException(`User ${username} not found`, 404)
 
-        return new UserDto(user) // para no devolver el password
+        return new UserDto(user)
     }
     
     @UseGuards(JwtAuthenticatedGuard)
@@ -107,7 +106,7 @@ export class UsersController {
             password: PASSWORD_VALIDATOR,
             login42: USERNAME_VALIDATOR,
             username: USERNAME_VALIDATOR.required(),
-            is2fa: Joi.boolean(), //todo: revisar que pasa si is2fa está pero twofaSecret no
+            is2fa: Joi.boolean(),
             twofaSecret: Joi.boolean(),
         }), { ...user, id });
         const token = getAuthToken(request)
@@ -128,7 +127,7 @@ export class UsersController {
         throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to delete user ${id}`)
     }
 
-    //sin guardia, las imagenes son publicas, si no las cosas no funcionan
+    //Public info
     @Get(':id/image')
     async getImageById(@Res({ passthrough: false }) response: Response, @Param('id') id: string) {
         validateInput(Joi.object({

@@ -134,15 +134,6 @@ export class Chats2Controller {
         }
     }
 
-    // // leave chat room
-    // @Post('rooms/:id/leave')
-    // async leaveRoom(@Param('id') id: number, @Body() data: ChatMembershipDto) {
-    //     validateInput(Joi.object({
-    //         userId: Joi.string().guid().required(),
-    //     }), data);
-    //     return this.chatsService.leaveRoom(id, data.userId)
-    // }
-
     // get one memebership
     @UseGuards(JwtAuthenticatedGuard)
     @Get('memberships/:id')
@@ -151,7 +142,7 @@ export class Chats2Controller {
     }
 
     // get chat room members
-    @UseGuards(JwtAuthenticatedGuard)
+    // @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/:id/members')
     async findRoomMembers(@Param('id') id: number): Promise<ChatMembership[]> {
         const res = await (this.chatsService.findChatRoomMembers(id))

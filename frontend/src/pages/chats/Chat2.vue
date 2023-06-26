@@ -356,21 +356,15 @@ export default defineComponent({
 
     this.generalRoom = await (await getGeneralRoom()).data
     this.isAdmin = false;
+    this.joinRoomWithId(this.generalRoom.id)
 
     const requestedRoomId = this.$route.query.roomId as string;
     if (requestedRoomId) {
-      // simplifico este metodo
       this.changeRoom(requestedRoomId)
     } else {
       this.changeRoom(this.generalRoom.id)
     }
 
-    // this.chatRoomName = this.generalRoom.name;
-    // this.chatRoomId = this.generalRoom.id
-
-    // this.joinRoomWithId(this.generalRoom.id);
-
-    // get all user memberships
     this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
     console.log(this.userMemberships)
 
@@ -492,9 +486,8 @@ export default defineComponent({
     },
 
     async joinRoomWithId(roomId: string, password?: string) {
-      if (roomId === "") {
+      if (roomId === "")
         return
-      }
 
       let room = (await getChatRoomByIdReq(roomId)).data
       if (!room) {
@@ -554,9 +547,7 @@ export default defineComponent({
       catch (error: any) {
         throwFromAsync(app, "Error changing the room: " + (error.response?.data?.message || "Unknown error"))
       }
-      // change chat
     },
-
 
     async leaveRoom(roomId: any) {
       // remove membership
@@ -572,7 +563,7 @@ export default defineComponent({
           return
         }
         // update memberships list
-        
+        this.fetchNiceRoomNames()
       }
     },
 

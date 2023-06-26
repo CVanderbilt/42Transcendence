@@ -11,7 +11,7 @@ export class UserEntity extends BaseEntity {
     email: string
 
     @Exclude()
-    @Column ({ nullable: true }) 
+    @Column ({ nullable: true , select : false}) 
     password: string
 
     @Column({ nullable: true })
@@ -20,15 +20,13 @@ export class UserEntity extends BaseEntity {
     @Column({ nullable: false, default: "Anonymous", unique: true })
     username: string
 
-    @Exclude()
-    @Column({ default: false })
+    @Column({ default: false})
     is2fa: boolean;
 
-    @Exclude()
-    @Column({ default: "", })
+    @Column({ default: "", select : false})
     twofaSecret: string
-    @Exclude()
-    @Column({ default: "", })
+    
+    @Column({ default: "", select : false})
     tentativeTwofaSecret: string
 
     @Column({ default: 0})
