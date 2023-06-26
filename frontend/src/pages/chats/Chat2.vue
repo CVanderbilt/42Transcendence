@@ -23,7 +23,8 @@
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                       {{ item.chatRoom.name }}
                     </b-button>
-                    <button v-if="item.chatRoom.name !== generalRoom.name && user.role !== 'ADMIN'" @click="leaveRoom(item.chatRoom.id)"> x
+                    <button v-if="item.chatRoom.name !== generalRoom.name && user.role !== 'ADMIN'"
+                      @click="leaveRoom(item.chatRoom.id)"> x
                     </button>
                   </div>
                 </div>
@@ -199,8 +200,7 @@
                   <label for="mutedUntil">Muted until</label>
                 </div>
 
-                <b-button style="background-color: brown;" type="button"
-                  @click="kickChatMember(item.id)">Kick</b-button>
+                <b-button style="background-color: brown;" type="button" @click="kickChatMember(item.id)">Kick</b-button>
               </form>
             </div>
           </div>
@@ -353,29 +353,22 @@ export default defineComponent({
   },
 
   async mounted() {
-    // if (this.$route.query.challenge) { // ???
-    //   console.log("challenge in query")
-    //   this.challengePlayer(this.$route.query.challenge as string)
-    // }
 
     this.generalRoom = await (await getGeneralRoom()).data
-
-    this.chatRoomName = this.generalRoom.name;
-    this.chatRoomId = this.generalRoom.id
     this.isAdmin = false;
-
-    this.joinRoomWithId(this.generalRoom.id);
 
     const requestedRoomId = this.$route.query.roomId as string;
     if (requestedRoomId) {
-      const chatRoom = await (await getChatRoomByIdReq(requestedRoomId)).data
-      this.chatRoomId = requestedRoomId
-      this.chatRoomName = chatRoom.name
-      console.log("url id " + this.chatRoomName)
-      // join room
-      this.joinRoomWithId(this.chatRoomId)
-      this.roomId = this.chatRoomId
+      // simplifico este metodo
+      this.changeRoom(requestedRoomId)
+    } else {
+      this.changeRoom(this.generalRoom.id)
     }
+
+    // this.chatRoomName = this.generalRoom.name;
+    // this.chatRoomId = this.generalRoom.id
+
+    // this.joinRoomWithId(this.generalRoom.id);
 
     // get all user memberships
     this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
@@ -567,10 +560,7 @@ export default defineComponent({
 
     async leaveRoom(roomId: any) {
       // remove membership
-      console.log(this.userMemberships)
-
       const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
-      console.log(membership)
       if (membership) {
         // remove membership from list
         this.userMemberships = this.userMemberships.filter((m) => m !== membership)
@@ -581,12 +571,12 @@ export default defineComponent({
           alert("Error leaving the room: " + (errorMsg || "Unknown error"));
           return
         }
+        // update memberships list
+
       }
-      // // change to general chat
-      // this.changeRoom(this.generalRoom.id, this.generalRoom.name)
     },
 
-    async changeRoom(roomId: string, roomName: string) {
+    async changeRoom(roomId: string, roomName = "") { // refactorizo para que se pueda llamar sin roomname
       const currentRoomId = this.roomId
       getUserMembershipsReq(this.user?.id as string).then((response) => {
         this.userMemberships = response.data
@@ -603,17 +593,17 @@ export default defineComponent({
 
         this.currentMembership = membership
         this.roomId = roomId;
+        this.chatRoomName = membership.chatRoom.name;
         this.io.socket.emit("event_leave", currentRoomId);
         this.messages = [];
         const payload = {
-          roomName: roomName,
-          roomId: roomId,
+          roomName: this.chatRoomName,
+          roomId: this.roomId,
           userId: this.user?.id,
           token: localStorage.getItem('token'),
         }
 
         this.io.socket.emit("event_join", payload);
-        this.chatRoomName = roomName;
 
         this.fetchNiceRoomNames()
 

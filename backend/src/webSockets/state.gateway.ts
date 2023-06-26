@@ -7,6 +7,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { array } from 'joi';
 import { Server, Socket } from 'socket.io';
 import { usersInGame } from 'src/utils/utils';
 import { ConnectionIsNotSetError } from 'typeorm';
@@ -50,7 +51,6 @@ export class StateGateway
       return { userId: item.userId, state: usersInGame.has(item.userId) ? "inGame" : "online" }
     })
     client.emit('user_states', msg);
-
   }
 
   @SubscribeMessage('user_state_updated')
@@ -86,10 +86,42 @@ export class StateGateway
       
     const msg = { userId: userId, state: state }
     this.server.emit('user_state_updated', msg);
-
+  
     console.log("user state updated from game")
     console.log(msg)
   }
+
+// .............................................................................................................
+
+
+// states = new Array<UserState>();
+
+// @SubscribeMessage('get_users_states')
+// handleGetUsersStates(client: Socket) {
+//   client.emit('user_states', this.states);
+// }
+
+// @SubscribeMessage('user_state_updated')
+// HandleUserUpdate(client: Socket, payload: { userId: string }) {
+//   var msg;
+
+//   if (usersInGame.has(payload.userId))
+//     msg = { userId: payload.userId, state: "inGame" }
+//   else
+//     msg = { userId: payload.userId, state: "online" }
+
+//   client.broadcast.emit('user_state_updated', msg);
+
+//   console.log("user state updated from login")
+//   console.log(msg)
+// }
+
+
+
+}
+interface UserState {
+  userId: string;
+  state: string;
 }
 
 interface Connections {

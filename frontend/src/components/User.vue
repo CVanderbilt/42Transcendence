@@ -17,7 +17,7 @@
                   <img :src="generateImageURL(lookedUpId)" height="200" style="border-radius: 50%" />
                 </div>
                 <h2 class="fw-bold mt-1 mb-5 text-uppercase">{{ lookedUpUserName }}</h2>
-                <h4 class="fw-bold mt-1 mb-5">Email: {{ lookedUpEmail }}</h4>
+                <h4 v-if="lookedUpEmail != undefined" class="fw-bold mt-1 mb-5">Email: {{ lookedUpEmail }}</h4>
 
                 <div>
                 <!-- <div style="display: flex; flex-direction: column;"> -->
@@ -42,7 +42,6 @@
                   <p v-if="!areFriends"> </p>
                   
                   <p v-if="isBlocked">user blocked</p>
-                  
                 </div>
               </div>
             </div>
