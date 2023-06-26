@@ -389,9 +389,8 @@ export class Chats2Service {
         const room = membership.chatRoom
         const res = await this.chatMembershipsRepo.delete({ id: id })
 
-        // if the user is the last member of the room, delete the room
-        const memberships = await this.findChatRoomMembers(room.id)
-        if (memberships.length == 0) {
+        // if the user is the owner delete the room
+        if (membership.isOwner) {
             this.chatRoomsRepo.delete(room.id)
         }
 
