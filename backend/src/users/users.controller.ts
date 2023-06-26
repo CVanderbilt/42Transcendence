@@ -128,7 +128,7 @@ export class UsersController {
         throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to delete user ${id}`)
     }
 
-    @UseGuards(JwtAuthenticatedGuard)
+    //sin guardia, las imagenes son publicas, si no las cosas no funcionan
     @Get(':id/image')
     async getImageById(@Res({ passthrough: false }) response: Response, @Param('id') id: string) {
         validateInput(Joi.object({
