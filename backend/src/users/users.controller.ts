@@ -12,6 +12,7 @@ import { EMAIL_VALIDATOR, getAuthToken, ID_VALIDATOR, PASSWORD_VALIDATOR, USERNA
 import * as Joi from 'joi';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
 import { UserDto } from './user.dto';
+import { JwtAuthenticatedGuard } from 'src/auth/jwt-authenticated-guard';
 
 @Controller('users')
 export class UsersController {
@@ -64,8 +65,8 @@ export class UsersController {
         }), { id });
         await this.usersService.setUserAsCustomer(id);
     }
-    
-    // @UseGuards(JwtAuthGuard)
+
+    @UseGuards(JwtAuthenticatedGuard)
     @Get()
     async findAll(): Promise<UserDto[]> {
         // transforma el array de usuarios en un array de UserDto
@@ -73,6 +74,7 @@ export class UsersController {
         return users.map(user => new UserDto(user))
     }
 
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('name/:username')
     async findUserByName(@Param('username') username: string): Promise<UserDto> {
         validateInput(Joi.object({
@@ -85,6 +87,7 @@ export class UsersController {
         return new UserDto(user) // para no devolver el password
     }
     
+    @UseGuards(JwtAuthenticatedGuard)
     @Get(':id')
     async findUser(@Param('id') id: string): Promise<User> {
         validateInput(Joi.object({
@@ -93,7 +96,9 @@ export class UsersController {
         return new UserDto( await this.usersService.findOneById(id) )
     }
 
-    // admins y el propio usuario a modificar
+    // todo: deberíamos probar a llamar a todas las apis comprobando todos los casos de unauthorized
+    // admins y el propio usuario a modificar (ese check es más complejo y se hace abajo con token.hasRightsOverUser)
+    @UseGuards(JwtAuthenticatedGuard)
     @Put(':id')
     async update(@Body() user: User, @Param('id') id: string, @Req() request: Request): Promise<UpdateResult> {
         validateInput(Joi.object({
@@ -111,14 +116,19 @@ export class UsersController {
         throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to modify user ${id}`)
     }
 
+    @UseGuards(JwtAuthenticatedGuard)
     @Delete(':id')
-    delete(@Param('id') id: string): Promise<DeleteResult> {
+    async delete(@Param('id') id: string, @Req() request: Request): Promise<DeleteResult> {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        return this.usersService.deleteUser(id)
+        const token = getAuthToken(request)
+        if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
+            return this.usersService.deleteUser(id)
+        throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to delete user ${id}`)
     }
 
+    @UseGuards(JwtAuthenticatedGuard)
     @Get(':id/image')
     async getImageById(@Res({ passthrough: false }) response: Response, @Param('id') id: string) {
         validateInput(Joi.object({
@@ -132,15 +142,20 @@ export class UsersController {
         stream.pipe(response);
     }
 
+    @UseGuards(JwtAuthenticatedGuard)
     @Put(':id/image')
     @UseInterceptors(FileInterceptor('file'))
-    async setImage(@Param('id') id: string, @UploadedFile() file: Multer.File) {
+    async setImage(@Param('id') id: string, @UploadedFile() file: Multer.File, @Req() request: Request) {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        return this.usersService.uploadDatabaseFile(file.buffer, id)
+        const token = getAuthToken(request)
+        if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
+            return this.usersService.uploadDatabaseFile(file.buffer, id)
+        throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to change image of user: ${id}`)
     }
 
+    @UseGuards(JwtAuthenticatedGuard)
     @Post('ladder')
     async getLadder(): Promise<User[]> {
         Logger.log('getLadder')

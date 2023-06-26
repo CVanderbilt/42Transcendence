@@ -52,18 +52,18 @@ export class Chats2Service {
         return room
     }
 
-    async updateChatRoomPassword(user: User, roomId: number, password: string) {
+    async updateChatRoomPassword(userId: string, roomId: number, password: string) {
         // check user belongs to the room and is owner
         const userMembership = await this.chatMembershipsRepo.find({
             where: {
-                user: { id: user.id },
+                user: { id: userId },
                 chatRoom: { id: roomId },
                 isOwner: true,
             }
         })
 
         if (userMembership.length == 0) {
-            throw new UnauthorizedException()
+            throw new UnauthorizedException(`User ${userId} is not allowed to update room ${roomId} password`)
         }
 
         const room = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
@@ -274,6 +274,17 @@ export class Chats2Service {
         return res
     }
 
+    async findMembershipOwner(id: number): Promise<User> {
+        const res = await this.chatMembershipsRepo.findOne({
+            where: { id: id },
+            relations: ['user', 'chatRoom'],
+        })
+        if (!res) {
+            throw new NotFoundException('Membership not found')
+        }
+        return res.user
+    }
+
     findChatRoomMembers(id: number): Promise<ChatMembership[]> {
         const res = this.chatMembershipsRepo.find({
             where: { chatRoom: { id: id } },
@@ -419,13 +430,7 @@ export class Chats2Service {
     async createChatRoomMessage(token: any, msg: ChatMsgDto): Promise<ChatMsg> {
         const sender = await this.usersRepo.findOne({ where: { id: msg.senderId } });
         const room = await this.chatRoomsRepo.findOne({ where: { id: msg.chatRoomId } });
-        const membership = await this.chatMembershipsRepo.findOne({
-            where: {
-                user: { id: token.userId },
-                chatRoom: { id: msg.chatRoomId },
-            }
-        })
-
+        
         if (token.role === 'ADMIN' || token.role === 'OWNER') {
             const postedMsg = await this.chatMsgsRepo.save({
                 sender: sender,
@@ -435,6 +440,13 @@ export class Chats2Service {
             })
             return postedMsg
         }
+        
+        const membership = await this.chatMembershipsRepo.findOne({
+            where: {
+                user: { id: token.userId },
+                chatRoom: { id: msg.chatRoomId },
+            }
+        })
 
         if (!membership || !isPastDate(membership.bannedUntil))
             throw new HttpException('You are not allowed to post messages in this room', HttpStatusCode.Unauthorized)

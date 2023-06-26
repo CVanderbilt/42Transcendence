@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { HttpStatusCode } from 'axios';
 import * as Joi from 'joi';
 const fs = require('fs');
 const { PNG } = require('pngjs');
@@ -124,6 +125,8 @@ export function getAuthToken(request, validate = true) {
       isTwoFactorAuthenticationEnabled: decodedToken.isTwoFactorAuthenticationEnabled,
       isTwoFactorAuthenticated: decodedToken.isTwoFactorAuthenticated,
       hasRightsOverUser: (token, user: User): boolean => {
+        if (!user)
+          throw new HttpException("Null user when checking for permissions", HttpStatusCode.NotFound)
         if (token.userId === user.id)
           return true;
         if (user.role === "OWNER")
