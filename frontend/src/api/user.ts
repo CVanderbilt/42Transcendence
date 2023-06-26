@@ -15,10 +15,6 @@ export interface IUserAPI {
     score?: number
 }
 
-// async function createUser(options: IUserAPI) {
-//     return apiClient.post(URL, {...options, chats: [{name: "general", role: "user"}]});
-// } // Esto sucede automáticamente en el backend cuando un usuario se registra
-
 export async function updateUserReq(id: string, options: IUserAPI) {    
     const res = await apiClient.put(`${URL}/${id}`, options)
     return res

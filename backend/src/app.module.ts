@@ -13,8 +13,6 @@ import { Chats2Module } from './chats2/chats2.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_FILTER } from '@nestjs/core';
 import { GlobalExceptionFilter } from './GlobalExceptionFilter';
-import { MatchesService } from './matches/matches.service';
-import { GameModule } from './gameSocket/game.module';
 
 @Module({
   imports: [
