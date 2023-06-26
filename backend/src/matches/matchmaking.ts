@@ -37,14 +37,14 @@ export class MatchMaker {
     }
 
     cancel(userName: string): boolean {
-      console.log("canceling matchmaking for " + userName)
+      //console.log("canceling matchmaking for " + userName)
       const user = this.usersAlt.get(userName)
       if (user) {
         if (user.matchId){
-          console.log("cant cancel matchmaking when game is ongoing")
+          //console.log("cant cancel matchmaking when game is ongoing")
           return false
         }
-        console.log("deleting entry")
+        //console.log("deleting entry")
         this.usersAlt.delete(userName)
       }
       return true
@@ -85,14 +85,14 @@ export class MatchMaker {
     
     private async createMatch(userName: string, opponentName: string, isCompetitive: boolean, powerups: string[], isChallenge: boolean = false): Promise<string> {
       try {
-          console.log("creating competitive match")
-          console.log(`contestants: (${userName} and ${opponentName})`)
-          console.log("usersRepo: " + this.usersRepo)
-          console.log("matchesRepo: " + this.matchesRepo)
+          //console.log("creating competitive match")
+          //console.log(`contestants: (${userName} and ${opponentName})`)
+          //console.log("usersRepo: " + this.usersRepo)
+          //console.log("matchesRepo: " + this.matchesRepo)
           const user = await this.usersRepo.findOne({ where: { id: userName } })
-          console.log("user: " + user)
+          //console.log("user: " + user)
           const opponent = await this.usersRepo.findOne({ where: { id: opponentName } })
-          console.log("opponent: " + opponent)
+          //console.log("opponent: " + opponent)
           if (!user)
             throw new HttpException("Create match failed, user: " + userName + " not found", HttpStatusCode.NotFound)
           if (!opponent)
@@ -129,15 +129,15 @@ export class MatchMaker {
           }
           return id
       } catch (error) {
-          console.log("!!!!!!!!ERROR AQUI!!!!!!!!")
+          //console.log("!!!!!!!!ERROR AQUI!!!!!!!!")
           //todo: relanzar por ahora servirá, si falla un usuario en matchmaking puede que se bloquee hata que de tiemout pero ya
-          console.log(error)
+          //console.log(error)
           throw error
       }
   }
 
     public async makeMatch(userName: string, score: number, friendly: boolean, powerups: string[]): Promise<string> {
-        console.log(`${userName} with score: ${score} started matchmaking...`)
+        //console.log(`${userName} with score: ${score} started matchmaking...`)
         return this.checkForMatch(userName, score, friendly, powerups)
     }
 
@@ -155,40 +155,40 @@ export class MatchMaker {
     private async matchUsers(user: QueuedUser, otherUser: QueuedUser): Promise<string> {
         let oneMutexAquired = false;
         try {
-            console.log(`${user.id} attempting to match with ${otherUser.id}`)
+            //console.log(`${user.id} attempting to match with ${otherUser.id}`)
           tryAcquire(user.mutex);
-          console.log(`${user.id} aquires its onw mutex`)
+          //console.log(`${user.id} aquires its onw mutex`)
           oneMutexAquired = true;
           tryAcquire(otherUser.mutex);
-          console.log(`${user.id} aquires other user mutex`)
-          console.log("mathing users succeded Creating random uuid for room")
+          //console.log(`${user.id} aquires other user mutex`)
+          //console.log("mathing users succeded Creating random uuid for room")
           
           const matchId = await this.createMatch(user.id, otherUser.id, true, user.powerups)
         
           otherUser.matchId = matchId
           user.matchId = matchId
-          console.log("mathighin returns " + matchId)
+          ////console.log("mathighin returns " + matchId)
           return matchId;
         } catch (error) {
             if (oneMutexAquired) {
-                console.log("Match mutex already locked")
+                //console.log("Match mutex already locked")
                 user.mutex.release()
             } else {
-                console.log("User mutex already locked")
+                //console.log("User mutex already locked")
             }
         }
-        console.log("mathing users failed")
+        //console.log("mathing users failed")
       }
 
       private async checkMatch(user: QueuedUser, threshold: number): Promise<string> {
-        console.log("checknig para user: " + user.id)
-        console.log("matchId?: " + user.matchId)
+        //console.log("checknig para user: " + user.id)
+        //console.log("matchId?: " + user.matchId)
         if (user.matchId){
-            console.log("user already matched!!")
+            //console.log("user already matched!!")
             return user.matchId
         }
         this.usersAlt.forEach((otherUser) => {
-            console.log(`        [${user.id}] attempting to match with [${otherUser.id}]`)
+            //console.log(`        [${user.id}] attempting to match with [${otherUser.id}]`)
             if (!otherUser.challenging && user.id !== otherUser.id && user.isFriendly === otherUser.isFriendly &&
               this.powerupsAreEquivalent(user.powerups, otherUser.powerups)) {
               if (user.isFriendly || Math.abs(user.score - otherUser.score) <= threshold)
@@ -210,7 +210,7 @@ export class MatchMaker {
             powerups,
           }).get(id)
           if (user.matchId) {
-            console.log(`user currently in a match with id: ${user.matchId}`)
+            //console.log(`user currently in a match with id: ${user.matchId}`)
             //todo: mecanismo de seguridad por si fuera un match antiguo no borrado -> ex:
             //    si el match tiene más de x(5?) mins de antigüedad borrarlo(el user del mapa de matchmaking) y hacer matchmaking normal
             return user.matchId
@@ -225,7 +225,7 @@ export class MatchMaker {
         let match = null
         do {
           match = await this.checkMatch(user, threshold);
-          console.log("en verdad ha returneado: " + match)
+          //console.log("en verdad ha returneado: " + match)
           
           if (match) break ;
           
@@ -237,7 +237,7 @@ export class MatchMaker {
               this.cancel(user.id)
               didCancel = true
             } catch (error) {
-              console.log("Couldnt timeout because mutex is locked")
+              //console.log("Couldnt timeout because mutex is locked")
             } //todo: mecanismo seguridad por si se quedan locks bloqueados mucho tiempo -> cancelar igualmente, borrar queued user y cancelar la partida en la que esté
             /* para esto podemos hacer que un usuario pueda cancelar una partida, se borra la partida si:
               - No hay room con ese id
@@ -248,10 +248,10 @@ export class MatchMaker {
             if (didCancel)
               throw new HttpException("Cant find a match right now, not enough players. Try againg later", HttpStatusCode.RequestTimeout)
           }
-          console.log(`No match found for ${user.id}. Checking again... (${threshold})`);
+          //console.log(`No match found for ${user.id}. Checking again... (${threshold})`);
           await sleep(random(3000, 6000))
         } while (true);
-        console.log(`Match found! ${user.id} in room: ${match}`);
+        //console.log(`Match found! ${user.id} in room: ${match}`);
         return match
       }
   }

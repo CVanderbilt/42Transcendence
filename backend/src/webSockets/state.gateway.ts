@@ -7,10 +7,8 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { array } from 'joi';
 import { Server, Socket } from 'socket.io';
 import { usersInGame } from 'src/utils/utils';
-import { ConnectionIsNotSetError } from 'typeorm';
 
 @WebSocketGateway(84, {
   cors: { origin: '*' },
@@ -22,7 +20,7 @@ export class StateGateway
 
   handleConnection(client: any, ...args: any[]) { }
 
-  connections = new Array<Connections>();
+  // connections = new Array<Connections>();
 
   @WebSocketServer() server: Server;
 
@@ -30,101 +28,110 @@ export class StateGateway
     console.log('State Socket initialized')
   }
 
-  handleDisconnect(client: any) {
-    console.log('Client disconnected from state socket')
-    const userId = this.connections.find((item: any) => item.clientId === client.id)?.userId
-    if (!userId)
-      return;
+  // handleDisconnect(client: any) {
+  //   console.log('Client disconnected from state socket')
+  //   const userId = this.connections.find((item: any) => item.clientId === client.id)?.userId
+  //   if (!userId)
+  //     return;
 
-    const msg = { userId: userId, state: "offline" }
-    client.broadcast.emit('user_state_updated', msg);
-    console.log("user state updated from handleDisconnect")
-    console.log(msg)
+  //   const msg = { userId: userId, state: "offline" }
+  //   client.broadcast.emit('user_state_updated', msg);
+  //   console.log("user state updated from handleDisconnect")
+  //   console.log(msg)
 
-    this.connections = this.connections.filter((item: any) => item.clientId !== client.id)
-  }
+  //   this.connections = this.connections.filter((item: any) => item.clientId !== client.id)
+  // }
 
-  @SubscribeMessage('get_users_states')
-  handleGetUsersStates(client: Socket) {
-    const array = Array.from(this.connections)
-    const msg = array.map((item: any) => {
-      return { userId: item.userId, state: usersInGame.has(item.userId) ? "inGame" : "online" }
-    })
-    client.emit('user_states', msg);
-  }
+  // @SubscribeMessage('get_users_states')
+  // handleGetUsersStates(client: Socket) {
+  //   const array = Array.from(this.connections)
+  //   const msg = array.map((item: any) => {
+  //     return { userId: item.userId, state: usersInGame.has(item.userId) ? "inGame" : "online" }
+  //   })
+  //   client.emit('user_states', msg);
+  // }
 
-  @SubscribeMessage('user_state_updated')
-  HandleUserUpdate(client: Socket, payload: { userId: string }) {
-    this.connections = this.connections.filter((item: any) => item.clientId !== client.id)
-    this.connections.push({ clientId: client.id, userId: payload.userId })
-    var msg;
-    if (usersInGame.has(payload.userId))
-      msg = { userId: payload.userId, state: "inGame" }
-    else
-      msg = { userId: payload.userId, state: "online" }
+  // @SubscribeMessage('user_state_updated')
+  // HandleUserUpdate(client: Socket, payload: { userId: string }) {
+  //   this.connections = this.connections.filter((item: any) => item.clientId !== client.id)
+  //   this.connections.push({ clientId: client.id, userId: payload.userId })
+  //   var msg;
+  //   if (usersInGame.has(payload.userId))
+  //     msg = { userId: payload.userId, state: "inGame" }
+  //   else
+  //     msg = { userId: payload.userId, state: "online" }
 
-    client.broadcast.emit('user_state_updated', msg);
+  //   client.broadcast.emit('user_state_updated', msg);
 
-    console.log("user state updated from login")
-    console.log(msg)
-  }
+  //   console.log("user state updated from login")
+  //   console.log(msg)
+  // }
 
-  @SubscribeMessage('user_logout')
-  HandleUserLogout(client: Socket, payload: { userId: string }) {
-    this.connections = this.connections.filter((item: any) => item.clientId !== client.id)
-    this.connections.push({ clientId: client.id, userId: payload.userId })
-    console.log('Client logout from state socket')
-    const msg = { userId: payload.userId, state: "offline" }
-    client.broadcast.emit('user_state_updated', msg);
-    console.log("user state updated from logout")
-  }
+  // @SubscribeMessage('user_logout')
+  // HandleUserLogout(client: Socket, payload: { userId: string }) {
+  //   this.connections = this.connections.filter((item: any) => item.clientId !== client.id)
+  //   this.connections.push({ clientId: client.id, userId: payload.userId })
+  //   console.log('Client logout from state socket')
+  //   const msg = { userId: payload.userId, state: "offline" }
+  //   client.broadcast.emit('user_state_updated', msg);
+  //   console.log("user state updated from logout")
+  // }
 
-  UpdateGameState(userId: string, state: string) {
-    //if there is no connection for this user, we don't need to update the state
-    if (!this.connections.find((item: any) => item.userId === userId))
-      return;
-      
-    const msg = { userId: userId, state: state }
-    this.server.emit('user_state_updated', msg);
+  // UpdateGameState(userId: string, state: string) {
+  //   //if there is no connection for this user, we don't need to update the state
+  //   if (!this.connections.find((item: any) => item.userId === userId))
+  //     return;
+
+  //   const msg = { userId: userId, state: state }
+  //   this.server.emit('user_state_updated', msg);
+
+  //   console.log("user state updated from game")
+  //   console.log(msg)
+  // }
   
-    console.log("user state updated from game")
-    console.log(msg)
+  // .............................................................................................................
+  
+
+  aliveUsers = new Array<string>();
+  
+  @SubscribeMessage('gimme')
+  handleGimme(client: Socket) {
+    client.emit('user_states', this.GetUserStates());
   }
 
-// .............................................................................................................
+  @SubscribeMessage('alive')
+  HandleAlive(client: Socket, payload: { userId: string }) {
+    this.aliveUsers.push(payload.userId)
+    this.server.emit('user_states', this.GetUserStates());
+  }
 
+  UpdateUserState(userId: string) {
+    console.log ( "update user state called")
+    this.aliveUsers.push(userId)
+    this.server.emit('user_states', this.GetUserStates());
+  }
 
-// states = new Array<UserState>();
+  handleDisconnect(client: any) {
+    setTimeout(() => {
+      this.aliveUsers = []
+      this.server.emit('who_is_alive')
+    }, 500);
+  }
 
-// @SubscribeMessage('get_users_states')
-// handleGetUsersStates(client: Socket) {
-//   client.emit('user_states', this.states);
-// }
+  GetUserStates() {
+    // remove duplicates
+    this.aliveUsers = this.aliveUsers.filter((item, index) => this.aliveUsers.indexOf(item) === index)
 
-// @SubscribeMessage('user_state_updated')
-// HandleUserUpdate(client: Socket, payload: { userId: string }) {
-//   var msg;
+    const userStates = new Array()
+    this.aliveUsers.forEach((id: any) => {
+      if (usersInGame.has(id))
+        userStates.push({ userId: id, state: "inGame" })
+      else
+        userStates.push({ userId: id, state: "online" })
+    })
 
-//   if (usersInGame.has(payload.userId))
-//     msg = { userId: payload.userId, state: "inGame" }
-//   else
-//     msg = { userId: payload.userId, state: "online" }
-
-//   client.broadcast.emit('user_state_updated', msg);
-
-//   console.log("user state updated from login")
-//   console.log(msg)
-// }
-
-
-
-}
-interface UserState {
-  userId: string;
-  state: string;
-}
-
-interface Connections {
-  clientId: string;
-  userId: string;
+    console.log("user states")
+    console.log(userStates)
+    return userStates;
+  }
 }

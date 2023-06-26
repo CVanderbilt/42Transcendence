@@ -48,7 +48,7 @@ export class MatchesService {
         players: [{ name: string, score: number }, { name: string, score: number }],
         type: "Competitive" | "Exhibition",
     ) {
-        console.log(`[${id}] -> players: {${players[0].name},${players[0].score}}, {${players[1].name},${players[1].score}}`)
+        // console.log(`[${id}] -> players: {${players[0].name},${players[0].score}}, {${players[1].name},${players[1].score}}`)
         
         const existingMatch = await this.matchesRepo.findOne({ where: { id } })
         if (existingMatch)
@@ -58,12 +58,12 @@ export class MatchesService {
         const opponent = await this.usersRepo.findOne({ where: { id: players[1].name } })
         if (!user)
         {
-            console.log(`no recieved player from: ${players} was user: ${user}`)
+            // console.log(`no recieved player from: ${players} was user: ${user}`)
             return
         }
         if (!opponent)
         {
-            console.log(`no recieved player from: ${players} was opponent: ${opponent}`)
+            // console.log(`no recieved player from: ${players} was opponent: ${opponent}`)
             return
         }
 
@@ -140,7 +140,7 @@ export class MatchesService {
             }
         }
 
-        console.log(await list)
+        // console.log(await list)
 
         return await (list as Match[])
     }

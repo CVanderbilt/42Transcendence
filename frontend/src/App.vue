@@ -76,19 +76,23 @@ export default defineComponent({
     this.isError = false;
 
     this.ioUserState.socket.offAny();
-    this.ioUserState.socket.emit("user_state_updated", {userId: this.user.id, state:"online"});
+    this.ioUserState.socket.emit("alive", {userId: this.user.id});
+
+    this.ioUserState.socket.on("user_states", (states: UserStateSocket[]) => {
+      if (!states.find((s) => s.userId === this.user.id)) {
+        this.ioUserState.socket.emit("alive", {userId: this.user.id});
+      }
+    })
+
+    this.ioUserState.socket.on("who_is_alive", (payload: any) => {
+      this.ioUserState.socket.emit("alive", {userId: this.user.id});
+    })
 
     console.log("created");
   },
 
   onmounted() {
-    this.ioUserState.socket.offAny();
-    this.ioUserState.socket.emit("user_state_updated", {userId: this.user.id, state:"online"});
-
-    this.ioUserState.socket.on("user_state_updated", (state: UserStateSocket) => {
-      if (state.userId == store.state.user.id && state.state == "offline")
-        this.ioUserState.socket.emit("user_state_updated", {userId: store.state.user.id, state:"online"});
-    });
+    
 
     console.log("mounted");
   },

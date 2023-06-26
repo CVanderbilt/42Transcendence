@@ -14,7 +14,6 @@
           {{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}
         </p>
 
-        <h3>Member since<br>{{ fshp.friend.createdAt }}</h3>
         <h3>Victories: {{ fshp.friend.victories }}</h3>
         <h3>Defeats: {{ fshp.friend.defeats }}</h3>
         <h3>Score: {{ fshp.friend.score }}</h3>
@@ -73,7 +72,10 @@ export default defineComponent({
   setup() {
     const io = stateSocketIO();
     const friendsStates = ref<UserState[]>([])
-    const updateStates = (updatedState: UserState) => {
+    const clearStates = () => {
+      friendsStates.value = []
+    }
+    const addState = (updatedState: UserState) => {
       const index = friendsStates.value.findIndex(element => updatedState.userId == element.userId)
       if (index != -1)
         friendsStates.value[index].state = updatedState.state
@@ -82,32 +84,32 @@ export default defineComponent({
     }
 
     return {
-      io,
+      ioUserState: io,
       friendsStates,
-      updateStates,
+      addState,
+      clearStates,
     }
   },
 
   async mounted() {
     this.getFriendships()
 
-    this.io.socket.on("user_states", (states: UserState[]) => {
+    this.ioUserState.socket.on("user_states", (states: UserState[]) => {
+      console.log("user_states")
+      console.log(states)
+
+      this.clearStates()
+
       states.forEach(element => {
         const state: UserState = {
           userId: element.userId,
           state: element.state,
         }
-
-        this.updateStates(state)
+        this.addState(state)
       })
     })
 
-    this.io.socket.emit("get_users_states", this.user.id)
-
-    this.io.socket.on("user_state_updated", (state: UserState) => {
-      this.updateStates(state)
-      console.log(this.friendsStates)
-    });
+    this.ioUserState.socket.emit("gimme");
   },
 
   methods: {
