@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Param, HttpException, Body } from '@nestjs/common';
+import { Controller, Get, Post, Param, HttpException, Body, UseGuards } from '@nestjs/common';
 import { Match } from './match.interface';
 import { MatchesService } from './matches.service';
 import { HttpStatusCode } from 'axios';
 import { ID_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
 import * as Joi from 'joi'
+import { JwtAuthenticatedGuard } from 'src/auth/jwt-authenticated-guard';
 
 const POWERUPS_VALIDATOR = Joi.string().regex(/^[A-Z]+$/)
 
@@ -12,6 +13,7 @@ export class MatchesController {
     constructor(private matchesService: MatchesService) { }
 
     //Todo: cambiar todos los nombred de atributos (especialmente de cara a llamar las apis) de username a userid
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('competitiveMatch/:userName')
     async getCompetitiveMatch(@Param('userName') userName: string): Promise<string> {
         validateInput(Joi.object({
@@ -35,6 +37,7 @@ export class MatchesController {
 
     //----------------------------------------------
 
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('user/:userId')
     async getMatches(@Param('userId') userId: string): Promise<Match[]> {
         validateInput(Joi.object({
@@ -49,6 +52,7 @@ export class MatchesController {
         }
     }
 
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('exhibitionMatch/:userName/:powerups')
     async getExhibitionMatch(
         @Param('userName') userName: string,
@@ -73,6 +77,7 @@ export class MatchesController {
         }
     }
 
+    @UseGuards(JwtAuthenticatedGuard)
     @Post('challenge')
     async challenge(@Body() data: { requesterName: string, opponentName: string, powerups: string }) {
         validateInput(Joi.object({
@@ -92,6 +97,7 @@ export class MatchesController {
         }
     }
 
+    @UseGuards(JwtAuthenticatedGuard)
     @Post('getCurrentMatch')
     async getCurrentMatch(@Body() data: { userName: string }) {
         validateInput(Joi.object({
