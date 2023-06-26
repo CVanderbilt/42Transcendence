@@ -35,11 +35,11 @@ export class ChatMembershipEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number    
 
-    @ManyToOne(type => UserEntity)
+    @ManyToOne(type => UserEntity, { onDelete: 'CASCADE' })
     @JoinColumn()
     user: UserEntity
 
-    @ManyToOne(type => ChatRoomEntity)
+    @ManyToOne(type => ChatRoomEntity, { onDelete: 'CASCADE' })
     @JoinColumn()
     chatRoom: ChatRoomEntity
 
@@ -67,11 +67,11 @@ export class ChatMsgEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number
 
-    @ManyToOne(type => ChatRoomEntity)
+    @ManyToOne(type => ChatRoomEntity, { onDelete: 'CASCADE' })
     @JoinColumn()
     chatRoom: ChatRoomEntity
     
-    @ManyToOne(type => UserEntity)
+    @ManyToOne(type => UserEntity, { onDelete: 'CASCADE' })
     @JoinColumn()
     sender: UserEntity
 
