@@ -142,7 +142,7 @@ export class Chats2Controller {
     }
 
     // get chat room members
-    // @UseGuards(JwtAuthenticatedGuard)
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/:id/members')
     async findRoomMembers(@Param('id') id: number): Promise<ChatMembership[]> {
         const res = await (this.chatsService.findChatRoomMembers(id))
