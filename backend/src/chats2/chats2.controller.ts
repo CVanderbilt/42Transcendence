@@ -6,41 +6,48 @@ import { ChatMembership, ChatRoom } from './chats.interface';
 import { Chats2Service } from './chats2.service';
 import * as Joi from 'joi'
 import { UsersService } from 'src/users/users.service';
+import { JwtAuthenticatedGuard } from 'src/auth/jwt-authenticated-guard';
 
 @Controller('chats')
 export class Chats2Controller {
     constructor(private chatsService: Chats2Service, private usersService: UsersService) { }
 
     // get chat rooms
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms')
     async findAllRooms(): Promise<ChatRoom[]> {
         return await (this.chatsService.findAllChatRooms())
     }
 
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/general')
     async findGeneralRoom(): Promise<ChatRoom> {
         return await (this.chatsService.findChatRoomByName("general"))
     }
 
     // get chat room by id (room + members)
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/:id')
     async findRoom(@Param('id') id: number): Promise<ChatRoom> {
         return await (this.chatsService.findChatRoomById(id))
     }
 
     // get chat room by name
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/name/:name')
     async findRoomByName(@Param('name') name: string): Promise<ChatRoom> {
         return await (this.chatsService.findChatRoomByName(name))
     }
 
     // get chat rooms for user
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/user/:id')
     async findUserRooms(@Param('id') id: string): Promise<ChatRoom[]> {
         return await (this.chatsService.findUserChatRooms(id))
     }
 
     // get private chat for users
+    @UseGuards(JwtAuthenticatedGuard) //todo: add specific logic to only allow if requester is admin or one of the users
     @Post('rooms/direct')
     async getPrivateRoom(@Body() body: any): Promise<ChatRoom> {
         //TODO añadir validacion de ids
@@ -53,6 +60,7 @@ export class Chats2Controller {
     }
 
     // new chat room
+    @UseGuards(JwtAuthenticatedGuard)
     @Post('rooms')
     async create(@Req() request, @Body() dto: ChatRoomDto): Promise<ChatRoom> {
         // validateInput(Joi.object({
@@ -73,6 +81,7 @@ export class Chats2Controller {
     }
 
     // update chat password
+    @UseGuards(JwtAuthenticatedGuard) //todo: update para que solo lo puedan hacer admin/owner or this chat admin/owner
     @Post('rooms/:roomId/password')
     @UseGuards(Jwt2faAuthGuard)
     async updatePassword(@Req() req: any, @Param('roomId') roomId: number, @Body() data: any) {
@@ -81,6 +90,7 @@ export class Chats2Controller {
     }
 
     // join chat room
+    @UseGuards(JwtAuthenticatedGuard) //requester tiene que ser admin or el user afectado
     @Post('rooms/:roomId/join')
     async joinRoom(@Param('roomId') roomId: number, @Body() data: JoinChatRoomDto): Promise<ChatMembership> {
         // validateInput(Joi.object({
@@ -97,7 +107,7 @@ export class Chats2Controller {
 
     // invite users to chat room
     @Post('rooms/:roomId/invite')
-    @UseGuards(Jwt2faAuthGuard)
+    @UseGuards(JwtAuthenticatedGuard)
     async inviteUsers(@Req() req: any, @Param('roomId') roomId: number, @Body() data: any) {
         // validateInput(Joi.object({
         //     userId: Joi.string().guid().required(),
@@ -107,6 +117,7 @@ export class Chats2Controller {
         return this.chatsService.inviteUser(user, roomId, data)
     }
 
+    @UseGuards(JwtAuthenticatedGuard) //todo: solo admin/owner o admin/owner de la room
     @Delete('rooms/:id')
     async deleteRoom(@Param('id') id: number) {
         this.chatsService.deleteRoom(id)
@@ -122,12 +133,14 @@ export class Chats2Controller {
     // }
 
     // get one memebership
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('memberships/:id')
     async findMembership(@Param('id') id: number): Promise<ChatMembership> {
         return await (this.chatsService.findChatMembershipById(id))
     }
 
     // get chat room members
+    @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/:id/members')
     async findRoomMembers(@Param('id') id: number): Promise<ChatMembership[]> {
         const res = await (this.chatsService.findChatRoomMembers(id))
@@ -135,6 +148,7 @@ export class Chats2Controller {
     }
 
     // get user memberships
+    @UseGuards(JwtAuthenticatedGuard) //todo: update para qeu si no es user/admin solo pueda hacer esto consigo mismo, también revisar el primer if, ahora mismo parece que un admin/owner saca todas las memberships independinetemente del usuario elegido
     @Get('memberships/user/:userId')
     async findUserMemberships(@Req() req, @Param('userId') userId: string): Promise<ChatMembership[]> {
         const token = getAuthToken(req)
@@ -160,6 +174,7 @@ export class Chats2Controller {
         return await (this.chatsService.findUserMemberships(userId))
     }
 
+    @UseGuards(JwtAuthenticatedGuard) //todo: solo admin/owner y admin/owner de la room
     @Post('memberships/ban')
     async banUser(@Body() input: { userName: string, roomId: number }) {
         const user = await this.usersService.findOneByName(input.userName);
@@ -169,6 +184,7 @@ export class Chats2Controller {
         this.chatsService.setIsBanned(user.id, input.roomId, true);
     }
 
+    @UseGuards(JwtAuthenticatedGuard) //todo: solo admin/owner y admin/owner de la room
     @Post('memberships/allow')
     async allowUser(@Body() input: { userName: string, roomId: number }) {
         const user = await this.usersService.findOneByName(input.userName);
@@ -178,6 +194,7 @@ export class Chats2Controller {
         this.chatsService.setIsBanned(user.id, input.roomId, false);
     }
     
+    @UseGuards(JwtAuthenticatedGuard) //todo: solo admin/owner y admin/owner de la room
     @Post('memberships/promote')
     async promoteUser(@Body() input: { userName: string, roomId: number }) {
         const user = await this.usersService.findOneByName(input.userName);
@@ -190,6 +207,7 @@ export class Chats2Controller {
         this.chatsService.setIsAdmin(user.id, input.roomId, true);
     }
 
+    @UseGuards(JwtAuthenticatedGuard) //todo: solo admin/owner y admin/owner de la room
     @Post('memberships/demote')
     async demoteUser(@Body() input: { userName: string, roomId: number }) {
         const user = await this.usersService.findOneByName(input.userName);
@@ -203,6 +221,7 @@ export class Chats2Controller {
     }
 
     // update membership
+    @UseGuards(JwtAuthenticatedGuard) //todo: solo admin/owner y el mismo usuario
     @Put('memberships/:id')
     async updateMembership(@Param('id') id: number, @Body() data: ChatMembershipDto) {
         // validateInput(Joi.object({
@@ -216,6 +235,7 @@ export class Chats2Controller {
     }
 
     // delete membership
+    @UseGuards(JwtAuthenticatedGuard) //todo: admin/owners + affected user
     @Delete('memberships/:id')
     async deleteMembership(@Param('id') id: number) {
         if (id < 0)  // admin gets memberships for all rooms with id = -1
@@ -224,6 +244,7 @@ export class Chats2Controller {
     }
 
     // get chat messages for room
+    @UseGuards(JwtAuthenticatedGuard) //revisar pero extra checks en la logica
     @Get('/messages/:roomId')
     async findRoomMessages(@Req() req, @Param('roomId') roomId: number): Promise<ChatMsgDto[]> {
         const token = getAuthToken(req, false)
@@ -231,6 +252,7 @@ export class Chats2Controller {
     }
 
     // post chat message for room
+    @UseGuards(JwtAuthenticatedGuard) // todo: revisar si hace falta un shortcut para que admisn puedan sin llegar a hacer fetch memberships en repo
     @Post('/messages/:roomId')
     async postRoomMessage(@Req() req, @Param('roomId') roomId: number, @Body() msg: ChatMsgDto) {
         validateInput(Joi.object({
