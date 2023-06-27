@@ -43,13 +43,11 @@ export async function getAllChatRoomsReq() {
     return (await apiClient.get(`${URL}/rooms`)).data
 }
 
-export async function createChatRoomReq(roomName: string, owner: string, password = "", isDirect = false) {
+export async function createChatRoomReq(roomName: string, owner: string, password?: string) {
     const room: any = {
         name: roomName,
-        ownerId: owner,
-        password: password,
-        isPrivate: password.length > 0 ? true : false,
-        isDirect: isDirect
+        ownerId: owner, //parece que no se usa ??? revisar si funciona y si funciona como lo hace, en cualquier caso quitar de aqui y usar el del token
+        password: password
     }
 
     return apiClient.post(`${URL}/rooms`, room)

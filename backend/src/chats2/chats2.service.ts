@@ -32,12 +32,13 @@ export class Chats2Service {
             throw new HttpException('Room name already taken', 409)
         }
 
+        const isPrivate = roomDto.password && !roomDto.isDirect ? true : false
         // create room
         const room = await this.chatRoomsRepo.save({
             name: roomDto.name,
-            isPrivate: roomDto.isPrivate,
+            isPrivate,
             password: roomDto.password ? bcrypt.hashSync(roomDto.password, 10) : null,
-            isDirect: roomDto.isDirect ? roomDto.isDirect : false,
+            isDirect: roomDto.isDirect
         })
 
         // if a user is provided add it as owner to the room
@@ -165,8 +166,7 @@ export class Chats2Service {
         if (!generalChat) {
             const generalChatRoomDto: ChatRoomDto = {
                 name: process.env.GENERAL_CHAT_NAME,
-                isPrivate: false,
-                password: "",
+                isDirect: false
             }
             generalChat = await this.createChatRoom(generalChatRoomDto)
         }
@@ -193,7 +193,7 @@ export class Chats2Service {
             }
         })
 
-        if (userMembership.length > 0) {
+        if (userMembership && userMembership.length > 0) {
             return this.chatMembershipsRepo.findOne(
                 {
                     where: { id: userMembership[0].id },
@@ -245,7 +245,7 @@ export class Chats2Service {
         })
     }
 
-    async inviteUser(inviter: User, id: number, data: any) {
+    async inviteUser(inviter: User, id: number, data: JoinChatRoomDto) {
         // check user belongs to the room and is not banned
         const userMembership = await this.chatMembershipsRepo.find({
             where: {

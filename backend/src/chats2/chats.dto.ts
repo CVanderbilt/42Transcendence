@@ -1,10 +1,8 @@
-export interface ChatRoomDto {    
-    name: string
-    password?: string
-    isPrivate?: boolean
-    isDirect?: boolean
+export interface ChatRoomDto {
+    name: string,
+    password?: string,
+    isDirect: boolean
 }
-
 export interface ChatMembershipDto {
     [x: string]: any
     userId: string

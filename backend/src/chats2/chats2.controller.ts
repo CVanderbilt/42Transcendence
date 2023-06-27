@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Post, Put, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { Jwt2faAuthGuard } from 'src/auth/jwt-2fa-auth.guard';
-import { getAuthToken, validateInput } from 'src/utils/utils';
+import { BOOLEAN_VALIDATOR, CHATNAME_VALIDATOR, CHATROOM_ID_VALIDATOR, DATE_VALIDATOR, FORBIDDEN, ID_VALIDATOR, MESSAGE_VALIDATOR, PASSWORD_VALIDATOR, USERNAME_VALIDATOR, getAuthToken, validateInput } from 'src/utils/utils';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { ChatMembership, ChatRoom } from './chats.interface';
 import { Chats2Service } from './chats2.service';
@@ -31,6 +31,9 @@ export class Chats2Controller {
     @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/:id')
     async findRoom(@Param('id') id: number): Promise<ChatRoom> {
+        validateInput(Joi.object({
+            id: CHATROOM_ID_VALIDATOR.required()
+        }), { id })
         return await (this.chatsService.findChatRoomById(id))
     }
 
@@ -38,6 +41,10 @@ export class Chats2Controller {
     @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/name/:name')
     async findRoomByName(@Param('name') name: string): Promise<ChatRoom> {
+        //todo: revisar si se sigue usando, de ser así revisar si se name está bien validado
+        validateInput(Joi.object({
+            name: CHATNAME_VALIDATOR.required()
+        }), { name })
         return await (this.chatsService.findChatRoomByName(name))
     }
 
@@ -45,13 +52,23 @@ export class Chats2Controller {
     @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/user/:id')
     async findUserRooms(@Param('id') id: string): Promise<ChatRoom[]> {
+        validateInput(Joi.object({
+            id: ID_VALIDATOR.required()
+        }), { id })
         return await (this.chatsService.findUserChatRooms(id))
     }
 
     // get private chat for users
     @UseGuards(JwtAuthenticatedGuard)
     @Post('rooms/direct')
-    async getPrivateRoom(@Body() body: any, @Req() req): Promise<ChatRoom> {
+    async getPrivateRoom(@Body() body: {
+        user1: string,
+        user2: string
+    }, @Req() req): Promise<ChatRoom> {
+        validateInput(Joi.object({
+            user1: ID_VALIDATOR.required(),
+            user2: ID_VALIDATOR.required()
+        }), body)
         const token = getAuthToken(req)
         if (!token.hasRightsOverUser(token, await this.usersService.findOneById(body.user1)) &&
         !token.hasRightsOverUser(token, await this.usersService.findOneById(body.user2)))
@@ -68,17 +85,19 @@ export class Chats2Controller {
     // new chat room
     @UseGuards(JwtAuthenticatedGuard)
     @Post('rooms')
-    async create(@Req() request, @Body() dto: ChatRoomDto): Promise<ChatRoom> {
-        // validateInput(Joi.object({
-        //     password: Joi.string().required(), // Eliminar is required porque puede haber salas sin password
-        //     name: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(), // todo: revisar a lo mejor no funciona correctamente
-        //     isPrivate: Joi.boolean, // todo: revisar a lo mejor no funciona correctamente
-        //     isDirect: Joi.boolean // todo: revisar a lo mejor no funciona correctamente
-        // }), dto); // TODO: no permitir caracteres raros
+    async create(@Req() request, @Body() data: {
+        name: string,
+        password: string
+    } ): Promise<ChatRoom> {
+        //todo: tambien hay un todo equivalente en frontend, revisar que pasa con el owner pasado como input que aqui no usamos y actualizar para que ponga de owner al usuario del token
+        validateInput(Joi.object({
+            name: CHATNAME_VALIDATOR.required(),
+            password: PASSWORD_VALIDATOR
+        }), data)
         try {
             const token = getAuthToken(request)
             const user = await this.usersService.findOneById(token.userId)
-            const res = await this.chatsService.createChatRoom(dto, user)
+            const res = await this.chatsService.createChatRoom({...data, isDirect: false}, user)
             return res
         } catch (error) {
             Logger.error(error)
@@ -91,6 +110,10 @@ export class Chats2Controller {
     @Post('rooms/:roomId/password')
     @UseGuards(Jwt2faAuthGuard)
     async updatePassword(@Req() req: any, @Param('roomId') roomId: number, @Body() data: { password: string }) {
+        validateInput(Joi.object({
+            roomId: CHATROOM_ID_VALIDATOR.required(),
+            password: PASSWORD_VALIDATOR.required()
+        }), data)
         const token = getAuthToken(req)
         return this.chatsService.updateChatRoomPassword(token.userId, roomId, data.password)
     }
@@ -99,10 +122,11 @@ export class Chats2Controller {
     @UseGuards(JwtAuthenticatedGuard) //requester tiene que ser admin or el user afectado
     @Post('rooms/:roomId/join')
     async joinRoom(@Param('roomId') roomId: number, @Body() data: JoinChatRoomDto): Promise<ChatMembership> {
-        // validateInput(Joi.object({
-        //     userId: Joi.string().guid().required(),
-        //     password: Joi.string().required()
-        // }), data);
+        validateInput(Joi.object({
+            roomId: CHATROOM_ID_VALIDATOR.required(),
+            userId: ID_VALIDATOR.required(),
+            password: PASSWORD_VALIDATOR
+        }), { ...data, roomId });
         try {
             const res = await this.chatsService.joinChatRoom(roomId, data)
             return res
@@ -114,20 +138,24 @@ export class Chats2Controller {
     // invite users to chat room
     @Post('rooms/:roomId/invite')
     @UseGuards(JwtAuthenticatedGuard)
-    async inviteUsers(@Req() req: any, @Param('roomId') roomId: number, @Body() data: any) {
-        // validateInput(Joi.object({
-        //     userId: Joi.string().guid().required(),
-        //     password: Joi.string().required() // eliminar required porque puede haber salas sin password
-        // }), data);
+    async inviteUsers(@Req() req: any, @Param('roomId') roomId: number, @Body() data: JoinChatRoomDto) {
+        validateInput(Joi.object({
+            roomId: CHATROOM_ID_VALIDATOR.required(),
+            userId: ID_VALIDATOR.required(),
+            password: PASSWORD_VALIDATOR
+        }), { ...data, roomId })
         const user = req.user
         return this.chatsService.inviteUser(user, roomId, data)
     }
 
     @UseGuards(JwtAdminGuard) //solo admin/owner de la web, owner del chat lo puede borrar abandonando el chat
     @Delete('rooms/:id')
-    async deleteRoom(@Param('id') id: number) {
+    async deleteRoom(@Param('id') roomId: number) {
+        validateInput(Joi.object({
+            roomId: CHATROOM_ID_VALIDATOR.required()
+        }), { roomId })
         try {
-            await this.chatsService.deleteRoom(id)
+            await this.chatsService.deleteRoom(roomId)
         } catch (error) {
             if (error instanceof HttpException) throw (error)
             throw new HttpException("delete room failed", HttpStatusCode.InternalServerError);
@@ -137,15 +165,21 @@ export class Chats2Controller {
     // get one memebership
     @UseGuards(JwtAuthenticatedGuard)
     @Get('memberships/:id')
-    async findMembership(@Param('id') id: number): Promise<ChatMembership> {
-        return await (this.chatsService.findChatMembershipById(id))
+    async findMembership(@Param('id') roomId: number): Promise<ChatMembership> {
+        validateInput(Joi.object({
+            roomId: CHATROOM_ID_VALIDATOR.required()
+        }), { roomId })
+        return await (this.chatsService.findChatMembershipById(roomId))
     }
 
     // get chat room members
     @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/:id/members')
-    async findRoomMembers(@Param('id') id: number): Promise<ChatMembership[]> {
-        const res = await (this.chatsService.findChatRoomMembers(id))
+    async findRoomMembers(@Param('id') roomId: number): Promise<ChatMembership[]> {
+        validateInput(Joi.object({
+            roomId: CHATROOM_ID_VALIDATOR.required()
+        }), { roomId })
+        const res = await (this.chatsService.findChatRoomMembers(roomId))
         return res
     }
 
@@ -153,6 +187,9 @@ export class Chats2Controller {
     @UseGuards(JwtAuthenticatedGuard)
     @Get('memberships/user/:userId')
     async findUserMemberships(@Req() req, @Param('userId') userId: string): Promise<ChatMembership[]> {
+        validateInput(Joi.object({
+            userId: ID_VALIDATOR.required()
+        }), { userId })
         const token = getAuthToken(req)
         if (token.userId === userId && (token.role === 'ADMIN' || token.role === 'OWNER')) {
             const rooms = await this.chatsService.findAllChatRooms()
@@ -181,6 +218,7 @@ export class Chats2Controller {
     @UseGuards(JwtAuthenticatedGuard) //todo: solo admin/owner y admin/owner de la room
     @Post('memberships/ban')
     async banUser(@Body() input: { userName: string, roomId: number }, @Req() req) {
+        //todo: implementar validateInput cuando funcione con userId en vez de userName
         const token = getAuthToken(req)
         const user = await this.usersService.findOneByName(input.userName);
 
@@ -196,6 +234,7 @@ export class Chats2Controller {
     @UseGuards(JwtAuthenticatedGuard)
     @Post('memberships/allow')
     async allowUser(@Body() input: { userName: string, roomId: number }, @Req() req) {
+        //todo: implementar validateInput cuando funcione con userId en vez de userName
         const token = getAuthToken(req)
         const user = await this.usersService.findOneByName(input.userName);
 
@@ -211,6 +250,7 @@ export class Chats2Controller {
     @UseGuards(JwtAuthenticatedGuard)
     @Post('memberships/promote')
     async promoteUser(@Body() input: { userName: string, roomId: number }, @Req() req) {
+        //todo: implementar validateInput cuando funcione con userId en vez de userName
         const token = getAuthToken(req)
         const user = await this.usersService.findOneByName(input.userName);
         if (!user) 
@@ -230,6 +270,7 @@ export class Chats2Controller {
     @UseGuards(JwtAuthenticatedGuard)
     @Post('memberships/demote')
     async demoteUser(@Body() input: { userName: string, roomId: number }, @Req() req) {
+        //todo: implementar validateInput cuando funcione con userId en vez de userName
         const token = getAuthToken(req)
         const user = await this.usersService.findOneByName(input.userName);
         if (!user) 
@@ -248,20 +289,38 @@ export class Chats2Controller {
     // update membership
     @UseGuards(JwtAuthenticatedGuard)
     @Put('memberships/:id')
-    async updateMembership(@Param('id') id: number, @Body() data: ChatMembershipDto, @Req() req) {
-        // validateInput(Joi.object({
-        //     userId: Joi.string().guid().required(),
-        //     isOwner: Joi.boolean(),
-        //     isAdmin: Joi.boolean(),
-        //     isBanend: Joi.boolean(),
-        //     isMuted: Joi.boolean()
-        // }), data);
+    async updateMembership(@Param('id') roomId: number, @Body() data: ChatMembershipDto, @Req() req) {
+        /*
+        [x: string]: any
+    userId: string
+    chatRoomId: number
+    isOwner?: boolean
+    isAdmin?: boolean
+    isBanned?: boolean
+    isMuted?: boolean
+    bannedUntil?: Date
+    mutedUntil?: Date
+        */
+       //todo: si los forbidden no funcionan quitarlos y permitir cualquier cosa, aunq se ignorarán los borraremos del input para garantizar
+        validateInput(Joi.object({
+            userId: ID_VALIDATOR.required(),
+            chatRoomId: CHATROOM_ID_VALIDATOR.required(),
+            isOwner: FORBIDDEN,
+            isAdmin: BOOLEAN_VALIDATOR,
+            isBanned: BOOLEAN_VALIDATOR,
+            isMuted: BOOLEAN_VALIDATOR,
+            bannedUntil: DATE_VALIDATOR,
+            mutedUntil: DATE_VALIDATOR,
+        }), { ...data, roomId })
+        if (roomId !== data.chatRoomId) {
+            throw new HttpException(`roomId in body (${data.chatRoomId}) does not match roomId in query (${roomId})`, HttpStatusCode.BadRequest)
+        }
         const token = getAuthToken(req)
 
         try {
-            const membershipOwner = await this.chatsService.findMembershipOwner(id)
+            const membershipOwner = await this.chatsService.findMembershipOwner(roomId)
             if (token.hasRightsOverUser(token, membershipOwner))
-                return this.chatsService.updateMembership(id, data)
+                return this.chatsService.updateMembership(roomId, data)
         } catch (error) {
             if (error instanceof HttpException) throw (error)
             throw new HttpException("update membership failed", HttpStatusCode.InternalServerError);
@@ -271,20 +330,27 @@ export class Chats2Controller {
     // delete membership
     @UseGuards(JwtAuthenticatedGuard)
     @Delete('memberships/:id')
-    async deleteMembership(@Param('id') id: number, @Req() req) {
-        if (id < 0)  // admin gets memberships for all rooms with id = -1
-            return null 
+    async deleteMembership(@Param('id') roomId: number, @Req() req) {
+        //Ojo, admins no podrán borrar memberships, decisión de diseño
+        if (roomId < 0)  // admin gets memberships for all rooms with id = -1
+            return null
+        validateInput(Joi.object({
+            roomId: CHATROOM_ID_VALIDATOR.required()
+        }), { roomId })
         const token = getAuthToken(req)
-        const membershipOwner = await this.chatsService.findMembershipOwner(id)
+        const membershipOwner = await this.chatsService.findMembershipOwner(roomId)
         if (!token.hasRightsOverUser(token, membershipOwner))
-            throw new UnauthorizedException(`requester ${token.userId} cant delete membership ${id}`)
-        return this.chatsService.deleteMembership(id)
+            throw new UnauthorizedException(`requester ${token.userId} cant delete membership ${roomId}`)
+        return this.chatsService.deleteMembership(roomId)
     }
 
     // get chat messages for room
     @UseGuards(JwtAuthenticatedGuard)
     @Get('/messages/:roomId')
     async findRoomMessages(@Req() req, @Param('roomId') roomId: number): Promise<ChatMsgDto[]> {
+        validateInput(Joi.object({
+            roomId: CHATROOM_ID_VALIDATOR.required()
+        }), {})
         const token = getAuthToken(req, false)
         return await (this.chatsService.findChatRoomMessages(token, roomId))
     }
@@ -294,14 +360,17 @@ export class Chats2Controller {
     @Post('/messages/:roomId')
     async postRoomMessage(@Req() req, @Param('roomId') roomId: number, @Body() msg: ChatMsgDto) {
         validateInput(Joi.object({
-            senderId: Joi.string().guid().required(),
-            chatRoomId: Joi.number().required(),
-            content: Joi.string().regex(/^[a-zA-Z0-9\s-_]+$/).required(),
-            // senderName: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
-            createdAt: Joi.string().isoDate(), // todo: revisar a lo mejor no funciona correctamente
-            isChallenge: Joi.boolean(),
-        }), msg);
-
+            chatRoomId: CHATROOM_ID_VALIDATOR.required(),
+            roomId: CHATROOM_ID_VALIDATOR.required(),
+            senderId: ID_VALIDATOR.required(),
+            content: MESSAGE_VALIDATOR.required(),
+            senderName: USERNAME_VALIDATOR.required(),
+            createdAt: DATE_VALIDATOR.required(),
+            isChallenge: BOOLEAN_VALIDATOR
+        }), { ...msg, roomId })
+        if (roomId !== msg.chatRoomId) {
+            throw new HttpException(`roomId in msg (${msg.chatRoomId}) does not match roomId in query (${roomId})`, HttpStatusCode.BadRequest)
+        }
         return this.chatsService.createChatRoomMessage(getAuthToken(req, false), msg)
     }
 }

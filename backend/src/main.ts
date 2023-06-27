@@ -17,10 +17,12 @@ async function bootstrap() {
   await app.listen(3000);
 
   // add the general chat room to the database
-  const generalChatRoomDto: ChatRoomDto = {
+  const generalChatRoomDto: {
+    name: string,
+    isDirect: boolean
+  } = {
     name: process.env.GENERAL_CHAT_NAME,
-    isPrivate: false,
-    password: "",
+    isDirect: false,
   }
   
   const chats2Service = app.get(Chats2Service)

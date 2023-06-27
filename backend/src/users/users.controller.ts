@@ -8,7 +8,7 @@ import { Readable } from 'typeorm/platform/PlatformTools';
 var fs  = require('fs'),
 path    = require('path'),
 url     = require('url');
-import { EMAIL_VALIDATOR, getAuthToken, ID_VALIDATOR, PASSWORD_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
+import { BOOLEAN_VALIDATOR, EMAIL_VALIDATOR, getAuthToken, ID_VALIDATOR, PASSWORD_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
 import * as Joi from 'joi';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
 import { UserDto } from './user.dto';
@@ -106,8 +106,8 @@ export class UsersController {
             password: PASSWORD_VALIDATOR,
             login42: USERNAME_VALIDATOR,
             username: USERNAME_VALIDATOR.required(),
-            is2fa: Joi.boolean(),
-            twofaSecret: Joi.boolean(),
+            is2fa: BOOLEAN_VALIDATOR,
+            twofaSecret: BOOLEAN_VALIDATOR,
         }), { ...user, id });
         const token = getAuthToken(request)
         if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
