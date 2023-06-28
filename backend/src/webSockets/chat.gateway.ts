@@ -90,9 +90,9 @@ export class ChatGateway
     client.leave(`room_${room}`);
   }
 
-  membershipUpdateEvent() {
-    this.server.emit('membership_update')
-  }
+  // membershipUpdateEvent() {
+  //   this.server.emit('membership_update')
+  // }
 }
 
 interface JoinPayload {
