@@ -1,3 +1,4 @@
+import { throwFromAsync } from "@/utils/utils";
 import { apiClient } from "./baseApi";
 
 const URL = "/chats";
@@ -46,7 +47,7 @@ export async function getAllChatRoomsReq() {
 export async function createChatRoomReq(roomName: string, owner: string, password?: string) {
     const room: any = {
         name: roomName,
-        ownerId: owner, //parece que no se usa ??? revisar si funciona y si funciona como lo hace, en cualquier caso quitar de aqui y usar el del token
+        //ownerId: owner, //parece que no se usa ??? revisar si funciona y si funciona como lo hace, en cualquier caso quitar de aqui y usar el del token
         password: password
     }
 
@@ -70,14 +71,18 @@ export async function getChatRoomMessagesReq(roomId: string) {
 }
 
 export async function joinChatRoomReq(roomId: string, userId: string, password?: string) {
-    return apiClient.post(`${URL}/rooms/${roomId}/join`, { userId, password })
+    return apiClient.post(`${URL}/rooms/${roomId}/join`, { userId, password: password === "" ? undefined : password })
 }
 
 export async function inviteUsersReq(roomID: string, userId: string) {
     return apiClient.post(`${URL}/rooms/${roomID}/invite`, { userId })
 }
 
-export async function postChatMessageReq(roomId: string, message: ChatMessage) {
+export async function postChatMessageReq(roomId: string, message: {
+    senderId: string,
+    content: string,
+    isChallenge?: boolean
+}) {
     return apiClient.post(`${URL}/messages/${roomId}`, message)
 }
 
@@ -98,7 +103,15 @@ export async function getChatRoomMembershipsReq(roomId: string) {
     return apiClient.get(`${URL}/rooms/${roomId}/members`)
 }
 
-export async function updateChatRoomMembershipsReq(membershipId: string, data: Membership) {
+//todo tocontinue -> dambiar data: Membership a solo lo q necesitamos, same en backend, empezar backend
+export async function updateChatRoomMembershipsReq(membershipId: string, data: {
+    isBanned?: boolean,
+    isMuted?: boolean,
+    isAdmin?: boolean,
+    bannedUntil?: Date,
+    mutedUntil?: Date
+}) {
+    alert("calling with: " + JSON.stringify(data))
     return apiClient.put(`${URL}/memberships/${membershipId}`, data)
 }
 

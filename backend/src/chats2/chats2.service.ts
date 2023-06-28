@@ -178,7 +178,7 @@ export class Chats2Service {
         this.joinChatRoom(generalChat.id, membership)
     }
 
-    async joinChatRoom(roomId: number, data: JoinChatRoomDto): Promise<ChatMembership> {
+    async joinChatRoom(roomId: number, data: JoinChatRoomDto, override?: boolean): Promise<ChatMembership> {
         // check whether the room exists
         const roomExists = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
         if (!roomExists) {
@@ -212,7 +212,7 @@ export class Chats2Service {
         }
 
         // if the room is private, check the password
-        if (room.isPrivate) {
+        if (room.isPrivate && !override) {
             if (!data.password) {
                 throw new UnauthorizedException('Password is required for this room')
             }
@@ -245,11 +245,11 @@ export class Chats2Service {
         })
     }
 
-    async inviteUser(inviter: User, id: number, data: JoinChatRoomDto) {
+    async inviteUser(inviterId: string, id: number, data: JoinChatRoomDto) {
         // check user belongs to the room and is not banned
         const userMembership = await this.chatMembershipsRepo.find({
             where: {
-                user: { id: inviter.id },
+                user: { id: inviterId },
                 chatRoom: { id: id },
                 isBanned: false,
             }
@@ -259,13 +259,13 @@ export class Chats2Service {
             throw new UnauthorizedException('You are not a member of this room')
         }
 
-        this.joinChatRoom(id, data)
+        this.joinChatRoom(id, data, true)
     }
 
 
-    async findChatMembershipById(id: number): Promise<ChatMembership> {
+    async findChatMembershipById(membershipId: number): Promise<ChatMembershipEntity> {
         const res = await this.chatMembershipsRepo.findOne({
-            where: { id: id },
+            where: { id: membershipId },
             relations: ['user', 'chatRoom'],
         })
         if (!res) {
@@ -274,9 +274,9 @@ export class Chats2Service {
         return res
     }
 
-    async findMembershipOwner(id: number): Promise<User> {
+    async findMembershipOwner(membershipId: number): Promise<User> {
         const res = await this.chatMembershipsRepo.findOne({
-            where: { id: id },
+            where: { id: membershipId },
             relations: ['user', 'chatRoom'],
         })
         if (!res) {
@@ -343,18 +343,44 @@ export class Chats2Service {
         return res
     }
 
-    async updateMembership(id: number, data: ChatMembershipDto) {
-
-        if (!data.isBanned)
-            data.bannedUntil = new Date()
-        if (!data.isMuted)
-            data.mutedUntil = new Date()
-
-        delete data.chatRoomId
-        delete data.user
-
-        const res = this.chatMembershipsRepo.update({ id: id }, data)
-        return res
+    async updateMembership(membershipId: number, requester: {
+        userId: string,
+        isAdmin: boolean,
+        isOwner: boolean
+    }, data: {
+        isAdmin: boolean,
+        isMuted?: boolean,
+        isBanned?: boolean,
+        bannedUntil?: Date,
+        mutedUntil?: Date
+    }) {
+        const membership = await this.findChatMembershipById(membershipId)
+        if (membership.user.role === "ADMIN" && !requester.isAdmin && !requester.isOwner) {
+            throw new HttpException("Only web administrators can change web administrators memberships", HttpStatusCode.Unauthorized)
+        }
+        if (!membership) {
+            throw new HttpException("No membership found with id " + membershipId, HttpStatusCode.NotFound)
+        }
+        if (membership.isOwner) {
+            throw new HttpException("Cant change owner memberhips", HttpStatusCode.BadRequest)
+        }
+        const requesterMembership = await this.getUserChatMembership(requester.userId, membership.chatRoom.id)
+        if (requester.isAdmin || requester.isOwner ||
+            ((requesterMembership.isAdmin || requesterMembership.isOwner) && isPastDate(requesterMembership.bannedUntil)))
+        {
+            if (!data.isBanned)
+                data.bannedUntil = new Date()
+            if (!data.isMuted)
+                data.mutedUntil = new Date()
+            
+            membership.isBanned = data.isBanned
+            membership.isAdmin = data.isAdmin
+            membership.isMuted = data.isMuted
+            membership.bannedUntil = data.bannedUntil
+            membership.mutedUntil = data.mutedUntil
+            membership.save()
+            return membership
+        }
     }
 
     async getUserChatMembership(userId: string, chatRoomId: number) {
@@ -427,24 +453,18 @@ export class Chats2Service {
 
     //-------------------------------------------- messages
 
-    async createChatRoomMessage(token: any, msg: ChatMsgDto): Promise<ChatMsg> {
-        const sender = await this.usersRepo.findOne({ where: { id: msg.senderId } });
-        const room = await this.chatRoomsRepo.findOne({ where: { id: msg.chatRoomId } });
-        
-        if (token.role === 'ADMIN' || token.role === 'OWNER') {
-            const postedMsg = await this.chatMsgsRepo.save({
-                sender: sender,
-                chatRoom: room,
-                content: msg.content,
-                isChallenge: msg.isChallenge,
-            })
-            return postedMsg
-        }
+    async createChatRoomMessage(chatRoomId: number, senderId: string, msg: {
+        senderId: string,
+        content: string,
+        isChallenge?: boolean
+    }): Promise<ChatMsg> {
+        const sender = await this.usersRepo.findOne({ where: { id: senderId } });
+        const room = await this.chatRoomsRepo.findOne({ where: { id: chatRoomId } });
         
         const membership = await this.chatMembershipsRepo.findOne({
             where: {
-                user: { id: token.userId },
-                chatRoom: { id: msg.chatRoomId },
+                user: { id: senderId },
+                chatRoom: { id: chatRoomId },
             }
         })
 

@@ -20,8 +20,11 @@ export const MESSAGE_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9\s-_]+$/) //TODO
 
 export function validateInput(schema: Joi.ObjectSchema<any>, toValidate: any) {
   const validation = schema.validate(toValidate);
-  if (validation.error !== undefined)
+  if (validation.error !== undefined) {
+    console.log("error validating: " + JSON.stringify(toValidate))
+    console.log("error: " + validation.error.message)
     throw new HttpException(validation.error.message, HttpStatus.BAD_REQUEST);
+  }
 }
 
 export function generateRandomSquaresImage() {
@@ -187,6 +190,12 @@ export function get42Token(request, validate = true) {
 
 export function isPastDate(date: Date): boolean {
   return date < new Date();
+}
+
+export function processError(error: any, defaultMsg: string): HttpException {
+  if (error instanceof HttpException)
+    return error
+  return new HttpException(defaultMsg, HttpStatusCode.InternalServerError);
 }
 
 export const usersInGame = new Set<string>();

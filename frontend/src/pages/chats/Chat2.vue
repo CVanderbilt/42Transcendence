@@ -253,7 +253,7 @@ import { IUser, key, store } from "../../store/store";
 import "@/style/styles.css";
 import { app, useSocketIO } from "../../main";
 import { postChatMessageReq, getChatRoomMessagesReq, Membership, getUserMembershipsReq, getChatRoomMembershipsReq, updateChatRoomMembershipsReq, createChatRoomReq, deleteChatRoomMembershipsReq, updateChatRoomPasswordReq, ChatRoom, getChatRoomByIdReq, getGeneralRoom, getDirectChatRoomReq } from "../../api/chatApi";
-import { getChatRoomByNameReq, joinChatRoomReq, inviteUsersReq as inviteUserReq, } from "../../api/chatApi";
+import { getChatRoomByNameReq, joinChatRoomReq, } from "../../api/chatApi";
 import { ChatMessage } from "../../api/chatApi";
 import { getUserById, getUserByName } from "../../api/user";
 import { getFriendshipsRequest } from "../../api/friendshipsApi";
@@ -263,6 +263,8 @@ import 'moment-timezone';
 import { throwFromAsync } from "@/utils/utils";
 import { challenge, getCurrentMatch } from "@/api/gameApi";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
+import { publishNotification } from "@/utils/utils";
+import { inviteUsersReq } from "../../api/chatApi";
 
 export default defineComponent({
   name: "Chat2",
@@ -433,10 +435,11 @@ export default defineComponent({
       // get all user memberships
       try {
         this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
-      } catch {
-        throwFromAsync(app, "Error retrieving memberships")
+      } catch {(error: any) => {
+        throwFromAsync(app, error)
+        alert("111")
         return
-      }
+      }}
 
       // update current membership
       const membership = this.userMemberships.find((membership: any) => membership.chatRoom.name === this.chatRoomName)
@@ -445,6 +448,8 @@ export default defineComponent({
       }
       else {
         throwFromAsync(app, "Not a member")
+        alert("222")
+
         this.changeRoom(this.generalRoom.id, this.generalRoom.name)
         return;
       }
@@ -472,9 +477,9 @@ export default defineComponent({
         this.io.socket.emit("event_message", msg2emit)
 
         // send through api
-        const outMessage: ChatMessage = {
+        const outMessage = {
           content: this.message,
-          chatRoomId: this.roomId,
+          //chatRoomId: this.roomId,
           senderId: this.user.id,
           isChallenge: isChallenge,
         }
@@ -489,10 +494,13 @@ export default defineComponent({
       if (roomId === "")
         return
 
-      let room = (await getChatRoomByIdReq(roomId)).data
-      if (!room) {
-        alert("Room not found")
-        room = this.generalRoom
+      let room: any
+      try {
+        room = (await getChatRoomByIdReq(roomId)).data
+      } catch (error: any) {
+        throwFromAsync(app, error)
+        alert("333")
+        return 
       }
 
       try {
@@ -502,8 +510,11 @@ export default defineComponent({
           this.userMemberships.push(resp.data)
         }
       } catch (error: any) {
-        const errorMsg = (error).response?.data?.message
-        alert("Error joining the room: " + (errorMsg || "Unknown error"));
+        throwFromAsync(app, error)
+        alert("444")
+
+        //const errorMsg = (error).response?.data?.message
+        //alert("Error joining the room: " + (errorMsg || "Unknown error"));
         return;
       }
 
@@ -512,13 +523,16 @@ export default defineComponent({
         this.changeRoom(room.id, room.name); //TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
       }
       catch (error: any) {
-        const errorMsg = (error).response?.data?.message
-        alert("Error changing the room: " + (errorMsg || "Unknown error"));
+        throwFromAsync(app, error)
+        alert("555")
+
+        //const errorMsg = (error).response?.data?.message
+        //alert("Error changing the room: " + (errorMsg || "Unknown error"));
         return;
       }
     },
 
-    async joinRoomBySearchBar(roomName2join: string, password?: string) {
+    async joinRoomBySearchBar(roomName2join: string, password: string) {
       if (roomName2join === "") {
         return;
       }
@@ -526,26 +540,32 @@ export default defineComponent({
       let room = (await getChatRoomByNameReq(roomName2join)).data
       if (!room) {
         alert("Room not found")
+        publishNotification(`Room ${roomName2join} not found, setting room to ${this.generalRoom}`, false)
         room = this.generalRoom
       }
-
+      let resp
       try {
-        const resp = await joinChatRoomReq(room.id, this.user?.id as string, password) // returns membership even if user is already a member of the room
-        this.isAdmin = resp.data.isAdmin
-        if (!this.userMemberships.find((membership) => membership.chatRoom.id === room.id)) {
-          this.userMemberships.push(resp.data)
-        }
+        resp = await joinChatRoomReq(room.id, this.user?.id as string, password) // returns membership even if user is already a member of the room
       } catch (error: any) {
-        const errorMsg = (error).response?.data?.message
-        alert("Error joining the room: " + (errorMsg || "Unknown error"));
+        throwFromAsync(app, error)
+        alert("777")
+        //const errorMsg = (error).response?.data?.message
+        //alert("Error joining the room: " + (errorMsg || "Unknown error"));
         return;
+      }
+      
+      this.isAdmin = resp.data.isAdmin
+      if (!this.userMemberships.find((membership) => membership.chatRoom.id === room.id)) {
+        this.userMemberships.push(resp.data)
       }
 
       try {
         this.changeRoom(room.id, room.name);//TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
       }
       catch (error: any) {
-        throwFromAsync(app, "Error changing the room: " + (error.response?.data?.message || "Unknown error"))
+        throwFromAsync(app, error)
+        alert("888")
+        //throwFromAsync(app, "Error changing the room: " + (error.response?.data?.message || "Unknown error"))
       }
     },
 
@@ -558,8 +578,11 @@ export default defineComponent({
         try {
           await deleteChatRoomMembershipsReq(membership.id)
         } catch (error: any) {
-          const errorMsg = (error).response?.data?.message
-          alert("Error leaving the room: " + (errorMsg || "Unknown error"));
+          //const errorMsg = (error).response?.data?.message
+          //alert("Error leaving the room: " + (errorMsg || "Unknown error"));
+          throwFromAsync(app, error)
+        alert("999")
+
           return
         }
         // update memberships list
@@ -574,11 +597,15 @@ export default defineComponent({
         const membership = this.userMemberships.find((membership) => membership.chatRoom.id == roomId)
         if (!membership) {
           throwFromAsync(app, "You are not a member of this room")
+        alert("aaa")
+
           return
         }
 
         if (!this.dateOK(membership.bannedUntil)) {
           throwFromAsync(app, "You are banned from room " + membership.chatRoom.name)
+        alert("bbb")
+
           return;
         }
 
@@ -598,12 +625,16 @@ export default defineComponent({
 
         this.fetchNiceRoomNames()
 
+        //alert("roomId? " + roomId)
         getChatRoomMessagesReq(roomId).then((response) => {
           for (var i in response.data) {
             this.messages.push(response.data[i]);
           }
         }).catch((error) => {
-          throwFromAsync(app, "Error getting messages: " + error.response?.data?.message || "Unknown error")
+          //throwFromAsync(app, "Error getting messages: " + error.response?.data?.message || "Unknown error")
+          throwFromAsync(app, error)
+        alert("ccc")
+
         });
       })
 
@@ -616,7 +647,11 @@ export default defineComponent({
         room = await (await createChatRoomReq(roomName, this.user?.id as string, password)).data
       }
       catch (err: any) {
-        throwFromAsync(app, JSON.stringify(err)) // TODO: revisar el throwFromAsync, cuando se intenta crear una sala con un nombre que ya está pillado
+        
+        
+        // TODO: revisar el throwFromAsync, cuando se intenta crear una sala con un nombre que ya está pillado
+        throwFromAsync(app, err)
+        alert("ddd")
         // publishNotification("Error creating chat room: " + err , true)
         return;
       }
@@ -629,8 +664,12 @@ export default defineComponent({
         this.userMemberships.push(membership)
       }
 
-      catch (err) {
-        throwFromAsync(app, "Error joining chat room: " + err)
+      catch (error: any) {
+        //throwFromAsync(app, "Error joining chat room: " + err)
+        throwFromAsync(app, error)
+        alert("ddd")
+
+        return
       }
 
       if (room) {
@@ -639,11 +678,14 @@ export default defineComponent({
           try {
             if (username !== this.user?.username && username !== "") {
               const invitee = await getUserByName(username)
-              inviteUserReq(room.id, invitee.data.id)
+              inviteUsersReq(room.id, invitee.data.id)
             }
           }
           catch (err: any) {
-            throwFromAsync(app, "Could not invite user")
+            //throwFromAsync(app, "Could not invite user")
+            throwFromAsync(app, err)
+        alert("eee")
+
           }
         })
 
@@ -657,8 +699,12 @@ export default defineComponent({
       try {
         await deleteChatRoomMembershipsReq(membershipId)
         this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.id !== membershipId)
-      } catch (error) {
-        alert("Can not remove user from chat room: " + error);
+      } catch (error: any) {
+        //alert("Can not remove user from chat room: " + error);
+        throwFromAsync(app, error)
+        alert("fff")
+        
+        return
       }
     },
 
@@ -699,8 +745,12 @@ export default defineComponent({
           this.managedChatRequiresPassword = room.isPrivate
         }
       }
-      catch (err) {
-        throwFromAsync(app, "Error getting chat room memberships: " + err)
+      catch (err: any) {
+        //throwFromAsync(app, "Error getting chat room memberships: " + err)
+        throwFromAsync(app, err)
+        alert("ggg")
+
+        return
       }
     },
 
@@ -730,7 +780,14 @@ export default defineComponent({
       this.managedChatMemberships.forEach(async (membership) => {
         membership.bannedUntil = this.time2utc(membership.bannedUntil)
         membership.mutedUntil = this.time2utc(membership.mutedUntil)
-        await updateChatRoomMembershipsReq(membership.id, membership)
+        alert("memberhis.userId!!!1 -> " + membership.id)
+        await updateChatRoomMembershipsReq(membership.id, {
+          isBanned: membership.isBanned,
+          isMuted: membership.isMuted,
+          isAdmin: membership.isAdmin,
+          bannedUntil: membership.bannedUntil,
+          mutedUntil: membership.mutedUntil
+        })
       })
 
       // add new members
@@ -738,11 +795,15 @@ export default defineComponent({
         this.manageChatParticipants.forEach(async (username) => {
           if (username !== this.user?.username && username !== "") {
             const invitee = (await getUserByName(username)).data
-            inviteUserReq(this.roomId, invitee.id)
+            inviteUsersReq(this.roomId, invitee.id)
           }
         })
-      } catch (error) {
-        alert("Can not invite users to chat room: " + error);
+      } catch (error: any) {
+        //alert("Can not invite users to chat room: " + error);
+        throwFromAsync(app, error)
+        alert("hhh")
+
+        return
       }
     },
 
