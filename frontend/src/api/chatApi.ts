@@ -47,7 +47,6 @@ export async function getAllChatRoomsReq() {
 export async function createChatRoomReq(roomName: string, owner: string, password?: string) {
     const room: any = {
         name: roomName,
-        //ownerId: owner, //parece que no se usa ??? revisar si funciona y si funciona como lo hace, en cualquier caso quitar de aqui y usar el del token
         password: password
     }
 

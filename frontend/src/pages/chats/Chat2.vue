@@ -378,7 +378,7 @@ export default defineComponent({
     // get friendships
     this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
 
-    // join message socket
+    // join chat socket
     this.io.socket.offAny();
     this.io.socket.on("new_message", (message, userName, senderId, roomId, isChallenge) => {
       const msg: ChatMessage = {
@@ -391,6 +391,10 @@ export default defineComponent({
 
       this.messages.push(msg)
     });
+
+    this.io.socket.on("membership_update", () => {
+      this.fetchNiceRoomNames()
+    })
   },
 
   beforeRouteLeave() {

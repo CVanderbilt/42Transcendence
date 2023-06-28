@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   OnGatewayConnection,
@@ -87,6 +88,10 @@ export class ChatGateway
   handleRoomLeave(client: Socket, room: string) {
     console.log(`chao room_${room}`)
     client.leave(`room_${room}`);
+  }
+
+  membershipUpdateEvent() {
+    this.server.emit('membership_update')
   }
 }
 

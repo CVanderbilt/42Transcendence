@@ -10,6 +10,7 @@ import { User } from 'src/users/user.interface';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
 import { isPastDate } from 'src/utils/utils';
 import { HttpStatusCode } from 'axios';
+// import { ChatGateway } from 'src/webSockets/chat.gateway';
 
 @Injectable()
 export class Chats2Service {
@@ -23,6 +24,7 @@ export class Chats2Service {
         private readonly chatMsgsRepo: Repository<ChatMsgEntity>,
         @InjectRepository(UserEntity)
         private readonly usersRepo: Repository<UserEntity>,
+        // private readonly chatGateway = new ChatGateway(chatMembershipsRepo),
     ) { }
 
     async createChatRoom(roomDto: ChatRoomDto, user: User = null): Promise<ChatRoom> {
@@ -238,6 +240,9 @@ export class Chats2Service {
             isOwner: isOwner,
             isAdmin: isAdmin,
         })
+
+        // emit event
+        // this.chatGateway.membershipUpdateEvent()
 
         return this.chatMembershipsRepo.findOne({
             where: { id: membership.id },
