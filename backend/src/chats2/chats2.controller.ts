@@ -336,10 +336,7 @@ export class Chats2Controller {
             roomId: CHATROOM_ID_VALIDATOR.required()
         }), { roomId })
         const token = getAuthToken(req)
-        const membershipOwner = await this.chatsService.findMembershipOwner(roomId)
-        if (!token.hasRightsOverUser(token, membershipOwner))
-            throw new UnauthorizedException(`requester ${token.userId} cant delete membership ${roomId}`)
-        return this.chatsService.deleteMembership(roomId)
+        return this.chatsService.deleteMembership(roomId, token.userId)
     }
 
     // get chat messages for room

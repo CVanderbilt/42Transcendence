@@ -423,7 +423,7 @@ export class Chats2Service {
         }
     }
 
-    async deleteMembership(id: number) {
+    async deleteMembership(id: number, requesterId: string) {
         let deleteRoom = false;
         const membership = await this.chatMembershipsRepo.findOne({ where: { id: id }, relations: ['chatRoom'] })
         const memberships = await this.findChatRoomMembers(membership.chatRoom.id)
@@ -431,9 +431,16 @@ export class Chats2Service {
 
         if (!membership)
             return new HttpException('Membership not found', HttpStatusCode.NotFound)
+        const requesterMembership = await this.findMembershipByUserAndRoom(requesterId, membership.chatRoom.id)
+        const requesterHasNotRightsErr = new HttpException("Requester doesnt have rights to delete membership", HttpStatusCode.Unauthorized)
         if (membership.isOwner) {
+            if (!requesterMembership.isOwner)
+                throw requesterHasNotRightsErr
             deleteRoom = true;
         }
+        if (!requesterMembership.isOwner && !requesterMembership.isAdmin)
+            throw requesterHasNotRightsErr
+
         // if the user is the last member of the room, delete the room
         if (memberships.length == 0)
             deleteRoom = true;

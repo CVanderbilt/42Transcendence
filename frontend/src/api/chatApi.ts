@@ -45,6 +45,7 @@ export async function getAllChatRoomsReq() {
 }
 
 export async function createChatRoomReq(roomName: string, owner: string, password?: string) {
+    if (password == "") password = undefined
     const room: any = {
         name: roomName,
         password: password
