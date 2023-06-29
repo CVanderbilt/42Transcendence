@@ -148,7 +148,7 @@ export function getAuthToken(request, validate = true) {
     };
     return ret;
   } catch (err) {
-    throw new UnauthorizedException('Invalid token');
+    throw new HttpException("Invalid token", HttpStatusCode.ImATeapot)
   }
 }
 
@@ -195,7 +195,7 @@ export function isPastDate(date: Date): boolean {
 export function processError(error: any, defaultMsg: string): HttpException {
   if (error instanceof HttpException)
     return error
-  return new HttpException(defaultMsg, HttpStatusCode.InternalServerError);
+  return new HttpException(defaultMsg, HttpStatusCode.ImATeapot);
 }
 
 export const usersInGame = new Set<string>();

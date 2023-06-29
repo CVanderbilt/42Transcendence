@@ -81,7 +81,7 @@ export class AuthService {
             isTwoFactorAuthenticated: false,
         }
 
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m" })
         const res : LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -162,7 +162,7 @@ export class AuthService {
             isTwoFactorAuthenticated: false,
         }
 
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m" })
         const res : LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -224,7 +224,7 @@ export class AuthService {
             isTwoFactorAuthenticated: true,
         };
 
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m"  })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m"  })
         const res : LoginResDto = {
             "userId": user.id,
             "email": user.email,

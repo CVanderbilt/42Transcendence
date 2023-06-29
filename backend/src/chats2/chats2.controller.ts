@@ -166,7 +166,7 @@ export class Chats2Controller {
             await this.chatsService.deleteRoom(roomId)
         } catch (error) {
             if (error instanceof HttpException) throw (error)
-            throw new HttpException("delete room failed", HttpStatusCode.InternalServerError);
+            throw new HttpException("delete room failed", HttpStatusCode.ImATeapot);
         }
     }
 
@@ -339,7 +339,7 @@ export class Chats2Controller {
             }, data)
         } catch (error) {
             if (error instanceof HttpException) throw (error)
-            throw new HttpException("update membership failed", HttpStatusCode.InternalServerError);
+            throw new HttpException("update membership failed", HttpStatusCode.ImATeapot);
         }
     }
 

@@ -40,7 +40,7 @@ export class MatchesController {
             console.log("error getting competitive match")
             //console.log(error)
             if (error instanceof HttpException) throw (error)
-            throw new HttpException("competitive matchmaking failed", HttpStatusCode.InternalServerError);
+            throw new HttpException("competitive matchmaking failed", HttpStatusCode.ImATeapot);
         }
     }
 
@@ -57,7 +57,7 @@ export class MatchesController {
             return await this.matchesService.getMatchesByUser(userId);
         } catch (error) {
             console.log (error)
-            throw new HttpException("error getting matches", HttpStatusCode.InternalServerError);
+            throw new HttpException("error getting matches", HttpStatusCode.ImATeapot);
         }
     }
 
@@ -82,7 +82,7 @@ export class MatchesController {
             return gameId;
         } catch (error) {
             if (error instanceof HttpException) throw (error)
-            throw new HttpException("friendly matchmaking failed", HttpStatusCode.InternalServerError);
+            throw new HttpException("friendly matchmaking failed", HttpStatusCode.ImATeapot);
         }
     }
 
@@ -102,7 +102,7 @@ export class MatchesController {
             return await this.matchesService.challenge(data.requesterName, data.opponentName, powerupsList)
         } catch (error) {
             if (error instanceof HttpException) throw (error)
-            throw new HttpException("competitive matchmaking failed", HttpStatusCode.InternalServerError);
+            throw new HttpException("competitive matchmaking failed", HttpStatusCode.ImATeapot);
         }
     }
 
@@ -116,7 +116,7 @@ export class MatchesController {
             return this.matchesService.getCurrentMatch(data.userName)
         } catch (error) {
             if (error instanceof HttpException) throw (error)
-            throw new HttpException("get current match failed", HttpStatusCode.InternalServerError);
+            throw new HttpException("get current match failed", HttpStatusCode.ImATeapot);
         }
     }
 
@@ -129,7 +129,7 @@ export class MatchesController {
         } catch (error) {
             console.log("processing error: " + JSON.stringify(error))
             if (error instanceof HttpException) throw (error)
-            throw new HttpException("get current match failed", HttpStatusCode.InternalServerError);
+            throw new HttpException("get current match failed", HttpStatusCode.ImATeapot);
             //throw processError(error, "cancel matchmaking failed")
         }
     }
