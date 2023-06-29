@@ -34,7 +34,7 @@
       <h3>Match Making</h3>
       <ul style="text-align: left;">
         <li>
-          Matches players with similar victory - defeat ratio.
+          Matches players with similar scores. If matchmaking takes too much time it will try to match with a higher threshold until it eventually either times out or matches succesfully
           Only competitive statistics are taken into account.
         </li>
       </ul>

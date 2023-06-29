@@ -1,27 +1,34 @@
-import { Controller, Get, Post, Param, HttpException, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, HttpException, Body, UseGuards, Req } from '@nestjs/common';
 import { Match } from './match.interface';
 import { MatchesService } from './matches.service';
 import { HttpStatusCode } from 'axios';
-import { ID_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
+import { ID_VALIDATOR, USERNAME_VALIDATOR, getAuthToken, validateInput } from 'src/utils/utils';
 import * as Joi from 'joi'
 import { JwtAuthenticatedGuard } from 'src/auth/jwt-authenticated-guard';
+import { UsersService } from 'src/users/users.service';
 
 const POWERUPS_VALIDATOR = Joi.string().regex(/^[A-Z]+$/)
 
 @Controller('matches')
 export class MatchesController {
-    constructor(private matchesService: MatchesService) { }
+    constructor(private matchesService: MatchesService, private usersService: UsersService) { }
 
     //Todo: cambiar todos los nombred de atributos (especialmente de cara a llamar las apis) de username a userid
     @UseGuards(JwtAuthenticatedGuard)
     @Get('competitiveMatch/:userName')
-    async getCompetitiveMatch(@Param('userName') userName: string): Promise<string> {
+    async getCompetitiveMatch(@Param('userName') userName: string, @Req() req): Promise<string> {
         validateInput(Joi.object({
             userName: ID_VALIDATOR.required()
         }), { userName });
+        const token = getAuthToken(req)
+        if (userName !== token.userId)
+            throw new HttpException("UserId in query and in token missmatch", HttpStatusCode.BadRequest)        
+    
+            // OJO aunq se llama username es userids
+        const user = await this.usersService.findOneById(userName)
         try {
-            console.log("getCompetitiveMatch called with userName: " + userName)
-            const gameId = await this.matchesService.makeMatch(userName, 100, false, []);
+            console.log("getCompetitiveMatch called with userId " + userName + " and score: " + user.score)
+            const gameId = await this.matchesService.makeMatch(userName, user.score, false, []);
             console.log("makeMatch funcionó y devuelve:")
             console.log(gameId)
             return gameId;
