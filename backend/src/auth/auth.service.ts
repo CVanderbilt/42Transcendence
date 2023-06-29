@@ -159,6 +159,9 @@ export class AuthService {
                 role: "CUSTOMER",
             }
             user = await this.usersService.createUser(newUserData)
+            const png = generateRandomSquaresImage();
+            const buffer = PNG.sync.write(png);
+            await this.usersService.uploadDatabaseFile(buffer, user.id);
         }
 
         const payload = {
