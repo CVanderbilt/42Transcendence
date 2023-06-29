@@ -59,7 +59,7 @@ export class AuthService {
 
         const user = await this.usersRepo.findOne({ 
             where: { email: login.email },
-            select: ["id", "email", "username", "password", "role", "is2fa"] })
+            select: ["id", "email", "username", "password", "role", "is2fa", "isNew"] })
 
         console.log("user", {user})
 
@@ -89,6 +89,14 @@ export class AuthService {
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
+            "isNew": user.isNew,
+        }
+
+        console.log("res", {res})
+        if (user.isNew)
+        {
+            user.isNew = false
+            this.usersRepo.save(user)
         }
 
         return res
@@ -170,6 +178,13 @@ export class AuthService {
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
+            "isNew": user.isNew,
+        }
+
+        if (user.isNew)
+        {
+            user.isNew = false
+            this.usersRepo.save(user)
         }
 
         return res
@@ -232,6 +247,7 @@ export class AuthService {
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
+            "isNew": user.isNew,
         }
 
         return res

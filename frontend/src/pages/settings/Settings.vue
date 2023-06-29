@@ -51,7 +51,7 @@
 import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
 import { key, store } from "../../store/store";
-import { generateImageURL, publishNotification, throwFromAsync } from "@/utils/utils";
+import { generateImageURL, handleHttpException, publishNotification, throwFromAsync } from "@/utils/utils";
 import { IUserAPI, putImage, updateUserReq } from "@/api/user";
 import { app, stateSocketIO } from "@/main";
 
@@ -100,13 +100,18 @@ export default defineComponent({
         publishNotification("User updated", false)
       }
       catch (error: any) {
-        return
+        handleHttpException(app, error)
       }
 
       store.commit("changeUserName", this.options.username)
 
-      if (this.selectedFile)
-        putImage(store.state.user.id, this.selectedFile);
+      if (this.selectedFile){
+        try {
+          await putImage(store.state.user.id, this.selectedFile)
+        } catch (error) {
+          handleHttpException(app, error)
+        }
+      }
 
       // si el usuario quiere activar 2fa llevarlo a la pagina de 2fa
       if (this.options.is2fa && !store.state.user.is2faEnabled) {

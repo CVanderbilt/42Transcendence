@@ -22,8 +22,9 @@
 
 import { apiClient } from '@/api/baseApi';
 import { ENABLE_2FA_ENDPOINT, QR_ENDPOINT } from '@/config';
+import { app } from '@/main';
 import { key, store } from '@/store/store';
-import { publishNotification } from '@/utils/utils';
+import { handleHttpException, publishNotification } from '@/utils/utils';
 import { computed, defineComponent } from 'vue';
 import { useStore } from 'vuex';
 
@@ -52,11 +53,16 @@ export default defineComponent({
     },
     methods: {
         async getQRCode() {
-            console.log('Getting QR code');
-            const response = await apiClient.get(QR_ENDPOINT, { responseType: 'blob' });
-            const qrCodeUrl = URL.createObjectURL(response.data);
-            this.qrCodeUrl = qrCodeUrl;
-            console.log('QR code URL: ' + qrCodeUrl);
+            try {
+                console.log('Getting QR code');
+                const response = await apiClient.get(QR_ENDPOINT, { responseType: 'blob' });
+                const qrCodeUrl = URL.createObjectURL(response.data);
+                this.qrCodeUrl = qrCodeUrl;
+                console.log('QR code URL: ' + qrCodeUrl);
+            }
+            catch (error) {
+                handleHttpException(app, error);
+            }
         },
 
         async submitCode() {
@@ -70,7 +76,8 @@ export default defineComponent({
                 }
             }
             catch (error) {
-                publishNotification('Invalid code, please try again.', true);
+                handleHttpException(app, error);
+                // publishNotification('Invalid code, please try again.', true);
             }
         }
     }

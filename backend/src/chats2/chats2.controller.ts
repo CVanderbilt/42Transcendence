@@ -9,8 +9,6 @@ import { UsersService } from 'src/users/users.service';
 import { JwtAuthenticatedGuard } from 'src/auth/jwt-authenticated-guard';
 import { HttpStatusCode } from 'axios';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
-import { rootCertificates } from 'tls';
-import { IS_NUMBER_STRING } from 'class-validator';
 
 @Controller('chats')
 export class Chats2Controller {
@@ -20,13 +18,21 @@ export class Chats2Controller {
     @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms')
     async findAllRooms(): Promise<ChatRoom[]> {
-        return await (this.chatsService.findAllChatRooms())
+        try {
+            return await (this.chatsService.findAllChatRooms())
+        } catch (error) {
+            throw processError(error, "cannot find rooms");
+        }
     }
 
     @UseGuards(JwtAuthenticatedGuard)
     @Get('rooms/general')
     async findGeneralRoom(): Promise<ChatRoom> {
-        return await (this.chatsService.findChatRoomByName("general"))
+        try {
+            return await (this.chatsService.findChatRoomByName("general"))
+        } catch (error) {
+            throw processError(error, "cannot general room");
+        }
     }
 
     // get chat room by id (room + members)
@@ -36,19 +42,27 @@ export class Chats2Controller {
         validateInput(Joi.object({
             id: CHATROOM_ID_VALIDATOR.required()
         }), { id })
-        return await (this.chatsService.findChatRoomById(id))
+        try {
+            return await (this.chatsService.findChatRoomById(id))
+        } catch (error) {
+            throw processError(error, "cannot find room");
+        }
     }
 
-    // get chat room by name
-    @UseGuards(JwtAuthenticatedGuard)
-    @Get('rooms/name/:name')
-    async findRoomByName(@Param('name') name: string): Promise<ChatRoom> {
-        //todo: revisar si se sigue usando, de ser así revisar si se name está bien validado
-        validateInput(Joi.object({
-            name: CHATNAME_VALIDATOR.required()
-        }), { name })
-        return await (this.chatsService.findChatRoomByName(name))
-    }
+    // // get chat room by name
+    // @UseGuards(JwtAuthenticatedGuard)
+    // @Get('rooms/name/:name')
+    // async findRoomByName(@Param('name') name: string): Promise<ChatRoom> {
+    //     //todo: revisar si se sigue usando, de ser así revisar si se name está bien validado
+    //     validateInput(Joi.object({
+    //         name: CHATNAME_VALIDATOR.required()
+    //     }), { name })
+    //     try {
+    //         return await (this.chatsService.findChatRoomByName(name))
+    //     } catch (error) {
+    //         throw processError(error, "cannot find room");
+    //     }
+    // }
 
     // get chat rooms for user
     @UseGuards(JwtAuthenticatedGuard)
@@ -57,7 +71,12 @@ export class Chats2Controller {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required()
         }), { id })
-        return await (this.chatsService.findUserChatRooms(id))
+
+        try {
+            return await (this.chatsService.findUserChatRooms(id))
+        } catch (error) {
+            throw processError(error, "cannot find rooms for user");
+        }
     }
 
     // get private chat for users
@@ -71,17 +90,20 @@ export class Chats2Controller {
             user1: ID_VALIDATOR.required(),
             user2: ID_VALIDATOR.required()
         }), body)
-        const token = getAuthToken(req)
-        if (!token.hasRightsOverUser(token, await this.usersService.findOneById(body.user1)) &&
-            !token.hasRightsOverUser(token, await this.usersService.findOneById(body.user2)))
-            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to retrieve private room between ${body.user1} and ${body.user2}`)
-        //TODO añadir validacion de ids
-        console.log("getPrivateRoom")
-        Logger.log({ body })
-        const id1 = body.user1
-        const id2 = body.user2
-        Logger.log(`id1: ${id1}, id2: ${id2}`)
-        return await (this.chatsService.getDirectChatRoom(id1, id2))
+
+        try {
+            const token = getAuthToken(req)
+            if (!token.hasRightsOverUser(token, await this.usersService.findOneById(body.user1)) &&
+                !token.hasRightsOverUser(token, await this.usersService.findOneById(body.user2)))
+                throw new UnauthorizedException(`Requester ${token.userId} does not have rights to retrieve private room between ${body.user1} and ${body.user2}`)
+            Logger.log({ body })
+            const id1 = body.user1
+            const id2 = body.user2
+            Logger.log(`id1: ${id1}, id2: ${id2}`)
+            return await (this.chatsService.getDirectChatRoom(id1, id2))
+        } catch (error) {
+            throw processError(error, "cannot get direc room");
+        }
     }
 
     // new chat room
@@ -102,8 +124,7 @@ export class Chats2Controller {
             const res = await this.chatsService.createChatRoom({ ...data, isDirect: false }, user)
             return res
         } catch (error) {
-            Logger.error(error)
-            throw error
+            throw processError(error, "cannot create room");
         }
     }
 
@@ -116,8 +137,12 @@ export class Chats2Controller {
             roomId: CHATROOM_ID_VALIDATOR.required(),
             password: PASSWORD_VALIDATOR.required()
         }), { ...data, roomId })
-        const token = getAuthToken(req)
-        return this.chatsService.updateChatRoomPassword(token.userId, roomId, data.password)
+        try {
+            const token = getAuthToken(req)
+            return this.chatsService.updateChatRoomPassword(token.userId, roomId, data.password)
+        } catch (error) {
+            throw processError(error, "cannot update chat");
+        }
     }
 
     // join chat room
@@ -156,7 +181,7 @@ export class Chats2Controller {
         }
     }
 
-    @UseGuards(JwtAdminGuard) //solo admin/owner de la web, owner del chat lo puede borrar abandonando el chat
+    @UseGuards(JwtAdminGuard)
     @Delete('rooms/:id')
     async deleteRoom(@Param('id') roomId: number) {
         validateInput(Joi.object({
@@ -165,8 +190,7 @@ export class Chats2Controller {
         try {
             await this.chatsService.deleteRoom(roomId)
         } catch (error) {
-            if (error instanceof HttpException) throw (error)
-            throw new HttpException("delete room failed", HttpStatusCode.ImATeapot);
+            throw processError(error, 'can not delete room')
         }
     }
 
@@ -177,7 +201,11 @@ export class Chats2Controller {
         validateInput(Joi.object({
             roomId: CHATROOM_ID_VALIDATOR.required()
         }), { membershipId })
-        return await (this.chatsService.findChatMembershipById(membershipId))
+        try {
+            return await (this.chatsService.findChatMembershipById(membershipId))
+        } catch (error) {
+            throw processError(error, "can not get membership");
+        }
     }
 
     // get chat room members
@@ -187,8 +215,12 @@ export class Chats2Controller {
         validateInput(Joi.object({
             roomId: CHATROOM_ID_VALIDATOR.required()
         }), { roomId })
-        const res = await (this.chatsService.findChatRoomMembers(roomId))
-        return res
+        try {
+            const res = await (this.chatsService.findChatRoomMembers(roomId))
+            return res
+        } catch (error) {
+            throw processError(error, "can not get room memberships");
+        }
     }
 
     // get user memberships
@@ -198,28 +230,33 @@ export class Chats2Controller {
         validateInput(Joi.object({
             userId: ID_VALIDATOR.required()
         }), { userId })
-        const token = getAuthToken(req)
-        if (token.userId === userId && (token.role === 'ADMIN' || token.role === 'OWNER')) {
-            const rooms = await this.chatsService.findAllChatRooms()
+        try {
 
-            const memberships: ChatMembership[] = rooms.map(room => {
-                return {
-                    id: -1,
-                    isOwner: true,
-                    isAdmin: true,
-                    isBanned: false,
-                    isMuted: false,
-                    bannedUntil: new Date(),
-                    mutedUntil: new Date(),
-                    chatRoom: room,
-                }
-            })
+            const token = getAuthToken(req)
+            if (token.userId === userId && (token.role === 'ADMIN' || token.role === 'OWNER')) {
+                const rooms = await this.chatsService.findAllChatRooms()
 
-            return memberships
+                const memberships: ChatMembership[] = rooms.map(room => {
+                    return {
+                        id: -1,
+                        isOwner: true,
+                        isAdmin: true,
+                        isBanned: false,
+                        isMuted: false,
+                        bannedUntil: new Date(),
+                        mutedUntil: new Date(),
+                        chatRoom: room,
+                    }
+                })
+
+                return memberships
+            }
+            if (!token.hasRightsOverUser(token, await this.usersService.findOneById(userId)))
+                throw new UnauthorizedException(`Requester ${token.userId} does not have rights to retrieve user's ${userId} memberships`)
+            return await (this.chatsService.findUserMemberships(userId))
+        } catch (error) {
+            throw processError(error, "can not get room memberships");
         }
-        if (!token.hasRightsOverUser(token, await this.usersService.findOneById(userId)))
-            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to retrieve user's ${userId} memberships`)
-        return await (this.chatsService.findUserMemberships(userId))
     }
 
     @UseGuards(JwtAuthenticatedGuard)
@@ -229,17 +266,21 @@ export class Chats2Controller {
             userId: ID_VALIDATOR.required(),
             roomId: Joi.number().required()
         }), input)
-        const token = getAuthToken(req)
-        const user = await this.usersService.findOneById(input.userId);
+        try {
+            const token = getAuthToken(req)
+            const user = await this.usersService.findOneById(input.userId);
 
-        if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+            if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
 
-        const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
-        if (token.hasRightsOverUser(token, user) && requestedMembership) {
-            this.chatsService.setIsBanned(user.id, input.roomId, true);
+            const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
+            if (token.hasRightsOverUser(token, user) && requestedMembership) {
+                this.chatsService.setIsBanned(user.id, input.roomId, true);
+            }
+            else
+                throw new UnauthorizedException(`Requester ${token.userId} does not have rights to ban user ${input.userId} in room ${input.roomId}`)
+        } catch (error) {
+            throw processError(error, "can not ban user");
         }
-        else
-            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to ban user ${input.userId} in room ${input.roomId}`)
     }
 
     @UseGuards(JwtAuthenticatedGuard)
@@ -249,17 +290,21 @@ export class Chats2Controller {
             userId: ID_VALIDATOR.required(),
             roomId: Joi.number().required()
         }), input)
-        const token = getAuthToken(req)
-        const user = await this.usersService.findOneById(input.userId);
+        try {
+            const token = getAuthToken(req)
+            const user = await this.usersService.findOneById(input.userId);
 
-        if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+            if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
 
-        const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
-        if (token.hasRightsOverUser(token, user) && requestedMembership) {
-            this.chatsService.setIsBanned(user.id, input.roomId, false);
+            const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
+            if (token.hasRightsOverUser(token, user) && requestedMembership) {
+                this.chatsService.setIsBanned(user.id, input.roomId, false);
+            }
+            else
+                throw new UnauthorizedException(`Requester ${token.userId} does not have rights to allow user ${input.userId} in room ${input.roomId}`)
+        } catch (error) {
+            throw processError(error, "can not allow user");
         }
-        else
-            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to allow user ${input.userId} in room ${input.roomId}`)
     }
 
     @UseGuards(JwtAuthenticatedGuard)
@@ -269,21 +314,25 @@ export class Chats2Controller {
             userId: ID_VALIDATOR.required(),
             roomId: Joi.number().required()
         }), input)
-        const token = getAuthToken(req)
-        const user = await this.usersService.findOneById(input.userId);
-        if (!user)
-            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+        try {
+            const token = getAuthToken(req)
+            const user = await this.usersService.findOneById(input.userId);
+            if (!user)
+                throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
 
-        const membership = await this.chatsService.findMembershipByUserAndRoom(user.id, input.roomId)
-        if (!membership)
-            throw new HttpException("MEMBERSHIP_NOT_FOUND", HttpStatus.NOT_FOUND)
+            const membership = await this.chatsService.findMembershipByUserAndRoom(user.id, input.roomId)
+            if (!membership)
+                throw new HttpException("MEMBERSHIP_NOT_FOUND", HttpStatus.NOT_FOUND)
 
-        const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
-        if (token.hasRightsOverUser(token, user) && requestedMembership) {
-            this.chatsService.setIsAdmin(user.id, input.roomId, true);
+            const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
+            if (token.hasRightsOverUser(token, user) && requestedMembership) {
+                this.chatsService.setIsAdmin(user.id, input.roomId, true);
+            }
+            else
+                throw new UnauthorizedException(`Requester ${token.userId} does not have rights to promote user ${input.userId} in room ${input.roomId}`)
+        } catch (error) {
+            throw processError(error, "can not promote user");
         }
-        else
-            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to promote user ${input.userId} in room ${input.roomId}`)
     }
 
     @UseGuards(JwtAuthenticatedGuard)
@@ -293,21 +342,25 @@ export class Chats2Controller {
             userId: ID_VALIDATOR.required(),
             roomId: Joi.number().required()
         }), input)
-        const token = getAuthToken(req)
-        const user = await this.usersService.findOneById(input.userId);
-        if (!user)
-            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+        try {
+            const token = getAuthToken(req)
+            const user = await this.usersService.findOneById(input.userId);
+            if (!user)
+                throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
 
-        const membership = await this.chatsService.findMembershipByUserAndRoom(user.id, input.roomId)
-        if (!membership)
-            throw new HttpException("MEMBERSHIP_NOT_FOUND", HttpStatus.NOT_FOUND)
+            const membership = await this.chatsService.findMembershipByUserAndRoom(user.id, input.roomId)
+            if (!membership)
+                throw new HttpException("MEMBERSHIP_NOT_FOUND", HttpStatus.NOT_FOUND)
 
-        const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
-        if (token.hasRightsOverUser(token, user) && requestedMembership) {
-            this.chatsService.setIsAdmin(user.id, input.roomId, false);
+            const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
+            if (token.hasRightsOverUser(token, user) && requestedMembership) {
+                this.chatsService.setIsAdmin(user.id, input.roomId, false);
+            }
+            else
+                throw new UnauthorizedException(`Requester ${token.userId} does not have rights to demote user ${input.userId} in room ${input.roomId}`)
+        } catch (error) {
+            throw processError(error, "can not promote user");
         }
-        else
-            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to demote user ${input.userId} in room ${input.roomId}`)
     }
 
     // update membership
@@ -329,17 +382,15 @@ export class Chats2Controller {
             mutedUntil: DATE_VALIDATOR
         }), { ...data, membershipId })
 
-        const token = getAuthToken(req)
-
         try {
+            const token = getAuthToken(req)
             return this.chatsService.updateMembership(membershipId, {
                 isAdmin: token.role === "ADMIN",
                 isOwner: token.role === "OWNER",
                 userId: token.userId
             }, data)
         } catch (error) {
-            if (error instanceof HttpException) throw (error)
-            throw new HttpException("update membership failed", HttpStatusCode.ImATeapot);
+            throw processError(error, "update membership failed")
         }
     }
 
@@ -347,14 +398,18 @@ export class Chats2Controller {
     @UseGuards(JwtAuthenticatedGuard)
     @Delete('memberships/:id')
     async deleteMembership(@Param('id') roomId: number, @Req() req) {
-        //Ojo, admins no podrán borrar memberships, decisión de diseño
-        if (roomId < 0)  // admin gets memberships for all rooms with id = -1
-            return null
-        validateInput(Joi.object({
-            roomId: CHATROOM_ID_VALIDATOR.required()
-        }), { roomId })
-        const token = getAuthToken(req)
-        return this.chatsService.deleteMembership(roomId, token.userId)
+        // Admins should not be able to delete memberships
+        try {
+            if (roomId < 0)  // admin gets memberships for all rooms with id = -1
+                return null
+            validateInput(Joi.object({
+                roomId: CHATROOM_ID_VALIDATOR.required()
+            }), { roomId })
+            const token = getAuthToken(req)
+            return this.chatsService.deleteMembership(roomId, token.userId)
+        } catch (error) {
+            throw processError(error, "deleteMembership failed")
+        }
     }
 
     // get chat messages for room
@@ -364,8 +419,13 @@ export class Chats2Controller {
         validateInput(Joi.object({
             roomId: CHATROOM_ID_VALIDATOR.required()
         }), { roomId })
-        const token = getAuthToken(req, false)
-        return await (this.chatsService.findChatRoomMessages(token, roomId))
+        try {
+            const token = getAuthToken(req, false)
+            return await (this.chatsService.findChatRoomMessages(token, roomId))
+        }
+        catch (error) {
+            processError(error, "could not retrieve messages");
+        }
     }
 
     // post chat message for room
@@ -382,6 +442,11 @@ export class Chats2Controller {
             content: MESSAGE_VALIDATOR.required(),
             isChallenge: BOOLEAN_VALIDATOR
         }), { ...msg, roomId })
-        return this.chatsService.createChatRoomMessage(roomId, getAuthToken(req).userId, msg)
+        try {
+            return this.chatsService.createChatRoomMessage(roomId, getAuthToken(req).userId, msg)
+        }
+        catch (error) {
+            processError(error, "could not post message");
+        }
     }
 }
