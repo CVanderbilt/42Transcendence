@@ -14,9 +14,10 @@
 <script lang="ts">
 import { getUserById } from "@/api/user";
 import { defineComponent } from "vue";
-import { gameSocketIO, stateSocketIO } from "../..//main";
+import { app, gameSocketIO, stateSocketIO } from "../..//main";
 
 import { IUser, store } from "../..//store/store";
+import { throwFromAsync } from "@/utils/utils";
 
 export default defineComponent({
   name: "Game",
@@ -98,11 +99,11 @@ export default defineComponent({
         .then((res => { 
           //alert(JSON.stringify(res.data, null, 2))
           this.leftUserName = (res.data as IUser).username 
-        }))
+        })).catch(err => throwFromAsync(app, err))
         getUserById(player2name)
         .then((res => {
            this.rightUserName = (res.data as IUser).username 
-        }))
+        })).catch(err => throwFromAsync(app, err))
       } else {
         console.log("hola aqui llega")
       }

@@ -14,8 +14,4 @@ async function elogin(data: { email: string, password: string }) {
     return apiClient.post(`${URL}/elogin`, data);
 }
 
-async function me() {
-    return apiClient.get(`${URL}/me`);
-}
-
-export { get42Token, signup, elogin, me }
+export { get42Token, signup, elogin }

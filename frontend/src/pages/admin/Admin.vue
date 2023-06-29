@@ -83,6 +83,8 @@ export default defineComponent({
   },
 
   methods: {
+    
+  
     updateInfo() {
       getAllUsers()
       .then(list => {
@@ -107,8 +109,8 @@ export default defineComponent({
                 })
               }
             });
-          })
-      })
+          }).catch(err => throwFromAsync(app, err))
+      }).catch(err => throwFromAsync(app, err))
     },
 
     async executeAction(action: Action, param: any) {
@@ -139,30 +141,30 @@ export default defineComponent({
     banUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
         publishNotification(`Banning user: ${chat.userName} in chat: ${chat.name}`, false)
-        banUserFromChat(chat.userName, chat.id)
+        banUserFromChat(chat.userName, chat.id).catch(err => throwFromAsync(app, err))
       }
     },
     allowUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
         publishNotification(`Allowing user: ${chat.userName} in chat: ${chat.name}`, false)
-        allowUserFromChat(chat.userName, chat.id)
+        allowUserFromChat(chat.userName, chat.id).catch(err => throwFromAsync(app, err))
       }
     },
     promoteUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
         publishNotification(`Promoting user: ${chat.userName} in chat: ${chat.name}`, false)
-        promoteUserInChat(chat.userName, chat.id)
+        promoteUserInChat(chat.userName, chat.id).catch(err => throwFromAsync(app, err))
       }
     },
     demoteUserInChatAction(chat: ChatRoomRow) {
       if (chat.userName) {
         publishNotification(`Demoting user: ${chat.userName} in chat: ${chat.name}`, false)
-        demoteUserInChat(chat.userName, chat.id)
+        demoteUserInChat(chat.userName, chat.id).catch(err => throwFromAsync(app, err))
       }
     },
     destroyChat(chat: ChatRoomRow) {
       publishNotification(`Deleting chat ${chat.name}`, false)
-      deleteChatRoom(chat.id);
+      deleteChatRoom(chat.id).catch(err => throwFromAsync(app, err))
     },
     hasAdminRights(user: IUser) {
       return user.role === "ADMIN" || user.role === "OWNER"

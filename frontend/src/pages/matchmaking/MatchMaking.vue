@@ -67,6 +67,8 @@ import { useStore } from "vuex";
 import { key } from "../..//store/store";
 import { enterCompetitiveGameApi, enterExhibitionGameApi } from "../../api/gameApi";
 import "@/style/styles.css";
+import { throwFromAsync } from "@/utils/utils";
+import { app } from "@/main";
 
 export default defineComponent({
   name: "Matchmaking",
@@ -96,7 +98,7 @@ export default defineComponent({
       enterCompetitiveGameApi(this.user.id)
       .then(response => {
         this.$router.push("/game?id=" + response.data);
-      })
+      }).catch(err => throwFromAsync(app, err))
     },
     async enterExhibitionMatch() {
       let powerups = "";
@@ -108,7 +110,7 @@ export default defineComponent({
       enterExhibitionGameApi(this.user.id, powerups)
       .then(response => {
         this.$router.push("/game?id=" + response.data);
-      })
+      }).catch(err => throwFromAsync(app, err))
     }
   },
 });

@@ -15,9 +15,9 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-apiClient.interceptors.response.use(
+/*apiClient.interceptors.response.use(
     (response) => response,
-    (error: AxiosError) => { throwFromAsync(app, (error.response?.data as any).message ?? error.message) }
-);
+    (error: AxiosError) => { alert("!!!");throwFromAsync(app, (error.response?.data as any).message ?? error.message) }
+);*/
 
 export { apiClient };

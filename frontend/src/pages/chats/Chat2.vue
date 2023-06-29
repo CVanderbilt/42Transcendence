@@ -356,7 +356,11 @@ export default defineComponent({
 
   async mounted() {
 
-    this.generalRoom = await (await getGeneralRoom()).data
+    try {
+      this.generalRoom = await (await getGeneralRoom()).data
+    } catch (error: any) {
+      throwFromAsync(app, error)
+    }
     this.isAdmin = false;
     this.joinRoomWithId(this.generalRoom.id)
 
@@ -366,8 +370,11 @@ export default defineComponent({
     } else {
       this.changeRoom(this.generalRoom.id)
     }
-
-    this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
+try {
+  this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
+} catch (error: any) {
+  throwFromAsync(app, error)
+}
     console.log(this.userMemberships)
 
     // get current membership
@@ -376,7 +383,11 @@ export default defineComponent({
       this.currentMembership = membership
 
     // get friendships
-    this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
+    try {
+      this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
+    } catch (error: any) {
+      throwFromAsync(app, error)
+    }
 
     // join chat socket
     this.io.socket.offAny();
@@ -410,8 +421,10 @@ export default defineComponent({
       chatRooms.forEach(async room => {
         let name = room.name
         if (room.isDirect) {
-          const memberships = await (await (getChatRoomMembershipsReq(room.id))).data as Membership[]
-          name = memberships[0].user.username + "-" + memberships[1].user.username
+          try {
+            const memberships = await (await (getChatRoomMembershipsReq(room.id))).data as Membership[]
+            name = memberships[0].user.username + "-" + memberships[1].user.username
+          } catch (error: any) { throwFromAsync(app, error) }
         }
 
         this.niceRoomNames.push({
@@ -441,7 +454,6 @@ export default defineComponent({
         this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
       } catch {(error: any) => {
         throwFromAsync(app, error)
-        alert("111")
         return
       }}
 
@@ -452,14 +464,12 @@ export default defineComponent({
       }
       else {
         throwFromAsync(app, "Not a member")
-        alert("222")
-
         this.changeRoom(this.generalRoom.id, this.generalRoom.name)
         return;
       }
 
       if (!this.dateOK(this.currentMembership.mutedUntil) || !this.dateOK(this.currentMembership.bannedUntil)) {
-        alert("You can not send messages here")
+        throwFromAsync(app, "You can not send messages here")
         return;
       }
 
@@ -488,7 +498,7 @@ export default defineComponent({
           isChallenge: isChallenge,
         }
 
-        postChatMessageReq(this.roomId, outMessage)
+        postChatMessageReq(this.roomId, outMessage).catch(err => throwFromAsync(app, err))
 
         this.message = "";
       }
@@ -503,7 +513,6 @@ export default defineComponent({
         room = (await getChatRoomByIdReq(roomId)).data
       } catch (error: any) {
         throwFromAsync(app, error)
-        alert("333")
         return 
       }
 
@@ -515,10 +524,6 @@ export default defineComponent({
         }
       } catch (error: any) {
         throwFromAsync(app, error)
-        alert("444")
-
-        //const errorMsg = (error).response?.data?.message
-        //alert("Error joining the room: " + (errorMsg || "Unknown error"));
         return;
       }
 
@@ -528,10 +533,6 @@ export default defineComponent({
       }
       catch (error: any) {
         throwFromAsync(app, error)
-        alert("555")
-
-        //const errorMsg = (error).response?.data?.message
-        //alert("Error changing the room: " + (errorMsg || "Unknown error"));
         return;
       }
     },
@@ -541,10 +542,14 @@ export default defineComponent({
         return;
       }
 
-      let room = (await getChatRoomByNameReq(roomName2join)).data
+      let room: any = null
+      try {
+        room = (await getChatRoomByNameReq(roomName2join)).data
+      } catch (error) {
+        room = null
+      }
       if (!room) {
-        alert("Room not found")
-        publishNotification(`Room ${roomName2join} not found, setting room to ${this.generalRoom}`, false)
+        publishNotification(`Room ${roomName2join} not found, setting room to ${this.generalRoom.name}`, false)
         room = this.generalRoom
       }
       let resp
@@ -552,7 +557,6 @@ export default defineComponent({
         resp = await joinChatRoomReq(room.id, this.user?.id as string, password) // returns membership even if user is already a member of the room
       } catch (error: any) {
         throwFromAsync(app, error)
-        alert("777")
         //const errorMsg = (error).response?.data?.message
         //alert("Error joining the room: " + (errorMsg || "Unknown error"));
         return;
@@ -635,12 +639,9 @@ export default defineComponent({
             this.messages.push(response.data[i]);
           }
         }).catch((error) => {
-          //throwFromAsync(app, "Error getting messages: " + error.response?.data?.message || "Unknown error")
           throwFromAsync(app, error)
-        alert("ccc")
-
         });
-      })
+      }).catch(err => throwFromAsync(app, err))
 
       console.log(this.currentMembership)
     },
@@ -651,12 +652,7 @@ export default defineComponent({
         room = await (await createChatRoomReq(roomName, this.user?.id as string, password)).data
       }
       catch (err: any) {
-        
-        
-        // TODO: revisar el throwFromAsync, cuando se intenta crear una sala con un nombre que ya está pillado
         throwFromAsync(app, err)
-        alert("ddd")
-        // publishNotification("Error creating chat room: " + err , true)
         return;
       }
 
@@ -669,10 +665,7 @@ export default defineComponent({
       }
 
       catch (error: any) {
-        //throwFromAsync(app, "Error joining chat room: " + err)
         throwFromAsync(app, error)
-        alert("ddd")
-
         return
       }
 
@@ -714,7 +707,7 @@ export default defineComponent({
 
     async handleSubmitCreateChat() {
       if (this.createdchatName === "") {
-        alert("Chat name cannot be empty");
+        throwFromAsync(app, new Error("Chat name cannot be empty"))
       } else {
         await this.createChatRoom(
           this.createdchatName,
@@ -726,7 +719,7 @@ export default defineComponent({
           this.createdChatRequiresPassword = false;
           this.addParticipant = "";
           this.createdChatParticipants = [];
-        });
+        }).catch(err => console.log(err));
       }
     },
 
@@ -752,8 +745,6 @@ export default defineComponent({
       catch (err: any) {
         //throwFromAsync(app, "Error getting chat room memberships: " + err)
         throwFromAsync(app, err)
-        alert("ggg")
-
         return
       }
     },
@@ -777,21 +768,25 @@ export default defineComponent({
     async handleManageChat() {
       // update password      
       if (this.managedChatPassword !== "") {
-        await updateChatRoomPasswordReq(this.roomId, this.managedChatPassword)
+        await updateChatRoomPasswordReq(this.roomId, this.managedChatPassword).catch(err => console.log(err))
       }
 
       // update current chat members
       this.managedChatMemberships.forEach(async (membership) => {
         membership.bannedUntil = this.time2utc(membership.bannedUntil)
         membership.mutedUntil = this.time2utc(membership.mutedUntil)
-        alert("memberhis.userId!!!1 -> " + membership.id)
-        await updateChatRoomMembershipsReq(membership.id, {
-          isBanned: membership.isBanned,
-          isMuted: membership.isMuted,
-          isAdmin: membership.isAdmin,
-          bannedUntil: membership.bannedUntil,
-          mutedUntil: membership.mutedUntil
-        })
+        try {
+          
+          await updateChatRoomMembershipsReq(membership.id, {
+            isBanned: membership.isBanned,
+            isMuted: membership.isMuted,
+            isAdmin: membership.isAdmin,
+            bannedUntil: membership.bannedUntil,
+            mutedUntil: membership.mutedUntil
+          })
+        } catch (error: any) {
+          throwFromAsync(app, error)
+        }
       })
 
       // add new members
@@ -803,20 +798,20 @@ export default defineComponent({
           }
         })
       } catch (error: any) {
-        //alert("Can not invite users to chat room: " + error);
         throwFromAsync(app, error)
-        alert("hhh")
-
         return
       }
     },
 
     async showUserActions(clickedUserId: string) {
       this.modalUserActions.userId = clickedUserId;
-      const clickedUser = await (await getUserById(clickedUserId)).data as IUser
-      this.modalUserActions.userName = clickedUser.username;
-
-      this.modalUserActions.show = !this.modalUserActions.show;
+      try {
+        const clickedUser = await (await getUserById(clickedUserId)).data as IUser
+        this.modalUserActions.userName = clickedUser.username;
+        this.modalUserActions.show = !this.modalUserActions.show;
+      } catch (error: any) {
+        throwFromAsync(app, error)
+      }
     },
 
     searchFriend() {
@@ -828,7 +823,6 @@ export default defineComponent({
 
       getCurrentMatch(player)
         .then(response => {
-          //alert(">>" + JSON.stringify(response, null, 2))
           this.$router.push("/game?id=" + response.data);
         }).catch(err => console.log(err) )
     },
@@ -848,16 +842,21 @@ export default defineComponent({
                 this.$router.push("/game?id=" + response.data);
               })
           }
-        })
+        }).catch(err => throwFromAsync(app, err))
     },
 
     async openDirectChat(friendId: string) {
       // Search if chat already exists
-      const chatRoom = await (await getDirectChatRoomReq(this.user.id, friendId)).data
-
-      this.changeRoom(chatRoom.id, chatRoom.name)
-
-      this.$router.push("/chats?roomId=" + chatRoom.id);
+      try {
+        
+        const chatRoom = await (await getDirectChatRoomReq(this.user.id, friendId)).data
+        
+        this.changeRoom(chatRoom.id, chatRoom.name)
+        
+        this.$router.push("/chats?roomId=" + chatRoom.id);
+      } catch (error: any) {
+        throwFromAsync(app, error)
+      }
     },
 
     dateOK(date: string) {

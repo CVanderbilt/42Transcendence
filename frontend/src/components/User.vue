@@ -58,8 +58,9 @@ import { useStore } from "vuex";
 import { key } from "../store/store";
 import { getUserById } from "../api/user";
 import { getFriendshipsRequest, makeFriendshipRequest, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
-import { generateImageURL } from "@/utils/utils";
+import { generateImageURL, throwFromAsync } from "@/utils/utils";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
+import { app } from "@/main";
 
 export default defineComponent({
   name: "User",
@@ -124,17 +125,18 @@ export default defineComponent({
           console.log("USUARIO:" + response.data.username);
           this.lookedUpUserName = response.data.username;
           this.lookedUpEmail = response.data.email;
-        })
-        .catch(() => {
-          alert("User not found");
-        });
+        }).catch(err => throwFromAsync(app, err))
     },
 
     async makeFriend() {
-      const res = await makeFriendshipRequest(this.currentUser?.id as string, this.lookedUpId)
-      if (res.status === 201) {
-        this.areFriends = res.data.isFriend
-        this.friendshipId = res.data.id
+      try {
+        const res = await makeFriendshipRequest(this.currentUser?.id as string, this.lookedUpId)
+        if (res.status === 201) {
+          this.areFriends = res.data.isFriend
+          this.friendshipId = res.data.id
+        } 
+      } catch (error: any) {
+        throwFromAsync(app, error)
       }
     },
 

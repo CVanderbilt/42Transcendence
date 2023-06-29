@@ -58,10 +58,6 @@ export async function updateChatRoomPasswordReq(roomId: string, password: string
     return apiClient.post(`${URL}/rooms/${roomId}/password`, {password: password})
 }
 
-export async function getChatRoomsForUserReq(userId: string) {
-    return apiClient.get(`${URL}/rooms/${userId}`);
-}
-
 export async function getChatRoomByNameReq(name: string) {
     return apiClient.get(`${URL}/rooms/name/${name}`)
 }

@@ -24,6 +24,8 @@
 import { computed, defineComponent } from "vue";
 import "@/style/styles.css";
 import { getUserById } from "@/api/user";
+import { throwFromAsync } from "@/utils/utils";
+import { app } from "@/main";
 declare var require: any;
 
 export default defineComponent({
@@ -36,14 +38,18 @@ export default defineComponent({
   },
 
   async mounted(): Promise<void> {
-    if (this.$route.query.reason !== undefined ) {
-      this.message = (this.$route.query.reason as string).replace(/_/g, " ");
-
-      // parse message
-      if (this.message.split(" ")[0] === "winner") {
-        const winnerId = this.message.split(" ").slice(2).join(" "); 
-        this.message = "Winner is " + await (await getUserById(winnerId)).data.username;
+    try {
+      if (this.$route.query.reason !== undefined ) {
+        this.message = (this.$route.query.reason as string).replace(/_/g, " ");
+        
+        // parse message
+        if (this.message.split(" ")[0] === "winner") {
+          const winnerId = this.message.split(" ").slice(2).join(" "); 
+          this.message = "Winner is " + await (await getUserById(winnerId)).data.username;
+        }
       }
+    } catch (error: any) {
+      throwFromAsync(app, error)
     }
   },
 

@@ -172,7 +172,7 @@ export default defineComponent({
             }
             this.DoLogin(user)
           }
-        })
+        }).catch(error => console.log(error))
     },
 
     // Check token validity
