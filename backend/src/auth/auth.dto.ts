@@ -1,5 +1,4 @@
 import { IsEmail, IsNotEmpty, MinLength } from "class-validator"
-import { ChatMembership } from "src/chats2/chats.interface"
 
 export class EmailSignupDto {
     @IsEmail()
@@ -32,6 +31,7 @@ export class LoginResDto {
     token: string
     is2fa: boolean
     role: string
+    isNew: boolean
 }
 
 export class Signin2faDto {
