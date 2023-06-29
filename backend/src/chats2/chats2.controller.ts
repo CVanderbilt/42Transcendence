@@ -91,6 +91,8 @@ export class Chats2Controller {
             user2: ID_VALIDATOR.required()
         }), body)
 
+        if (body.user1 === body.user2)
+            throw new HttpException("Cant create direct chat with itself", HttpStatusCode.BadRequest)
         try {
             const token = getAuthToken(req)
             if (!token.hasRightsOverUser(token, await this.usersService.findOneById(body.user1)) &&
