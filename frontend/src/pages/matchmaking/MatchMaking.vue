@@ -96,7 +96,7 @@ export default defineComponent({
   methods: {
     cancelMatchmakingAction() {
       cancelMatchmaking()
-      .then(() => publishNotification("Matchmaking cancelled successfully, you can match again!!", false))
+      .then((res) => {console.log("matchmaking canceled succeded: " + JSON.stringify(res, null, 2))})//publishNotification("Matchmaking cancelled successfully, you can match again!!", false))
       .catch((err) => throwFromAsync(app, err))
     },
     modifyProfileRoute() {
@@ -105,7 +105,12 @@ export default defineComponent({
     async enterCompetitiveMatch() {
       enterCompetitiveGameApi(this.user.id)
       .then(response => {
-        this.$router.push("/game?id=" + response.data);
+        if (response.data.statusCode === 202) {
+          publishNotification("Matchmaking canceled succesfully", false)
+        } else {
+          //alert("will reroute: " + JSON.stringify(response, null, 2))
+          this.$router.push("/game?id=" + response.data);
+        }
       }).catch(err => throwFromAsync(app, err))
     },
     async enterExhibitionMatch() {

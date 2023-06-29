@@ -2,6 +2,10 @@
   <div class="game-board">
     <div>
       <h1>{{ leftUserName + " " + leftUserScore + "/" + rightUserScore + " " + rightUserName }}</h1>
+      <b-button v-on:click='leave()'
+        style="width:fit-content ; background-color: #c2c1c1; color:red; border-radius: 0; margin-top: 30px;">
+        LEAVE
+    </b-button>
     </div>
     <canvas ref="canvas" width="500" height="300">
       <line x1="250" y1="0" x2="250" y2="300" style="stroke: #FFFFFF; stroke-width: 3" />
@@ -58,7 +62,11 @@ export default defineComponent({
     this.stateIo.socket.emit("user_state_updated", { userId: this.user.id, state: "online" });
     next()
   },
-  
+  beforeUnmount() {
+    // Perform cleanup tasks or execute logic before the component is unmounted
+    // For example, closing the socket connection
+    this.io.socket.close();
+  },
   async mounted(): Promise<void> {
     if (this.$route.query.id === undefined) {
       console.log("no id, redirecting to matchmaking")
@@ -129,6 +137,9 @@ export default defineComponent({
   },
 
   methods: {
+    leave(): void {
+      this.$router.push("/");
+    },
     keyDownHandler(e: KeyboardEvent): void {
       if (e.key == "Down" || e.key == "ArrowDown") {
         if (this.leftUserDownPressed == false) {

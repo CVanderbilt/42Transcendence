@@ -56,7 +56,7 @@ export class MatchMaker {
       if (user) {
         if (user.matchId){
           //console.log("cant cancel matchmaking when game is ongoing")
-          return false
+          throw new HttpException("Cant cancel matchmaking when game is ongoin", HttpStatusCode.Conflict)
         }
         //console.log("deleting entry")
         try {
@@ -66,6 +66,7 @@ export class MatchMaker {
         }
         //this.usersAlt.delete(userId)
         user.delete = true
+        throw new HttpException("Canceled request processed succesfully", HttpStatusCode.Accepted)
       }
       throw new HttpException("User currently not in matchmaking", HttpStatusCode.NotFound)
     }
@@ -157,7 +158,7 @@ export class MatchMaker {
   }
 
     public async makeMatch(userName: string, score: number, friendly: boolean, powerups: string[]): Promise<string> {
-        //console.log(`${userName} with score: ${score} started matchmaking...`)
+        console.log(`${userName} with score: ${score} started matchmaking...`)
         return this.checkForMatch(userName, score, friendly, powerups)
     }
 
@@ -201,14 +202,14 @@ export class MatchMaker {
       }
 
       private async checkMatch(user: QueuedUser, threshold: number): Promise<string> {
-        //console.log("checknig para user: " + user.id)
+        console.log("checknig para user: " + user.id)
         //console.log("matchId?: " + user.matchId)
         if (user.matchId){
-            //console.log("user already matched!!")
+            console.log("user already matched!!")
             return user.matchId
         }
         this.usersAlt.forEach((otherUser) => {
-            //console.log(`        [${user.id}] attempting to match with [${otherUser.id}]`)
+            console.log(`        [${user.id}] attempting to match with [${otherUser.id}]`)
             if (!otherUser.challenging && user.id !== otherUser.id && user.isFriendly === otherUser.isFriendly &&
               this.powerupsAreEquivalent(user.powerups, otherUser.powerups)) {
               if (user.isFriendly || Math.abs(user.score - otherUser.score) <= threshold)
@@ -245,13 +246,14 @@ export class MatchMaker {
         let match = null
         do {
           match = await this.checkMatch(user, threshold);
-          //console.log("en verdad ha returneado: " + match)
+          console.log("en verdad ha returneado: " + match)
           
           if (match) break ;
           
           if (user.delete) {
+            console.log("intenta cancelar")
             this.cancel(user.id)
-            throw new HttpException("Cant find a match right now, not enough players. Try againg later", HttpStatusCode.RequestTimeout)
+            throw new HttpException("Cant find a match right now, not enough players. Try againg later", HttpStatusCode.Accepted)
             //throw new HttpException("Matchmaking canceled", HttpStatusCode.Conflict)
           }
           threshold += 10
