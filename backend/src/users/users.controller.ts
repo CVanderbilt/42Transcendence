@@ -32,20 +32,20 @@ export class UsersController {
 
     @UseGuards(JwtAdminGuard)
     @Post(':id/ban')
-    async banUser(@Param('id') id: string): Promise<void> {
+    async banUser(@Param('id') id: string) {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        this.usersService.setUserIsBanned(id, true);
+        return this.usersService.setUserIsBanned(id, true);
     }
     
     @UseGuards(JwtAdminGuard)
     @Post(':id/allow')
-    async allowUser(@Param('id') id: string): Promise<void> {
+    async allowUser(@Param('id') id: string) {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        this.usersService.setUserIsBanned(id, false);
+        return this.usersService.setUserIsBanned(id, false);
     }
 
     @UseGuards(JwtAdminGuard)

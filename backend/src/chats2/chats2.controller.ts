@@ -9,6 +9,8 @@ import { UsersService } from 'src/users/users.service';
 import { JwtAuthenticatedGuard } from 'src/auth/jwt-authenticated-guard';
 import { HttpStatusCode } from 'axios';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
+import { rootCertificates } from 'tls';
+import { IS_NUMBER_STRING } from 'class-validator';
 
 @Controller('chats')
 export class Chats2Controller {
@@ -223,18 +225,23 @@ export class Chats2Controller {
     //todo: importante updatear para que vaya con id y no username porq el username se puede cambiar y da problemas
     @UseGuards(JwtAuthenticatedGuard) //todo: solo admin/owner y admin/owner de la room
     @Post('memberships/ban')
-    async banUser(@Body() input: { userName: string, roomId: number }, @Req() req) {
-        //todo: implementar validateInput cuando funcione con userId en vez de userName
+    async banUser(@Body() input: { userId: string, roomId: number }, @Req() req) {
+        validateInput(Joi.object({
+            userId: ID_VALIDATOR.required(),
+            roomId: Joi.number().required()
+        }), input) 
         const token = getAuthToken(req)
-        const user = await this.usersService.findOneByName(input.userName);
+        const user = await this.usersService.findOneById(input.userId);
 
         if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
 
         const requesterMembership = await this.chatsService.findMembershipByUserAndRoom(token.userId, input.roomId)
-        if (token.hasRightsOverUser(token, user) && !requesterMembership && (!requesterMembership.isAdmin || !requesterMembership.isOwner))
+        if (token.hasRightsOverUser(token, user) && 
+            !requesterMembership && 
+            (!requesterMembership.isAdmin || !requesterMembership.isOwner))
             this.chatsService.setIsBanned(user.id, input.roomId, true);
         else
-            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to ban user ${input.userName} in room ${input.roomId}`)
+            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to ban user ${input.userId} in room ${input.roomId}`)
     }
 
     @UseGuards(JwtAuthenticatedGuard)
