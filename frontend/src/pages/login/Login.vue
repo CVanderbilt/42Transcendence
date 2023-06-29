@@ -88,7 +88,6 @@ export default defineComponent({
       login42page: LOGIN_42_URL,
       is2faEnabled: false,
       twoFactorCode: "",
-      isNew: false,
       io,
     };
   },
@@ -141,7 +140,6 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned,
             }
-            this.isNew = response.data.isNew
             this.DoLogin(user)
           }
         }).catch(err => handleHttpException(app, err))
@@ -172,7 +170,6 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned
             }
-            this.isNew = response.data.isNew
             this.DoLogin(user)
           }
         }).catch(error => console.log(error))
@@ -215,13 +212,7 @@ export default defineComponent({
       this.io.socket.offAny();
       this.io.socket.emit("user_state_updated", { userId: user.id, state: "online" });
       store.commit("changeUser", user)
-
-      if (this.isNew) {
-        this.$router.push("/settings")
-      }
-      else {
-        this.$router.push("/")
-      }
+      this.$router.push("/")
     }
   },
 

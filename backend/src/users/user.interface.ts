@@ -24,6 +24,4 @@ export class User {
     role: string;
 
     score?: number;
-
-    isNew?: boolean;
 }
