@@ -70,7 +70,7 @@ export class MatchesController {
             powerups: POWERUPS_VALIDATOR.required()
         }), { userName, powerups });
         try {
-            console.log("getCompetitiveMatch called with userName: " + userName)
+            console.log("friendly match called with userName: " + userName)
             const powerupsList: string[] = []
             for (let i = 0; i < powerups.length; i++)
                 powerupsList.push(powerups[i])

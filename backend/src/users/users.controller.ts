@@ -157,7 +157,6 @@ export class UsersController {
     @UseGuards(JwtAuthenticatedGuard)
     @Post('ladder')
     async getLadder(): Promise<User[]> {
-        Logger.log('getLadder')
-        return null
+        return this.usersService.getLadder()
     }
 }

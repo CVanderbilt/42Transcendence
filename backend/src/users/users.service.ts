@@ -153,25 +153,14 @@ export class UsersService {
 
     async getLadder() : Promise<User[]> {
         console.log("getLadder")
-        const users = await this.usersRepo.find()
-        users.sort((u1, u2) => {
-            // if player has not played any game, he is last
-            if (u1.victories + u1.defeats === 0)
-                return 1;
-            if (u2.victories + u2.defeats === 0)
-                return -1;    
-            // Order by ratio
-            if (u1.victories / (u1.victories + u1.defeats) < u2.victories / (u2.victories + u2.defeats))
-                return 1;
-            if (u1.victories / (u1.victories + u1.defeats) > u2.victories / (u2.victories + u2.defeats))
-                return -1;
-            // Order by victories
-            if (u1.victories < u2.victories)
-                return 1;
-            if (u1.victories > u2.victories)
-                return -1;
-            return 0;
-        })
-        return users
+        
+        const topUsers = await this.usersRepo.find({
+            order: {
+              score: "DESC" // Sort by score in descending order
+            },
+            take: 20 // Retrieve up to 20 users
+          });
+        
+          return topUsers;
     }
 }

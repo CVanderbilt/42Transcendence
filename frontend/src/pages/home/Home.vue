@@ -58,6 +58,7 @@
                       <tr>
                         <th>Rank</th>
                         <th>User</th>
+                        <th>Score</th>
                         <th>Victories</th>
                         <th>Defeats</th>
                       </tr>
@@ -67,6 +68,7 @@
                         :class="{ 'alternate-row': index % 2 !== 0 }">
                         <td>{{ index + 1 }}</td>
                         <td>{{ item.username }}</td>
+                        <td>{{ item.score }}</td>
                         <td>{{ item.victories }}</td>
                         <td>{{ item.defeats }}</td>
                       </tr>
@@ -88,8 +90,10 @@ import { defineComponent, onMounted, ref } from "vue";
 import { useStore } from "vuex";
 import { key } from "../..//store/store";
 import "@/style/styles.css";
-import { Match, getMatchesReq as getMatchesForUserReq } from "@/api/gameApi";
+import { Match, getMatchesReq } from "@/api/gameApi";
 import { IUserAPI, getLadder } from "@/api/user";
+import { throwFromAsync } from "@/utils/utils";
+import { app } from "@/main";
 
 export default defineComponent({
   name: "Home",
@@ -103,7 +107,7 @@ export default defineComponent({
     const ladder = ref<IUserAPI[]>([]);
 
     async function fetchMatches() {
-      const res = (await getMatchesForUserReq(user().id)).data as Match[]
+      const res = (await getMatchesReq(user().id)).data as Match[]
       matches.value = res;
       if (res.length > 0) {
         exhibitions.value = res.filter((m) => m.type === "exhibition");
@@ -112,12 +116,17 @@ export default defineComponent({
     }
 
     async function fetchLadder() {
-      const res = (await getLadder()) as IUserAPI[]
-      ladder.value = res;
+      try {
+        const res = (await getLadder()) as IUserAPI[]
+        ladder.value = res
+      } catch (error: any) {
+        throwFromAsync(app, error)
+      }
+        
     }
 
     onMounted(fetchMatches)
-    // onMounted(fetchLadder)
+    onMounted(fetchLadder)
 
     return {
       user,
