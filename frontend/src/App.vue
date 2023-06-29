@@ -54,8 +54,8 @@ import { useStore } from "vuex";
 import { key, store } from "./store/store";
 import { RouterView } from "vue-router";
 import { getUserByName } from "./api/user";
-import { generateImageURL } from "./utils/utils";
-import { stateSocketIO } from "./main";
+import { generateImageURL, handleHttpException } from "./utils/utils";
+import { app, stateSocketIO } from "./main";
 import { UserStateSocket } from "./utils/types";
 
 export default defineComponent({
@@ -111,11 +111,14 @@ export default defineComponent({
   },
   methods: {
     searchFriend(username: string) { //todo: update para usar apis
-
+      try {
       getUserByName(username)
         .then((response) => {
           this.$router.push("/user?uuid=" + response.data.id);
         })
+      } catch (error) {
+        handleHttpException(app, error)
+      }
     },
     modifyProfileRoute() {
       this.$router.push("/settings");
