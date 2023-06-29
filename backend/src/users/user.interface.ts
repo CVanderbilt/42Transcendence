@@ -1,4 +1,5 @@
 import { IsUUID } from "class-validator"
+import { InsertWriteOpResult } from "typeorm"
 
 export class User {
     @IsUUID()
@@ -23,4 +24,6 @@ export class User {
     role: string;
 
     score?: number;
+
+    isNew?: boolean;
 }

@@ -88,6 +88,7 @@ export default defineComponent({
       login42page: LOGIN_42_URL,
       is2faEnabled: false,
       twoFactorCode: "",
+      isNew: false,
       io,
     };
   },
@@ -129,6 +130,7 @@ export default defineComponent({
             this.is2faCodeRequired.status = true
           }
 
+
           else {
             const user: IUser = {
               id: response.data.userId,
@@ -139,8 +141,9 @@ export default defineComponent({
               is2fa: response.data.is2fa,
               is2faEnabled: response.data.is2faEnabled || false,
               role: response.data.role,
-              isBanned: response.data.isBanned
+              isBanned: response.data.isBanned,
             }
+            this.isNew = response.data.isNew
             this.DoLogin(user)
           }
         }).catch(err => handleHttpException(app, err))
@@ -171,6 +174,7 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned
             }
+            this.isNew = response.data.isNew
             this.DoLogin(user)
           }
         }).catch(error => console.log(error))
@@ -204,14 +208,22 @@ export default defineComponent({
         localStorage.setItem("token", response.data.token)
 
         this.DoLogin(user)
+      }).catch (error => {
+        handleHttpException(app, error)
       })
     },
 
-    DoLogin(user: any){
+    DoLogin(user: any, ){
       this.io.socket.offAny();
       this.io.socket.emit("user_state_updated", {userId: user.id, state:"online"});
       store.commit("changeUser", user)
-      this.$router.push("/");
+
+      if (this.isNew) {
+        this.$router.push("/settings")
+      }
+      else {
+        this.$router.push("/")
+      }
     }
   },
 

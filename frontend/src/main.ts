@@ -113,6 +113,7 @@ app.config.errorHandler = (error: any, vm, info) => {
 
 //este handler pilla errores de funciones asyn que no estemos manejando, al redirigir previene errores derivados de ese error y al lanzar un error propio previene otros errores que pudieran hber inmediatamente despues
 window.addEventListener('unhandledrejection', function(event) {
+  this.alert("ssss");
   window.location.href = 'http://localhost:8080/'; //todo sacar este valor de env variables
   throw new Error("redirecting due to undhandled error")
 });
