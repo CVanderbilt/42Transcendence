@@ -27,6 +27,10 @@ export class MatchesService {
         return this.matchMaker.cancel(userName)
     }
 
+    cancelV2(userId: string) {
+        this.matchMaker.cancelV2(userId)
+    }
+
     async challenge(requesterName: string, opponentName: string, powerups: string[]): Promise<string> {
         return await this.matchMaker.challenge(requesterName, opponentName, powerups)
     }

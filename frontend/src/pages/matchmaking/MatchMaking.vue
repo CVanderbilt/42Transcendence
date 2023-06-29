@@ -51,7 +51,10 @@
             <div class="card mb-4">
               <div class="card-header">
                 <i class="fas fa-table me-1"></i>
-                Currently Playing
+                <b-button v-on:click='cancelMatchmakingAction()'
+                  style="width: 100%; background-color: #c2c1c1; color:red; border-radius: 0; margin-top: 30px;">
+                  Cancel matchmaking
+                </b-button>
               </div>
             </div>
           </div>
@@ -65,9 +68,9 @@
 import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
 import { key } from "../..//store/store";
-import { enterCompetitiveGameApi, enterExhibitionGameApi } from "../../api/gameApi";
+import { cancelMatchmaking, enterCompetitiveGameApi, enterExhibitionGameApi } from "../../api/gameApi";
 import "@/style/styles.css";
-import { throwFromAsync } from "@/utils/utils";
+import { publishNotification, throwFromAsync } from "@/utils/utils";
 import { app } from "@/main";
 
 export default defineComponent({
@@ -91,6 +94,11 @@ export default defineComponent({
 
 
   methods: {
+    cancelMatchmakingAction() {
+      cancelMatchmaking()
+      .then(() => publishNotification("Matchmaking cancelled successfully, you can match again!!", false))
+      .catch((err) => throwFromAsync(app, err))
+    },
     modifyProfileRoute() {
       this.$router.push("/settings");
     },

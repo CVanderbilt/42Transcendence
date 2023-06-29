@@ -15,6 +15,7 @@ interface QueuedUser {
     isFriendly: boolean
     matchId?: string,
     challenging?: string,
+    delete?: boolean
 }
   
 // Queue class representing the user queue
@@ -48,6 +49,25 @@ export class MatchMaker {
         this.usersAlt.delete(userName)
       }
       return true
+    }
+
+    cancelV2(userId: string) {
+      const user = this.usersAlt.get(userId)
+      if (user) {
+        if (user.matchId){
+          //console.log("cant cancel matchmaking when game is ongoing")
+          return false
+        }
+        //console.log("deleting entry")
+        try {
+          tryAcquire(user.mutex)
+        } catch (error) {
+          throw new HttpException("User matching right now, cant cancel", HttpStatusCode.Conflict)
+        }
+        //this.usersAlt.delete(userId)
+        user.delete = true
+      }
+      throw new HttpException("User currently not in matchmaking", HttpStatusCode.NotFound)
     }
 
     async challenge(requesterName: string, opponentName: string, powerups: string[]): Promise<string> {
@@ -229,6 +249,11 @@ export class MatchMaker {
           
           if (match) break ;
           
+          if (user.delete) {
+            this.cancel(user.id)
+            throw new HttpException("Cant find a match right now, not enough players. Try againg later", HttpStatusCode.RequestTimeout)
+            //throw new HttpException("Matchmaking canceled", HttpStatusCode.Conflict)
+          }
           threshold += 10
           if (threshold > 50) {
             let didCancel = false

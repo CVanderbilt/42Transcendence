@@ -2,13 +2,14 @@ import { Controller, Get, Post, Param, HttpException, Body, UseGuards, Req } fro
 import { Match } from './match.interface';
 import { MatchesService } from './matches.service';
 import { HttpStatusCode } from 'axios';
-import { ID_VALIDATOR, USERNAME_VALIDATOR, getAuthToken, validateInput } from 'src/utils/utils';
+import { ID_VALIDATOR, USERNAME_VALIDATOR, getAuthToken, processError, validateInput } from 'src/utils/utils';
 import * as Joi from 'joi'
 import { JwtAuthenticatedGuard } from 'src/auth/jwt-authenticated-guard';
 import { UsersService } from 'src/users/users.service';
 
 const POWERUPS_VALIDATOR = Joi.string().regex(/^[A-Z]+$/)
 
+let counter = 0
 @Controller('matches')
 export class MatchesController {
     constructor(private matchesService: MatchesService, private usersService: UsersService) { }
@@ -27,7 +28,8 @@ export class MatchesController {
             // OJO aunq se llama username es userids
         const user = await this.usersService.findOneById(userName)
         try {
-            console.log("getCompetitiveMatch called with userId " + userName + " and score: " + user.score)
+            console.log("getCompetitiveMatch called with userId " + userName + " and score: " + user.score + " _" + counter)
+            counter++
             const gameId = await this.matchesService.makeMatch(userName, user.score, false, []);
             console.log("makeMatch funcionó y devuelve:")
             console.log(gameId)
@@ -115,6 +117,20 @@ export class MatchesController {
         } catch (error) {
             if (error instanceof HttpException) throw (error)
             throw new HttpException("get current match failed", HttpStatusCode.InternalServerError);
+        }
+    }
+
+    @UseGuards(JwtAuthenticatedGuard)
+    @Post('cancelMatchmaking')
+    async cancelMatchmaking(@Req() req) {
+        try {
+            const token = getAuthToken(req)
+            this.matchesService.cancelV2(token.userId)
+        } catch (error) {
+            console.log("processing error: " + JSON.stringify(error))
+            if (error instanceof HttpException) throw (error)
+            throw new HttpException("get current match failed", HttpStatusCode.InternalServerError);
+            //throw processError(error, "cancel matchmaking failed")
         }
     }
 }

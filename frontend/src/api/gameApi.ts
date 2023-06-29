@@ -40,3 +40,7 @@ export async function challenge(userId: string, opponentName: string) {
 export async function getCurrentMatch(userId: string) {
     return apiClient.post(`${URL}/getCurrentMatch`, { userName: userId })
 }
+
+export async function cancelMatchmaking() {
+    return apiClient.post(`${URL}/cancelMatchmaking`)
+}
