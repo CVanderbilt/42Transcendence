@@ -69,20 +69,22 @@ export class AuthController {
     //   id: Joi.string().guid().required(),
     // }), user);
     
-    const secret = await this.authService.generateTwoFactorAuthenticationSecret(user)
+    const tentative = await this.authService.generateTwoFactorAuthenticationSecret(user)
     // update user secret
-    this.usersService.setTentativeTwofaSecret(user.id, secret.secret)
+    this.usersService.setTentativeTwofaSecret(user.id, tentative.secret)
     // return qr
-    this.authService.pipeQrCodeStream(response, secret.otpauthUrl)
+    this.authService.pipeQrCodeStream(response, tentative.otpauthUrl)
   }
 
   @Post('2fa/turn-on/:code')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
   async turnOnTwoFactorAuthentication(@Req() req, @Param('code') twoFactorCode: string) {
+    validateInput(Joi.object({
+      twoFactorCode: Joi.string().pattern(/^\d{6}$/).required()
+    }), {twoFactorCode});
+
     console.log("turnOnTwoFactorAuthentication")
-
-
     const authToken = getAuthToken(req)
     const user = await this.usersRepo.findOne({ 
       where: { id: authToken.userId },
@@ -90,26 +92,21 @@ export class AuthController {
 
     Logger.log("turnOnTwoFactorAuthentication with 2fa code : " + twoFactorCode + " for user " + user.username)
     console.log(user)
-    
-    // validateInput(Joi.object({
-    //   login42: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
-    //   id: Joi.string().guid().required()
-    // }), user);
 
     const isCodeValid = await this.authService.isTwoFactorAuthenticationCodeValid(twoFactorCode, user.tentativeTwofaSecret)
     if (!isCodeValid) {
       throw new UnauthorizedException('Wrong authentication code');
     }
-    return await this.usersService.EnableTwofa(user.id, true);
+    return await this.usersService.EnableTwofa(user.id);
   }
 
   @Post('2fa/authenticate/:code')
   @HttpCode(200)
   // @UseGuards(JwtAuthGuard)
   async authenticate(@Req() request, @Param('code') twoFactorCode: string) {
-    // validateInput(Joi.object({
-    //   twoFactorCode: Joi.string().pattern(/^\d{6}$/).required()
-    // }), {twoFactorCode});
+    validateInput(Joi.object({
+      twoFactorCode: Joi.string().pattern(/^\d{6}$/).required()
+    }), {twoFactorCode});
 
     try {
       const authToken = getAuthToken(request)

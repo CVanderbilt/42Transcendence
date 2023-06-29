@@ -37,7 +37,7 @@ export class UsersService {
         return this.usersRepo.findOne( { where: { email: email } } )
     }
 
-    async checkpass(pass: string, encryptedPass: string): Promise<Boolean> {
+    async checkEncrypted(pass: string, encryptedPass: string): Promise<Boolean> {
         return await bcrypt.compare(pass, encryptedPass);
     }
 
@@ -46,11 +46,6 @@ export class UsersService {
     }
 
     async updateUser(id: string, user: User): Promise<UpdateResult> {
-        // No se puede activar 2FA sin validar el codigo de google authenticator
-        //if (user.is2fa === true)
-        //    delete user.is2fa
-        //user.id = undefined;
-
         const storedUser = await this.findOneById(id)
 
         if (storedUser.username !== user.username) {
@@ -70,9 +65,12 @@ export class UsersService {
         return this.usersRepo.delete(id);
     }
 
-    async EnableTwofa(userId: string, value: boolean) {
-        const u = await this.usersRepo.findOneBy({ id : userId })
-        u.is2fa = value
+    async EnableTwofa(userId: string) {
+        console.log("EnableTwofa", userId)
+        const u = await this.usersRepo.findOne({ 
+            where: { id: userId },
+            select: ["id", "tentativeTwofaSecret"] })
+        u.is2fa = true
         u.twofaSecret = u.tentativeTwofaSecret
         u.tentativeTwofaSecret = ""
         u.save()
@@ -80,9 +78,14 @@ export class UsersService {
     }
 
     async setTentativeTwofaSecret(userId: string, secret: string) {
-        const user = await this.usersRepo.findOneBy({ id : userId })
+        const user = await this.usersRepo.findOne({ 
+            where: { id: userId },
+            select: ["id", "tentativeTwofaSecret"] })
+
+        if (!user)
+            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
         user.tentativeTwofaSecret = secret
-        user.save()
+        await user.save()
     }
 
     async getFileById(id: string) {

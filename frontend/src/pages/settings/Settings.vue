@@ -30,7 +30,7 @@
                 </div>
 
                 <div class="form-outline form-white mb-2">
-                  <input type="checkbox" id="is2fa" class="form-check-input" v-model="options.is2fa" />
+                  <input type="checkbox" id="is2fa" class="form-check-input" v-model="is2fa" />
                   <label class="form-label" for="is2fa">Use 2 factor authentication</label>
                 </div>
 
@@ -48,10 +48,10 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent } from "vue";
+import { computed, defineComponent, handleError } from "vue";
 import { useStore } from "vuex";
 import { key, store } from "../../store/store";
-import { generateImageURL, publishNotification, throwFromAsync } from "@/utils/utils";
+import { generateImageURL, handleHttpException, publishNotification, throwFromAsync } from "@/utils/utils";
 import { IUserAPI, putImage, updateUserReq } from "@/api/user";
 import { app, stateSocketIO } from "@/main";
 
@@ -71,7 +71,6 @@ export default defineComponent({
   data() {
     const options: IUserAPI = {
       username: '',
-      is2fa: false,
     }
 
 
@@ -79,13 +78,12 @@ export default defineComponent({
     return {
       options,
       selectedFile,
+      is2fa: false,
     };
   },
   mounted() {
-    console.log("Settings mounted");
-    console.log(this.user);
     this.options.username = this.user.username as string
-    this.options.is2fa = this.user?.is2fa
+    this.is2fa = this.user?.is2fa
   },
 
   methods: {
@@ -100,6 +98,7 @@ export default defineComponent({
         publishNotification("User updated", false)
       }
       catch (error: any) {
+        handleHttpException(app, error)
         return
       }
 
@@ -109,10 +108,9 @@ export default defineComponent({
         putImage(store.state.user.id, this.selectedFile);
 
       // si el usuario quiere activar 2fa llevarlo a la pagina de 2fa
-      if (this.options.is2fa && !store.state.user.is2faEnabled) {
+      if (this.is2fa && !store.state.user.is2faEnabled) {
         this.$router.push("/qr");
       }
-
     },
 
     generateImageURL,

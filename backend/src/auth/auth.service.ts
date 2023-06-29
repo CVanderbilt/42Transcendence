@@ -23,7 +23,7 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
-    async getUserById(id: string) : Promise<User> {
+    async getUserById(id: string): Promise<User> {
         return await this.usersService.findOneById(id)
     }
 
@@ -46,8 +46,8 @@ export class AuthService {
             role: "CUSTOMER",
         }
 
-        const user : User = await this.usersService.createUser(userDto)
-        
+        const user: User = await this.usersService.createUser(userDto)
+
         const png = generateRandomSquaresImage();
         const buffer = PNG.sync.write(png);
         await this.usersService.uploadDatabaseFile(buffer, user.id);
@@ -57,11 +57,12 @@ export class AuthService {
         if (login === undefined)
             throw new HttpException("INVALID_DATA", HttpStatus.BAD_REQUEST)
 
-        const user = await this.usersRepo.findOne({ 
+        const user = await this.usersRepo.findOne({
             where: { email: login.email },
-            select: ["id", "email", "username", "password", "role", "is2fa", "isNew"] })
+            select: ["id", "email", "username", "password", "role", "is2fa", "isNew"]
+        })
 
-        console.log("user", {user})
+        console.log("user", { user })
 
         if (!user) {
             throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.NOT_FOUND)
@@ -82,7 +83,7 @@ export class AuthService {
         }
 
         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m" })
-        const res : LoginResDto = {
+        const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
             "name": user.username,
@@ -92,9 +93,8 @@ export class AuthService {
             "isNew": user.isNew,
         }
 
-        console.log("res", {res})
-        if (user.isNew)
-        {
+        console.log("res", { res })
+        if (user.isNew) {
             user.isNew = false
             this.usersRepo.save(user)
         }
@@ -118,12 +118,12 @@ export class AuthService {
                 data: bodyFormData,
                 headers: { "content-type": "application/json" },
             })
-    
+
             const data = (await res).data
-    
+
             return data
         } catch (error) {
-            Logger.error("Failed getting token from 42: " + JSON.stringify( error ))            
+            Logger.error("Failed getting token from 42: " + JSON.stringify(error))
             throw new HttpException("Failed getting token from 42", HttpStatus.BAD_REQUEST)
         }
     }
@@ -140,7 +140,7 @@ export class AuthService {
         Logger.log(data)
         return data
     }
-    
+
 
     async signIn42(code: string): Promise<LoginResDto> {
         const accessData = await this.exchangeCodeForAccessData(code)
@@ -171,7 +171,7 @@ export class AuthService {
         }
 
         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m" })
-        const res : LoginResDto = {
+        const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
             "name": user.username,
@@ -181,8 +181,7 @@ export class AuthService {
             "isNew": user.isNew,
         }
 
-        if (user.isNew)
-        {
+        if (user.isNew) {
             user.isNew = false
             this.usersRepo.save(user)
         }
@@ -204,7 +203,7 @@ export class AuthService {
     }
 
     public async isTwoFactorAuthenticationCodeValid(code: string, secret: string) {
-        console.log("isTwoFactorAuthenticationCodeValid", {code, secret})
+        console.log("isTwoFactorAuthenticationCodeValid", { code, secret })
         const isCodeValid = authenticator.verify({
             token: code,
             secret: secret,
@@ -212,15 +211,14 @@ export class AuthService {
         return isCodeValid
     }
 
-    async loginWith2fa(userId: string, code: string) : Promise<LoginResDto> {
-      Logger.log("login2fa")
-
+    async loginWith2fa(userId: string, code: string): Promise<LoginResDto> {
         if (userId === undefined)
             throw new HttpException("USER_NOT_FOUND", HttpStatus.BAD_REQUEST)
 
-            const user = await this.usersRepo.findOne({ 
-                where: { id: userId },
-                select: ["id", "email", "username", "password", "role", "is2fa", "twofaSecret", "tentativeTwofaSecret"] })
+        const user = await this.usersRepo.findOne({
+            where: { id: userId },
+            select: ["id", "email", "username", "password", "role", "is2fa", "twofaSecret", "tentativeTwofaSecret"]
+        })
         if (!user) {
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
         }
@@ -239,8 +237,8 @@ export class AuthService {
             isTwoFactorAuthenticated: true,
         };
 
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m"  })
-        const res : LoginResDto = {
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m" })
+        const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
             "name": user.username,
