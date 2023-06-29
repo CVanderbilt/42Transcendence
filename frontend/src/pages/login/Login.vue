@@ -72,7 +72,8 @@ import { IUser, store } from "../../store/store";
 import { AUTHENTICATE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";
 import { apiClient } from "@/api/baseApi";
 import { elogin, get42Token } from "@/api/auth";
-import { stateSocketIO } from "@/main";
+import { app, stateSocketIO } from "@/main";
+import { handleHttpException, throwFromAsync } from "@/utils/utils";
 
 export default defineComponent({
   name: "Login",
@@ -142,7 +143,7 @@ export default defineComponent({
             }
             this.DoLogin(user)
           }
-        })
+        }).catch(err => handleHttpException(app, err))
     },
 
     // Exchange 42 code for JWT token

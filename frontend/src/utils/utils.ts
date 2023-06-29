@@ -26,6 +26,10 @@ export function publishNotification(message: string, isError: boolean) {
   store.commit("setNotification", { message, isError})
 }
 
+export function handleHttpException(app:any, error: any) {
+  throwFromAsync(app, (error.response?.data as any).message ?? error.message)
+}
+
 export function isAuthenticated() {
   const token = localStorage.getItem('token')
   if (!token)

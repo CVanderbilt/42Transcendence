@@ -21,7 +21,7 @@ import { defineComponent } from "vue";
 import { app, gameSocketIO, stateSocketIO } from "../..//main";
 
 import { IUser, store } from "../..//store/store";
-import { throwFromAsync } from "@/utils/utils";
+import { handleHttpException, throwFromAsync } from "@/utils/utils";
 
 export default defineComponent({
   name: "Game",
@@ -107,11 +107,11 @@ export default defineComponent({
         .then((res => { 
           //alert(JSON.stringify(res.data, null, 2))
           this.leftUserName = (res.data as IUser).username 
-        })).catch(err => throwFromAsync(app, err))
+        })).catch(err => handleHttpException(app, err))
         getUserById(player2name)
         .then((res => {
            this.rightUserName = (res.data as IUser).username 
-        })).catch(err => throwFromAsync(app, err))
+        })).catch(err => handleHttpException(app, err))
       } else {
         console.log("hola aqui llega")
       }

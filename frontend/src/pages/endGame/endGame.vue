@@ -24,7 +24,7 @@
 import { computed, defineComponent } from "vue";
 import "@/style/styles.css";
 import { getUserById } from "@/api/user";
-import { throwFromAsync } from "@/utils/utils";
+import { handleHttpException, throwFromAsync } from "@/utils/utils";
 import { app } from "@/main";
 declare var require: any;
 
@@ -49,7 +49,7 @@ export default defineComponent({
         }
       }
     } catch (error: any) {
-      throwFromAsync(app, error)
+      handleHttpException(app, error)
     }
   },
 

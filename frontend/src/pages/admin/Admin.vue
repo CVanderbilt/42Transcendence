@@ -58,7 +58,7 @@ import { IUser, store } from '@/store/store';
 import { defineComponent } from 'vue';
 import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'
 import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, demoteUserInChat, getAllChatRoomsReq, getChatRoomMembershipsReq, Membership, promoteUserInChat } from '@/api/chatApi';
-import { publishNotification, throwFromAsync } from '@/utils/utils';
+import { handleHttpException, publishNotification, throwFromAsync } from '@/utils/utils';
 import { app } from '@/main';
 
 interface ChatRoomRow extends ChatRoom {
@@ -122,7 +122,7 @@ export default defineComponent({
         await action(param)
         this.updateInfo()
       } catch (error: any) {
-        throwFromAsync(app, error.message)
+        handleHttpException(app, error)
       }
     },
 
@@ -156,7 +156,7 @@ export default defineComponent({
       publishNotification(`Banning user: ${chat.userName} in chat: ${chat.name}`, false)
       try {
         return (await banUserFromChat(chat.userName, chat.id)).data
-      } catch (error: any) { throwFromAsync(app, error) }
+      } catch (error: any) { handleHttpException(app, error) }
     },
 
     async allowUserInChatAction(chat: ChatRoomRow) {
@@ -165,7 +165,7 @@ export default defineComponent({
       publishNotification(`Allowing user: ${chat.userName} in chat: ${chat.name}`, false)
       try {
         return (await allowUserFromChat(chat.userName, chat.id)).data
-      } catch (error: any) { throwFromAsync(app, error) }
+      } catch (error: any) { handleHttpException(app, error) }
     },
 
     async promoteUserInChatAction(chat: ChatRoomRow) {
@@ -174,7 +174,7 @@ export default defineComponent({
       publishNotification(`Promoting user: ${chat.userName} in chat: ${chat.name}`, false)
       try {
         return (await promoteUserInChat(chat.userName, chat.id)).data
-      } catch (error: any) { throwFromAsync(app, error) }
+      } catch (error: any) { handleHttpException(app, error) }
     },
     async demoteUserInChatAction(chat: ChatRoomRow) {
       if (!chat || !chat.userName || !chat.id)
@@ -182,14 +182,14 @@ export default defineComponent({
       publishNotification(`Demoting user: ${chat.userName} in chat: ${chat.name}`, false)
       try {
         return (await demoteUserInChat(chat.userName, chat.id)).data
-      } catch (error: any) { throwFromAsync(app, error) }
+      } catch (error: any) { handleHttpException(app, error) }
     },
     async destroyChat(chat: ChatRoomRow) {
       publishNotification(`Deleting chat ${chat.name}`, false)
       let res
       try {
         res = await (await deleteChatRoom(chat.id)).data
-      } catch (error: any) { throwFromAsync(app, error) }
+      } catch (error: any) { handleHttpException(app, error) }
       this.updateInfo()
       return res
     },

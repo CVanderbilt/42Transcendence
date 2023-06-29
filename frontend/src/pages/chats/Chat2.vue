@@ -260,7 +260,7 @@ import { getFriendshipsRequest } from "../../api/friendshipsApi";
 import { IFriendship } from "../../api/friendshipsApi";
 import moment from 'moment';
 import 'moment-timezone';
-import { throwFromAsync } from "@/utils/utils";
+import { handleHttpException, throwFromAsync } from "@/utils/utils";
 import { challenge, getCurrentMatch } from "@/api/gameApi";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
 import { publishNotification } from "@/utils/utils";
@@ -359,7 +359,7 @@ export default defineComponent({
     try {
       this.generalRoom = await (await getGeneralRoom()).data
     } catch (error: any) {
-      throwFromAsync(app, error)
+      handleHttpException(app, error)
     }
     this.isAdmin = false;
     this.joinRoomWithId(this.generalRoom.id)
@@ -373,7 +373,7 @@ export default defineComponent({
 try {
   this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
 } catch (error: any) {
-  throwFromAsync(app, error)
+  handleHttpException(app, error)
 }
     console.log(this.userMemberships)
 
@@ -386,7 +386,7 @@ try {
     try {
       this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
     } catch (error: any) {
-      throwFromAsync(app, error)
+      handleHttpException(app, error)
     }
 
     // join chat socket
@@ -424,7 +424,7 @@ try {
           try {
             const memberships = await (await (getChatRoomMembershipsReq(room.id))).data as Membership[]
             name = memberships[0].user.username + "-" + memberships[1].user.username
-          } catch (error: any) { throwFromAsync(app, error) }
+          } catch (error: any) { handleHttpException(app, error) }
         }
 
         this.niceRoomNames.push({
@@ -453,7 +453,7 @@ try {
       try {
         this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
       } catch {(error: any) => {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
         return
       }}
 
@@ -498,7 +498,7 @@ try {
           isChallenge: isChallenge,
         }
 
-        postChatMessageReq(this.roomId, outMessage).catch(err => throwFromAsync(app, err))
+        postChatMessageReq(this.roomId, outMessage).catch(err => handleHttpException(app, err))
 
         this.message = "";
       }
@@ -512,7 +512,7 @@ try {
       try {
         room = (await getChatRoomByIdReq(roomId)).data
       } catch (error: any) {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
         return 
       }
 
@@ -523,7 +523,7 @@ try {
           this.userMemberships.push(resp.data)
         }
       } catch (error: any) {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
         return;
       }
 
@@ -532,7 +532,7 @@ try {
         this.changeRoom(room.id, room.name); //TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
       }
       catch (error: any) {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
         return;
       }
     },
@@ -556,7 +556,7 @@ try {
       try {
         resp = await joinChatRoomReq(room.id, this.user?.id as string, password) // returns membership even if user is already a member of the room
       } catch (error: any) {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
         //const errorMsg = (error).response?.data?.message
         //alert("Error joining the room: " + (errorMsg || "Unknown error"));
         return;
@@ -571,8 +571,7 @@ try {
         this.changeRoom(room.id, room.name);//TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
       }
       catch (error: any) {
-        throwFromAsync(app, error)
-        alert("888")
+        handleHttpException(app, error)
         //throwFromAsync(app, "Error changing the room: " + (error.response?.data?.message || "Unknown error"))
       }
     },
@@ -588,8 +587,7 @@ try {
         } catch (error: any) {
           //const errorMsg = (error).response?.data?.message
           //alert("Error leaving the room: " + (errorMsg || "Unknown error"));
-          throwFromAsync(app, error)
-        alert("999")
+          handleHttpException(app, error)
 
           return
         }
@@ -605,14 +603,12 @@ try {
         const membership = this.userMemberships.find((membership) => membership.chatRoom.id == roomId)
         if (!membership) {
           throwFromAsync(app, "You are not a member of this room")
-        alert("aaa")
 
           return
         }
 
         if (!this.dateOK(membership.bannedUntil)) {
           throwFromAsync(app, "You are banned from room " + membership.chatRoom.name)
-        alert("bbb")
 
           return;
         }
@@ -639,9 +635,9 @@ try {
             this.messages.push(response.data[i]);
           }
         }).catch((error) => {
-          throwFromAsync(app, error)
+          handleHttpException(app, error)
         });
-      }).catch(err => throwFromAsync(app, err))
+      }).catch(err => handleHttpException(app, err))
 
       console.log(this.currentMembership)
     },
@@ -652,7 +648,7 @@ try {
         room = await (await createChatRoomReq(roomName, this.user?.id as string, password)).data
       }
       catch (err: any) {
-        throwFromAsync(app, err)
+        handleHttpException(app, err)
         return;
       }
 
@@ -665,7 +661,7 @@ try {
       }
 
       catch (error: any) {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
         return
       }
 
@@ -680,8 +676,7 @@ try {
           }
           catch (err: any) {
             //throwFromAsync(app, "Could not invite user")
-            throwFromAsync(app, err)
-        alert("eee")
+            handleHttpException(app, err)
 
           }
         })
@@ -698,8 +693,7 @@ try {
         this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.id !== membershipId)
       } catch (error: any) {
         //alert("Can not remove user from chat room: " + error);
-        throwFromAsync(app, error)
-        alert("fff")
+        handleHttpException(app, error)
         
         return
       }
@@ -744,7 +738,7 @@ try {
       }
       catch (err: any) {
         //throwFromAsync(app, "Error getting chat room memberships: " + err)
-        throwFromAsync(app, err)
+        handleHttpException(app, err)
         return
       }
     },
@@ -785,7 +779,7 @@ try {
             mutedUntil: membership.mutedUntil
           })
         } catch (error: any) {
-          throwFromAsync(app, error)
+          handleHttpException(app, error)
         }
       })
 
@@ -798,7 +792,7 @@ try {
           }
         })
       } catch (error: any) {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
         return
       }
     },
@@ -810,7 +804,7 @@ try {
         this.modalUserActions.userName = clickedUser.username;
         this.modalUserActions.show = !this.modalUserActions.show;
       } catch (error: any) {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
       }
     },
 
@@ -842,7 +836,7 @@ try {
                 this.$router.push("/game?id=" + response.data);
               })
           }
-        }).catch(err => throwFromAsync(app, err))
+        }).catch(err => handleHttpException(app, err))
     },
 
     async openDirectChat(friendId: string) {
@@ -855,7 +849,7 @@ try {
         
         this.$router.push("/chats?roomId=" + chatRoom.id);
       } catch (error: any) {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
       }
     },
 

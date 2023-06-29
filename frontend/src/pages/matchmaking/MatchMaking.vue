@@ -70,7 +70,7 @@ import { useStore } from "vuex";
 import { key } from "../..//store/store";
 import { cancelMatchmaking, enterCompetitiveGameApi, enterExhibitionGameApi } from "../../api/gameApi";
 import "@/style/styles.css";
-import { publishNotification, throwFromAsync } from "@/utils/utils";
+import { handleHttpException, publishNotification, throwFromAsync } from "@/utils/utils";
 import { app } from "@/main";
 
 export default defineComponent({
@@ -97,7 +97,7 @@ export default defineComponent({
     cancelMatchmakingAction() {
       cancelMatchmaking()
       .then((res) => {console.log("matchmaking canceled succeded: " + JSON.stringify(res, null, 2))})//publishNotification("Matchmaking cancelled successfully, you can match again!!", false))
-      .catch((err) => throwFromAsync(app, err))
+      .catch((err) => handleHttpException(app, err))
     },
     modifyProfileRoute() {
       this.$router.push("/settings");
@@ -111,7 +111,7 @@ export default defineComponent({
           //alert("will reroute: " + JSON.stringify(response, null, 2))
           this.$router.push("/game?id=" + response.data);
         }
-      }).catch(err => throwFromAsync(app, err))
+      }).catch(err => handleHttpException(app, err))
     },
     async enterExhibitionMatch() {
       let powerups = "";
@@ -123,7 +123,7 @@ export default defineComponent({
       enterExhibitionGameApi(this.user.id, powerups)
       .then(response => {
         this.$router.push("/game?id=" + response.data);
-      }).catch(err => throwFromAsync(app, err))
+      }).catch(err => handleHttpException(app, err))
     }
   },
 });

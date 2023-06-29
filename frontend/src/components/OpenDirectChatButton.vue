@@ -7,7 +7,7 @@
 <script lang="ts">
 import { getDirectChatRoomReq } from "@/api/chatApi"
 import { app } from "@/main";
-import { throwFromAsync } from "@/utils/utils";
+import { handleHttpException, throwFromAsync } from "@/utils/utils";
 import { defineComponent } from "vue"
 
 export default defineComponent({
@@ -21,7 +21,7 @@ export default defineComponent({
         const chatRoom = await (await getDirectChatRoomReq(this.userId, this.friendId)).data
         this.$router.push("/chats?roomId=" + chatRoom.id);
       } catch (error: any) {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
       }
     },
   }

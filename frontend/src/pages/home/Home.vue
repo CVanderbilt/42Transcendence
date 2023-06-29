@@ -92,7 +92,7 @@ import { key } from "../..//store/store";
 import "@/style/styles.css";
 import { Match, getMatchesReq } from "@/api/gameApi";
 import { IUserAPI, getLadder } from "@/api/user";
-import { throwFromAsync } from "@/utils/utils";
+import { handleHttpException, throwFromAsync } from "@/utils/utils";
 import { app } from "@/main";
 
 export default defineComponent({
@@ -120,7 +120,7 @@ export default defineComponent({
         const res = (await getLadder()) as IUserAPI[]
         ladder.value = res
       } catch (error: any) {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
       }
         
     }

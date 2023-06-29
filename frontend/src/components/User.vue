@@ -58,7 +58,7 @@ import { useStore } from "vuex";
 import { key } from "../store/store";
 import { getUserById } from "../api/user";
 import { getFriendshipsRequest, makeFriendshipRequest, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
-import { generateImageURL, throwFromAsync } from "@/utils/utils";
+import { generateImageURL, handleHttpException, throwFromAsync } from "@/utils/utils";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
 import { app } from "@/main";
 
@@ -125,7 +125,7 @@ export default defineComponent({
           console.log("USUARIO:" + response.data.username);
           this.lookedUpUserName = response.data.username;
           this.lookedUpEmail = response.data.email;
-        }).catch(err => throwFromAsync(app, err))
+        }).catch(err => handleHttpException(app, err))
     },
 
     async makeFriend() {
@@ -136,7 +136,7 @@ export default defineComponent({
           this.friendshipId = res.data.id
         } 
       } catch (error: any) {
-        throwFromAsync(app, error)
+        handleHttpException(app, error)
       }
     },
 
