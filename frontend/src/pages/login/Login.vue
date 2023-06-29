@@ -73,7 +73,7 @@ import { AUTHENTICATE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";
 import { apiClient } from "@/api/baseApi";
 import { elogin, get42Token } from "@/api/auth";
 import { app, stateSocketIO } from "@/main";
-import { handleHttpException } from "@/utils/utils";
+import { handleHttpException, throwFromAsync } from "@/utils/utils";
 
 export default defineComponent({
   name: "Login",
@@ -94,6 +94,9 @@ export default defineComponent({
   async mounted() {
     // comprueba si ya hay un token válido
     await this.tokenLogin()
+
+    if (this.$route.query.expired !== undefined)
+      throwFromAsync(app, "Token expired, you have to log in again")
 
     // comprueba si hay un codigo en la url
     if (this.$route.query.code) {
