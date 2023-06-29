@@ -73,7 +73,7 @@ import { AUTHENTICATE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";
 import { apiClient } from "@/api/baseApi";
 import { elogin, get42Token } from "@/api/auth";
 import { app, stateSocketIO } from "@/main";
-import { handleHttpException, throwFromAsync } from "@/utils/utils";
+import { handleHttpException } from "@/utils/utils";
 
 export default defineComponent({
   name: "Login",
@@ -129,8 +129,6 @@ export default defineComponent({
           if (response.data.is2fa) {
             this.is2faCodeRequired.status = true
           }
-
-
           else {
             const user: IUser = {
               id: response.data.userId,
@@ -191,8 +189,8 @@ export default defineComponent({
     async submit2faCode() {
       console.log("submitCode: " + this.twoFactorCode + "")
       apiClient.post(`${AUTHENTICATE_2FA_ENDPOINT}/${this.twoFactorCode}`)
-      .then(response => {
-        const user: IUser = {
+        .then(response => {
+          const user: IUser = {
             id: response.data.userId,
             username: response.data.name,
             email: response.data.email,
@@ -204,18 +202,18 @@ export default defineComponent({
             isBanned: response.data.isBanned
           }
 
-        console.log("2fa token: " + localStorage.getItem("token"))
-        localStorage.setItem("token", response.data.token)
+          console.log("2fa token: " + localStorage.getItem("token"))
+          localStorage.setItem("token", response.data.token)
 
-        this.DoLogin(user)
-      }).catch (error => {
-        handleHttpException(app, error)
-      })
+          this.DoLogin(user)
+        }).catch(error => {
+          handleHttpException(app, error)
+        })
     },
 
-    DoLogin(user: any, ){
+    DoLogin(user: any,) {
       this.io.socket.offAny();
-      this.io.socket.emit("user_state_updated", {userId: user.id, state:"online"});
+      this.io.socket.emit("user_state_updated", { userId: user.id, state: "online" });
       store.commit("changeUser", user)
 
       if (this.isNew) {

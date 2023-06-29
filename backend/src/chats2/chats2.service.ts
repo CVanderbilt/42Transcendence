@@ -146,7 +146,6 @@ export class Chats2Service {
         return roomCreated
     }
 
-
     async findUserChatRooms(userId: string): Promise<ChatRoom[]> {
         const res = await this.chatMembershipsRepo.createQueryBuilder('membership')
             .leftJoinAndSelect('membership.chatRoom', 'chatRoom')
@@ -241,13 +240,11 @@ export class Chats2Service {
             isAdmin: isAdmin,
         })
 
-        // emit event
-        // this.chatGateway.membershipUpdateEvent()
-
-        return this.chatMembershipsRepo.findOne({
+        const res = this.chatMembershipsRepo.findOne({
             where: { id: membership.id },
             relations: ['user', 'chatRoom'],
         })
+        return res
     }
 
     async inviteUser(inviterId: string, id: number, data: JoinChatRoomDto) {
@@ -371,13 +368,12 @@ export class Chats2Service {
         }
         const requesterMembership = await this.getUserChatMembership(requester.userId, membership.chatRoom.id)
         if (requester.isAdmin || requester.isOwner ||
-            ((requesterMembership.isAdmin || requesterMembership.isOwner) && isPastDate(requesterMembership.bannedUntil)))
-        {
+            ((requesterMembership.isAdmin || requesterMembership.isOwner) && isPastDate(requesterMembership.bannedUntil))) {
             if (!data.isBanned)
                 data.bannedUntil = new Date()
             if (!data.isMuted)
                 data.mutedUntil = new Date()
-            
+
             membership.isBanned = data.isBanned
             membership.isAdmin = data.isAdmin
             membership.isMuted = data.isMuted
@@ -450,7 +446,7 @@ export class Chats2Service {
 
         const res = await this.chatMembershipsRepo.delete({ id: id })
 
-        if (deleteRoom) 
+        if (deleteRoom)
             this.chatRoomsRepo.delete(room.id)
 
         return res
@@ -472,7 +468,7 @@ export class Chats2Service {
     }): Promise<ChatMsg> {
         const sender = await this.usersRepo.findOne({ where: { id: senderId } });
         const room = await this.chatRoomsRepo.findOne({ where: { id: chatRoomId } });
-        
+
         const membership = await this.chatMembershipsRepo.findOne({
             where: {
                 user: { id: senderId },
@@ -521,7 +517,6 @@ export class Chats2Service {
         if (!membership)
             throw new HttpException('You are not a member of this room', HttpStatusCode.Unauthorized)
 
-        console.log(membership.bannedUntil)
         if (!isPastDate(membership.bannedUntil))
             throw new HttpException('You have been banned from this room', HttpStatusCode.Unauthorized)
 

@@ -362,7 +362,7 @@ export default defineComponent({
       handleHttpException(app, error)
     }
     this.isAdmin = false;
-    this.joinRoomWithId(this.generalRoom.id)
+    await this.joinRoomWithId(this.generalRoom.id)
 
     const requestedRoomId = this.$route.query.roomId as string;
     if (requestedRoomId) {
@@ -375,7 +375,6 @@ try {
 } catch (error: any) {
   handleHttpException(app, error)
 }
-    console.log(this.userMemberships)
 
     // get current membership
     const membership = this.userMemberships.find((membership: any) => membership.chatRoom.name === this.chatRoomName)
@@ -639,7 +638,6 @@ try {
         });
       }).catch(err => handleHttpException(app, err))
 
-      console.log(this.currentMembership)
     },
 
     async createChatRoom(roomName: string, password: string, userNames: string[]) {
@@ -825,7 +823,6 @@ try {
       getChatRoomMembershipsReq(this.currentMembership.chatRoom.id)
         .then(response => {
           const opponentMembership = response.data.find((membership: any) => membership.user.id != this.user.id)
-          console.log(opponentMembership)
           if (opponentMembership) {
             challenge(store.state.user.id, opponentMembership.user.id)
               .then(response => {
