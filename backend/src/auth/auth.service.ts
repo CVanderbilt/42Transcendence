@@ -53,14 +53,14 @@ export class AuthService {
         const buffer = PNG.sync.write(png);
         await this.usersService.uploadDatabaseFile(buffer, user.id);
 
-        return this.getLoginDto(user.id)
+        return await this.getLoginDto(user.id)
     }
 
     async getLoginDto(userId: string)
     {
         const user = await this.usersRepo.findOne({
             where: { id: userId },
-            select: ["id", "email", "username", "password", "role", "is2fa", "isNew"]
+            select: ["id", "email", "username", "password", "role", "is2fa"]
         })
 
         const payload = {
@@ -72,7 +72,7 @@ export class AuthService {
             isTwoFactorAuthenticated: false,
         }
 
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m" })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -80,7 +80,6 @@ export class AuthService {
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
-            "isNew": user.isNew,
         }
 
         return res
@@ -92,7 +91,7 @@ export class AuthService {
 
         const user = await this.usersRepo.findOne({
             where: { email: login.email },
-            select: ["id", "email", "username", "password", "role", "is2fa", "isNew"]
+            select: ["id", "email", "username", "password", "role", "is2fa"]
         })
 
         if (!user) {
@@ -105,11 +104,6 @@ export class AuthService {
         }
 
         const res = this.getLoginDto(user.id)
-
-        if (user.isNew) {
-            user.isNew = false
-            this.usersRepo.save(user)
-        }
 
         return res
     }
@@ -185,7 +179,7 @@ export class AuthService {
             isTwoFactorAuthenticated: false,
         }
 
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m" })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -193,12 +187,6 @@ export class AuthService {
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
-            "isNew": user.isNew,
-        }
-
-        if (user.isNew) {
-            user.isNew = false
-            this.usersRepo.save(user)
         }
 
         return res
@@ -252,7 +240,7 @@ export class AuthService {
             isTwoFactorAuthenticated: true,
         };
 
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m" })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -260,7 +248,6 @@ export class AuthService {
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
-            "isNew": user.isNew,
         }
 
         return res

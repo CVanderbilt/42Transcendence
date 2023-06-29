@@ -55,7 +55,4 @@ export class UserEntity extends BaseEntity {
 
     @OneToMany(() => ChatMembershipEntity, membership => membership.chatRoom, { onDelete: 'CASCADE' })
     memberships: ChatMembershipEntity[];
-
-    @Column({ default: true})
-    isNew: boolean
 }

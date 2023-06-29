@@ -58,7 +58,6 @@ export default defineComponent({
 
     return {
       user,
-      isNew: false,
     };
   },
   data() {
@@ -83,10 +82,11 @@ export default defineComponent({
           username: this.username,
           password: this.password,
           email: this.email,
-        })).data
+        }))
+
+        console.log(JSON.stringify(response))
 
         localStorage.setItem("token", response.data.token)
-        console.log("saving token: " + localStorage.getItem("token"))
 
         const user: IUser = {
           id: response.data.userId,
@@ -99,7 +99,6 @@ export default defineComponent({
           role: response.data.role,
           isBanned: response.data.isBanned,
         }
-        this.isNew = response.data.isNew
 
         this.io.socket.offAny();
         this.io.socket.emit("user_state_updated", { userId: user.id, state: "online" });
