@@ -11,6 +11,7 @@ import { generateRandomSquaresImage } from 'src/utils/utils';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
+import { get } from 'http';
 const PNG = require('pngjs').PNG;
 
 
@@ -51,27 +52,16 @@ export class AuthService {
         const png = generateRandomSquaresImage();
         const buffer = PNG.sync.write(png);
         await this.usersService.uploadDatabaseFile(buffer, user.id);
+
+        return this.getLoginDto(user.id)
     }
 
-    async loginWithEmail(login: LoginEmailDto) {
-        if (login === undefined)
-            throw new HttpException("INVALID_DATA", HttpStatus.BAD_REQUEST)
-
+    async getLoginDto(userId: string)
+    {
         const user = await this.usersRepo.findOne({
-            where: { email: login.email },
+            where: { id: userId },
             select: ["id", "email", "username", "password", "role", "is2fa", "isNew"]
         })
-
-        console.log("user", { user })
-
-        if (!user) {
-            throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.NOT_FOUND)
-        }
-
-        const passCheck = await bcrypt.compare(login.password, user.password)
-        if (!passCheck) {
-            throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.FORBIDDEN)
-        }
 
         const payload = {
             userId: user.id,
@@ -93,7 +83,29 @@ export class AuthService {
             "isNew": user.isNew,
         }
 
-        console.log("res", { res })
+        return res
+    }
+
+    async loginWithEmail(login: LoginEmailDto) {
+        if (login === undefined)
+            throw new HttpException("INVALID_DATA", HttpStatus.BAD_REQUEST)
+
+        const user = await this.usersRepo.findOne({
+            where: { email: login.email },
+            select: ["id", "email", "username", "password", "role", "is2fa", "isNew"]
+        })
+
+        if (!user) {
+            throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.NOT_FOUND)
+        }
+
+        const passCheck = await bcrypt.compare(login.password, user.password)
+        if (!passCheck) {
+            throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.FORBIDDEN)
+        }
+
+        const res = this.getLoginDto(user.id)
+
         if (user.isNew) {
             user.isNew = false
             this.usersRepo.save(user)
@@ -146,7 +158,7 @@ export class AuthService {
         const accessData = await this.exchangeCodeForAccessData(code)
 
         const me42 = await this.exchange42TokenForUserData(accessData.access_token)
-        const name = me42.first_name + " " + me42.last_name
+        const name = me42.login
         const login42 = me42.login
 
         var user: User = await this.usersService.findBy42Login(me42.login)
