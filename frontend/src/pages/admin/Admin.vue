@@ -13,8 +13,9 @@
                 <div class="list-attribute-box">
                   <button class="allow" v-if="user.isBanned" @click="executeAction(allowUserAction, user)">Allow</button>
                   <button class="ban" v-else @click="executeAction(banUserAction, user)">Ban</button>
-                  <button class="allow" v-if="!hasAdminRights(user)" @click="executeAction(promoteUserAction, user)">Promote</button>
-                  <button class="ban" v-else @click="executeAction(demoteUserAction ,user)">Demote</button>
+                  <button class="allow" v-if="!hasAdminRights(user)"
+                    @click="executeAction(promoteUserAction, user)">Promote</button>
+                  <button class="ban" v-else @click="executeAction(demoteUserAction, user)">Demote</button>
                 </div>
               </div>
             </div>
@@ -27,6 +28,7 @@
           <div class="list-row" v-for="chat in chatList" :key="chat.id">
             <div class="list-row-header">
               <b class="list-attribute-name">{{ chat.name }}</b>
+              <button @click="openChat(chat.id)">View</button>
             </div>
             <div class="list-row-content">
               <div class="list-attribute-box">
@@ -34,7 +36,7 @@
                   <input class="list-attribute-input" type="text" placeholder="userName" v-model="chat.userName">
                   <div class="list-attribute-box">
                     <button class="ban" @click="executeAction(banUserInChatAction, chat)">Ban</button>
-                    <button class="allow" @click="executeAction(allowUserInChatAction,chat)">Allow</button>
+                    <button class="allow" @click="executeAction(allowUserInChatAction, chat)">Allow</button>
                   </div>
                   <div class="list-attribute-box">
                     <button class="allow" @click="executeAction(promoteUserInChatAction, chat)">Promote</button>
@@ -61,10 +63,11 @@ import { app } from '@/main';
 
 interface ChatRoomRow extends ChatRoom {
   userName: string
+  members: Membership[]
 }
 
 interface Action {
-  (param: any): void
+  (param: any): Promise<void>
 }
 
 //todo:
@@ -87,30 +90,31 @@ export default defineComponent({
   
     updateInfo() {
       getAllUsers()
-      .then(list => {
-        this.userList = list
-        getAllChatRoomsReq()
-          .then(list => {
-            this.chatList = list;
-            this.chatList.forEach(async element => {
-              console.log(element.name)
-              if (element.isDirect) {
-                console.log("is direct")
-                getChatRoomMembershipsReq(element.id)
-                .then(response => {
-                  const memberships: Membership[] = response.data
-                  if (!memberships.length) {
-                    let name = memberships[0].user.username
-                    if (memberships.length > 1)
-                      name += " - " + memberships[1].user.username
-                    element.name = name
-                    console.log(element.name)
-                  } else throwFromAsync(app, new Error("Cant get chatRoomMemberships"))
+        .then(list => {
+          this.userList = list
+          getAllChatRoomsReq()
+            .then(list => {
+              this.chatList = list;
+              this.chatList.forEach(async element => {
+                this.chatList.forEach(async room => {
+                  room.members = await (await getChatRoomMembershipsReq(room.id)).data
+                  if (room.isDirect) {
+                    if (room.members.length > 0) {
+                      let name = room.members[0].user.username
+                      if (room.members.length > 1)
+                        name += " - " + room.members[1].user.username
+                      room.name = name
+                      console.log(room.name)
+                    } else throwFromAsync(app, new Error("Cant get chatRoomMemberships"))
+                  }
                 })
-              }
-            });
-          }).catch(err => throwFromAsync(app, err))
-      }).catch(err => throwFromAsync(app, err))
+              });
+            })
+        })
+    },
+
+    async openChat(chatId : string) {
+      this.$router.push("/chats?roomId=" + chatId);      
     },
 
     async executeAction(action: Action, param: any) {
@@ -122,50 +126,74 @@ export default defineComponent({
       }
     },
 
-    promoteUserAction(user: IUser) {
+    async promoteUserAction(user: IUser) {
+      if (!user)
+        return
       publishNotification(`Promoting user ${user.id}`, false)
-      promoteUser(user.id)
+      return (await promoteUser(user.id)).data
     },
-    demoteUserAction(user: IUser) {
+    async demoteUserAction(user: IUser) {
+      if (!user)
+        return
       publishNotification(`Demoting user ${user.id}`, false)
-      demoteUser(user.id)
+      return (await demoteUser(user.id)).data
     },
-    banUserAction(user: IUser) {
+    async banUserAction(user: IUser) {
+      if (!user)
+        return
       publishNotification(`Banning user ${user.id}`, false)
-      banUser(user.id)
+      return (await banUser(user.id)).data
     },
-    allowUserAction(user: IUser) {
+    async allowUserAction(user: IUser) {
+      if (!user)
+        return
       publishNotification(`Allowing user ${user.id}`, false)
-      allowUser(user.id)
+      return (await allowUser(user.id)).data
     },
-    banUserInChatAction(chat: ChatRoomRow) {
-      if (chat.userName) {
-        publishNotification(`Banning user: ${chat.userName} in chat: ${chat.name}`, false)
-        banUserFromChat(chat.userName, chat.id).catch(err => throwFromAsync(app, err))
-      }
+    async banUserInChatAction(chat: ChatRoomRow) {
+      if (!chat || !chat.userName || !chat.id)
+        return
+      publishNotification(`Banning user: ${chat.userName} in chat: ${chat.name}`, false)
+      try {
+        return (await banUserFromChat(chat.userName, chat.id)).data
+      } catch (error: any) { throwFromAsync(app, error) }
     },
-    allowUserInChatAction(chat: ChatRoomRow) {
-      if (chat.userName) {
-        publishNotification(`Allowing user: ${chat.userName} in chat: ${chat.name}`, false)
-        allowUserFromChat(chat.userName, chat.id).catch(err => throwFromAsync(app, err))
-      }
+
+    async allowUserInChatAction(chat: ChatRoomRow) {
+      if (!chat || !chat.userName || !chat.id)
+        return
+      publishNotification(`Allowing user: ${chat.userName} in chat: ${chat.name}`, false)
+      try {
+        return (await allowUserFromChat(chat.userName, chat.id)).data
+      } catch (error: any) { throwFromAsync(app, error) }
     },
-    promoteUserInChatAction(chat: ChatRoomRow) {
-      if (chat.userName) {
-        publishNotification(`Promoting user: ${chat.userName} in chat: ${chat.name}`, false)
-        promoteUserInChat(chat.userName, chat.id).catch(err => throwFromAsync(app, err))
-      }
+
+    async promoteUserInChatAction(chat: ChatRoomRow) {
+      if (!chat || !chat.userName || !chat.id)
+        return
+      publishNotification(`Promoting user: ${chat.userName} in chat: ${chat.name}`, false)
+      try {
+        return (await promoteUserInChat(chat.userName, chat.id)).data
+      } catch (error: any) { throwFromAsync(app, error) }
     },
-    demoteUserInChatAction(chat: ChatRoomRow) {
-      if (chat.userName) {
-        publishNotification(`Demoting user: ${chat.userName} in chat: ${chat.name}`, false)
-        demoteUserInChat(chat.userName, chat.id).catch(err => throwFromAsync(app, err))
-      }
+    async demoteUserInChatAction(chat: ChatRoomRow) {
+      if (!chat || !chat.userName || !chat.id)
+        return
+      publishNotification(`Demoting user: ${chat.userName} in chat: ${chat.name}`, false)
+      try {
+        return (await demoteUserInChat(chat.userName, chat.id)).data
+      } catch (error: any) { throwFromAsync(app, error) }
     },
-    destroyChat(chat: ChatRoomRow) {
+    async destroyChat(chat: ChatRoomRow) {
       publishNotification(`Deleting chat ${chat.name}`, false)
-      deleteChatRoom(chat.id).catch(err => throwFromAsync(app, err))
+      let res
+      try {
+        res = await (await deleteChatRoom(chat.id)).data
+      } catch (error: any) { throwFromAsync(app, error) }
+      this.updateInfo()
+      return res
     },
+
     hasAdminRights(user: IUser) {
       return user.role === "ADMIN" || user.role === "OWNER"
     }

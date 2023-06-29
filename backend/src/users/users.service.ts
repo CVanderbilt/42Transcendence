@@ -26,7 +26,6 @@ export class UsersService {
     }
 
     async findOneByName(username: string): Promise<User> {
-        console.log("findOneByName", username)
         return this.usersRepo.findOne( { where: { username: username } } )
     }
 

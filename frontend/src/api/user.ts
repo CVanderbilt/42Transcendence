@@ -53,19 +53,19 @@ export async function getAllUsers() {
 }
 
 export async function banUser(id: string) {
-    apiClient.post(`${URL}/${id}/ban`)
+    return apiClient.post(`${URL}/${id}/ban`)
 }
 
 export async function allowUser(id: string) {
-    apiClient.post(`${URL}/${id}/allow`)
+    return (await apiClient.post(`${URL}/${id}/allow`))
 }
 
 export async function promoteUser(id: string) {
-    apiClient.post(`${URL}/${id}/promote`)
+    return (await apiClient.post(`${URL}/${id}/promote`))
 }
 
 export async function demoteUser(id: string) {
-    apiClient.post(`${URL}/${id}/demote`)
+    return (await apiClient.post(`${URL}/${id}/demote`))
 }
 
 export async function getLadder() {

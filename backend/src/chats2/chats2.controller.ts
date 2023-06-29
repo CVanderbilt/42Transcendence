@@ -9,6 +9,8 @@ import { UsersService } from 'src/users/users.service';
 import { JwtAuthenticatedGuard } from 'src/auth/jwt-authenticated-guard';
 import { HttpStatusCode } from 'axios';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
+import { rootCertificates } from 'tls';
+import { IS_NUMBER_STRING } from 'class-validator';
 
 @Controller('chats')
 export class Chats2Controller {
@@ -71,7 +73,7 @@ export class Chats2Controller {
         }), body)
         const token = getAuthToken(req)
         if (!token.hasRightsOverUser(token, await this.usersService.findOneById(body.user1)) &&
-        !token.hasRightsOverUser(token, await this.usersService.findOneById(body.user2)))
+            !token.hasRightsOverUser(token, await this.usersService.findOneById(body.user2)))
             throw new UnauthorizedException(`Requester ${token.userId} does not have rights to retrieve private room between ${body.user1} and ${body.user2}`)
         //TODO añadir validacion de ids
         console.log("getPrivateRoom")
@@ -88,7 +90,7 @@ export class Chats2Controller {
     async create(@Req() request, @Body() data: {
         name: string,
         password?: string
-    } ): Promise<ChatRoom> {
+    }): Promise<ChatRoom> {
         //todo: tambien hay un todo equivalente en frontend, revisar que pasa con el owner pasado como input que aqui no usamos y actualizar para que ponga de owner al usuario del token
         validateInput(Joi.object({
             name: CHATNAME_VALIDATOR.required(),
@@ -97,7 +99,7 @@ export class Chats2Controller {
         try {
             const token = getAuthToken(request)
             const user = await this.usersService.findOneById(token.userId)
-            const res = await this.chatsService.createChatRoom({...data, isDirect: false}, user)
+            const res = await this.chatsService.createChatRoom({ ...data, isDirect: false }, user)
             return res
         } catch (error) {
             Logger.error(error)
@@ -200,7 +202,7 @@ export class Chats2Controller {
         if (token.userId === userId && (token.role === 'ADMIN' || token.role === 'OWNER')) {
             const rooms = await this.chatsService.findAllChatRooms()
 
-            const memberships : ChatMembership[] = rooms.map(room => {
+            const memberships: ChatMembership[] = rooms.map(room => {
                 return {
                     id: -1,
                     isOwner: true,
@@ -220,76 +222,92 @@ export class Chats2Controller {
         return await (this.chatsService.findUserMemberships(userId))
     }
 
-    //todo: importante updatear para que vaya con id y no username porq el username se puede cambiar y da problemas
-    @UseGuards(JwtAuthenticatedGuard) //todo: solo admin/owner y admin/owner de la room
+    @UseGuards(JwtAuthenticatedGuard)
     @Post('memberships/ban')
-    async banUser(@Body() input: { userName: string, roomId: number }, @Req() req) {
-        //todo: implementar validateInput cuando funcione con userId en vez de userName
+    async banUser(@Body() input: { userId: string, roomId: number }, @Req() req) {
+        validateInput(Joi.object({
+            userId: ID_VALIDATOR.required(),
+            roomId: Joi.number().required()
+        }), input)
         const token = getAuthToken(req)
-        const user = await this.usersService.findOneByName(input.userName);
+        const user = await this.usersService.findOneById(input.userId);
 
         if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
 
-        const requesterMembership = await this.chatsService.findMembershipByUserAndRoom(token.userId, input.roomId)
-        if (token.hasRightsOverUser(token, user) && !requesterMembership && (!requesterMembership.isAdmin || !requesterMembership.isOwner))
+        const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
+        if (token.hasRightsOverUser(token, user) && requestedMembership) {
             this.chatsService.setIsBanned(user.id, input.roomId, true);
+        }
         else
-            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to ban user ${input.userName} in room ${input.roomId}`)
+            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to ban user ${input.userId} in room ${input.roomId}`)
     }
 
     @UseGuards(JwtAuthenticatedGuard)
     @Post('memberships/allow')
-    async allowUser(@Body() input: { userName: string, roomId: number }, @Req() req) {
-        //todo: implementar validateInput cuando funcione con userId en vez de userName
+    async allowUser(@Body() input: { userId: string, roomId: number }, @Req() req) {
+        validateInput(Joi.object({
+            userId: ID_VALIDATOR.required(),
+            roomId: Joi.number().required()
+        }), input)
         const token = getAuthToken(req)
-        const user = await this.usersService.findOneByName(input.userName);
+        const user = await this.usersService.findOneById(input.userId);
 
         if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
 
-        const requesterMembership = await this.chatsService.findMembershipByUserAndRoom(token.userId, input.roomId)
-        if (token.hasRightsOverUser(token, user) && !requesterMembership && (!requesterMembership.isAdmin || !requesterMembership.isOwner))
+        const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
+        if (token.hasRightsOverUser(token, user) && requestedMembership) {
             this.chatsService.setIsBanned(user.id, input.roomId, false);
+        }
         else
-            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to allow user ${input.userName} in room ${input.roomId}`)
+            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to allow user ${input.userId} in room ${input.roomId}`)
     }
-    
+
     @UseGuards(JwtAuthenticatedGuard)
     @Post('memberships/promote')
-    async promoteUser(@Body() input: { userName: string, roomId: number }, @Req() req) {
-        //todo: implementar validateInput cuando funcione con userId en vez de userName
+    async promoteUser(@Body() input: { userId: string, roomId: number }, @Req() req) {
+        validateInput(Joi.object({
+            userId: ID_VALIDATOR.required(),
+            roomId: Joi.number().required()
+        }), input)
         const token = getAuthToken(req)
-        const user = await this.usersService.findOneByName(input.userName);
-        if (!user) 
+        const user = await this.usersService.findOneById(input.userId);
+        if (!user)
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
-        
+
         const membership = await this.chatsService.findMembershipByUserAndRoom(user.id, input.roomId)
-        if (!membership) 
+        if (!membership)
             throw new HttpException("MEMBERSHIP_NOT_FOUND", HttpStatus.NOT_FOUND)
 
-        const requesterMembership = await this.chatsService.findMembershipByUserAndRoom(token.userId, input.roomId)
-        if (token.hasRightsOverUser(token, user) && !requesterMembership && (!requesterMembership.isAdmin || !requesterMembership.isOwner))
+        const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
+        if (token.hasRightsOverUser(token, user) && requestedMembership) {
             this.chatsService.setIsAdmin(user.id, input.roomId, true);
+        }
         else
-            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to promote user ${input.userName} in room ${input.roomId}`)
+            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to promote user ${input.userId} in room ${input.roomId}`)
     }
 
     @UseGuards(JwtAuthenticatedGuard)
     @Post('memberships/demote')
-    async demoteUser(@Body() input: { userName: string, roomId: number }, @Req() req) {
-        //todo: implementar validateInput cuando funcione con userId en vez de userName
+    async demoteUser(@Body() input: { userId: string, roomId: number }, @Req() req) {
+        validateInput(Joi.object({
+            userId: ID_VALIDATOR.required(),
+            roomId: Joi.number().required()
+        }), input)
         const token = getAuthToken(req)
-        const user = await this.usersService.findOneByName(input.userName);
-        if (!user) 
+        const user = await this.usersService.findOneById(input.userId);
+        if (!user)
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+
         const membership = await this.chatsService.findMembershipByUserAndRoom(user.id, input.roomId)
-        if (!membership) 
+        if (!membership)
             throw new HttpException("MEMBERSHIP_NOT_FOUND", HttpStatus.NOT_FOUND)
 
-        const requesterMembership = await this.chatsService.findMembershipByUserAndRoom(token.userId, input.roomId)
-        if (token.hasRightsOverUser(token, user) && !requesterMembership && (!requesterMembership.isAdmin || !requesterMembership.isOwner))
+        const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
+        if (token.hasRightsOverUser(token, user) && requestedMembership) {
             this.chatsService.setIsAdmin(user.id, input.roomId, false);
+        }
         else
-            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to demote user ${input.userName} in room ${input.roomId}`)
+            throw new UnauthorizedException(`Requester ${token.userId} does not have rights to demote user ${input.userId} in room ${input.roomId}`)
     }
 
     // update membership
@@ -310,7 +328,7 @@ export class Chats2Controller {
             bannedUntil: DATE_VALIDATOR,
             mutedUntil: DATE_VALIDATOR
         }), { ...data, membershipId })
-        
+
         const token = getAuthToken(req)
 
         try {
@@ -321,7 +339,7 @@ export class Chats2Controller {
             }, data)
         } catch (error) {
             if (error instanceof HttpException) throw (error)
-                throw new HttpException("update membership failed", HttpStatusCode.InternalServerError);
+            throw new HttpException("update membership failed", HttpStatusCode.InternalServerError);
         }
     }
 

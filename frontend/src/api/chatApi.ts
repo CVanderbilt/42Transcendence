@@ -1,5 +1,6 @@
 import { throwFromAsync } from "@/utils/utils";
 import { apiClient } from "./baseApi";
+import { getUserByName } from "./user";
 
 const URL = "/chats";
 
@@ -55,7 +56,7 @@ export async function createChatRoomReq(roomName: string, owner: string, passwor
 }
 
 export async function updateChatRoomPasswordReq(roomId: string, password: string) {
-    return apiClient.post(`${URL}/rooms/${roomId}/password`, {password: password})
+    return apiClient.post(`${URL}/rooms/${roomId}/password`, { password: password })
 }
 
 export async function getChatRoomByNameReq(name: string) {
@@ -81,10 +82,6 @@ export async function postChatMessageReq(roomId: string, message: {
 }) {
     return apiClient.post(`${URL}/messages/${roomId}`, message)
 }
-
-// export async function leaveChatRoomReq(roomId: string, userId: string) {
-//     return apiClient.post(`${URL}/rooms/${roomId}/leave`, { userId })
-// }
 
 export async function deleteChatRoom(roomId: string) {
     return apiClient.delete(`${URL}/rooms/${roomId}`)
@@ -116,23 +113,27 @@ export async function deleteChatRoomMembershipsReq(membershipId: string) {
 }
 
 export async function banUserFromChat(userName: string, roomId: string) {
-    return apiClient.post(`${URL}/memberships/ban`, {userName, roomId})
+    const userId = await (await getUserByName(userName)).data.id
+    return apiClient.post(`${URL}/memberships/ban`, { userId, roomId })
 }
 
 export async function allowUserFromChat(userName: string, roomId: string) {
-    return apiClient.post(`${URL}/memberships/allow`, {userName, roomId})
+    const userId = await (await getUserByName(userName)).data.id
+    return apiClient.post(`${URL}/memberships/allow`, { userId, roomId })
 }
 
 export async function promoteUserInChat(userName: string, roomId: string) {
-    return apiClient.post(`${URL}/memberships/promote`, {userName, roomId})
+    const userId = await (await getUserByName(userName)).data.id
+    return apiClient.post(`${URL}/memberships/promote`, { userId, roomId })
 }
 
 export async function demoteUserInChat(userName: string, roomId: string) {
-    return apiClient.post(`${URL}/memberships/demote`, {userName, roomId})
+    const userId = await (await getUserByName(userName)).data.id
+    return apiClient.post(`${URL}/memberships/demote`, { userId, roomId })
 }
 
 export async function getDirectChatRoomReq(user1: string, user2: string) {
-    return apiClient.post(`${URL}/rooms/direct`, {user1, user2})
+    return apiClient.post(`${URL}/rooms/direct`, { user1, user2 })
 }
 
 export async function getChatRoomByIdReq(id: string) {
