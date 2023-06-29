@@ -17,8 +17,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
-        Logger.log("JwtStrategy.validate")
-        Logger.log("payload", payload)
         const user = await this.userService.findOneById(payload.userId);
         if (payload.isTwoFactorAuthenticationEnabled && !payload.isTwoFactorAuthenticated)
             throw new UnauthorizedException("Two factor authentication is enabled but not authenticated")

@@ -122,15 +122,18 @@ export async function banUserFromChat(userName: string, roomId: string) {
 }
 
 export async function allowUserFromChat(userName: string, roomId: string) {
-    return apiClient.post(`${URL}/memberships/allow`, { userName, roomId })
+    const userId = await (await getUserByName(userName)).data.id
+    return apiClient.post(`${URL}/memberships/allow`, { userId, roomId })
 }
 
 export async function promoteUserInChat(userName: string, roomId: string) {
-    return apiClient.post(`${URL}/memberships/promote`, { userName, roomId })
+    const userId = await (await getUserByName(userName)).data.id
+    return apiClient.post(`${URL}/memberships/promote`, { userId, roomId })
 }
 
 export async function demoteUserInChat(userName: string, roomId: string) {
-    return apiClient.post(`${URL}/memberships/demote`, { userName, roomId })
+    const userId = await (await getUserByName(userName)).data.id
+    return apiClient.post(`${URL}/memberships/demote`, { userId, roomId })
 }
 
 export async function getDirectChatRoomReq(user1: string, user2: string) {
