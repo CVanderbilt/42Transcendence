@@ -828,9 +828,9 @@ export default defineComponent({
 
       getCurrentMatch(player)
         .then(response => {
-          alert(JSON.stringify(response, null, 2))
+          //alert(">>" + JSON.stringify(response, null, 2))
           this.$router.push("/game?id=" + response.data);
-        })
+        }).catch(err => console.log(err) )
     },
 
     async challengePlayer() {
