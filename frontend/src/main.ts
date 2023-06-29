@@ -22,7 +22,7 @@ import NotificationBanner from './components/NotificationBanner.vue'
 import EndGame from './pages/endGame/endGame.vue'
 import Admin from './pages/admin/Admin.vue'
 import Rules from './pages/rules/Rules.vue'
-import { isAuthenticated, publishNotification } from './utils/utils'
+import { isAuthenticated, publishNotification, throwFromAsync } from './utils/utils'
 
 const routes = [
   { path: '/', name: 'home', component: Home, meta: { requiresAuth: true } },
@@ -104,6 +104,18 @@ app.component('notification-banner', NotificationBanner)
 app.config.errorHandler = (error: any, vm, info) => {
   publishNotification(error.message, true)
 }
+
+// Este no hace falta porq ya tenemos el otro
+/*window.onerror = function (msg, url, line, col, error) {
+  //code to handle or report error goes here
+  alert("emergency unhandled error!!!")
+}*/
+
+//este handler pilla errores de funciones asyn que no estemos manejando, al redirigir previene errores derivados de ese error y al lanzar un error propio previene otros errores que pudieran hber inmediatamente despues
+window.addEventListener('unhandledrejection', function(event) {
+  window.location.href = 'http://localhost:8080/'; //todo sacar este valor de env variables
+  throw new Error("redirecting due to undhandled error")
+});
 
 app.mount('#app')
 

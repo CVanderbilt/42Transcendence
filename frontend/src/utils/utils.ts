@@ -13,7 +13,9 @@ export function generateImageURL(userId = ""): string {
   return `${API_END_POINT}/users/${userId}/image`;
 }
 
-export function throwFromAsync(app: App<Element>, e: Error | string) {
+export function throwFromAsync(app: App<Element>, e: Error | string | undefined) {
+  if (!e)
+    e = new Error("undefined error")
   if (typeof e === "string")
     e = new Error(e)
   const errorHandler = app.config.errorHandler || console.error
