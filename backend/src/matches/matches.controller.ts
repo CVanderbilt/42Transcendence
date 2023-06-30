@@ -26,8 +26,8 @@ export class MatchesController {
             throw new HttpException("UserId in query and in token missmatch", HttpStatusCode.BadRequest)        
     
             // OJO aunq se llama username es userids
+            try {
         const user = await this.usersService.findOneById(userName)
-        try {
             console.log("getCompetitiveMatch called with userId " + userName + " and score: " + user.score + " _" + counter)
             counter++
             const gameId = await this.matchesService.makeMatch(userName, user.score, false, []);
@@ -94,11 +94,11 @@ export class MatchesController {
             opponentName: ID_VALIDATOR.required(),
             powerups: POWERUPS_VALIDATOR.required()
         }), data);
+        try {
         console.log("challenge y tal")
         const powerupsList: string[] = []
             for (let i = 0; i < data.powerups.length; i++)
                 powerupsList.push(data.powerups[i])
-        try {
             return await this.matchesService.challenge(data.requesterName, data.opponentName, powerupsList)
         } catch (error) {
             if (error instanceof HttpException) throw (error)
