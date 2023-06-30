@@ -45,9 +45,10 @@ import { useStore } from "vuex";
 import { key } from "../../store/store";
 import { getFriendshipsRequest, IFriendship, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
-import { stateSocketIO } from "@/main";
+import { app, stateSocketIO } from "@/main";
 import "@/style/styles.css";
 import { generateImageURL } from "@/utils/utils";
+import { handleHttpException } from "@/utils/utils";
 
 interface UserState {
   userId: string;
@@ -98,9 +99,6 @@ export default defineComponent({
     this.getFriendships()
 
     this.ioUserState.socket.on("user_states", (states: UserState[]) => {
-      console.log("user_states")
-      console.log(states)
-
       this.clearStates()
 
       states.forEach(element => {
@@ -119,7 +117,6 @@ export default defineComponent({
     async getFriendships() {
       try {
         const res = await getFriendshipsRequest(this.user?.id as string)
-        console.log(res)
         res.forEach(async (fshp) => {
           if (fshp.isFriend)
           {
@@ -132,7 +129,7 @@ export default defineComponent({
           }
         })
       } catch (err) {
-        console.log(err)
+        handleHttpException(app, err)
       }
     },
     generateImageURL,
@@ -142,9 +139,8 @@ export default defineComponent({
         const f = this.friendships.find((fshp) => fshp.id === friendshipId)
         if (f)
           f.isBlocked = isBlocked
-      }
-      catch (err) {
-        console.log(err)
+        } catch (err) {
+        handleHttpException(app, err)
       }
     },
 
@@ -152,9 +148,8 @@ export default defineComponent({
       try {
         unfriendRequest(frienshipId)
         this.friendships = this.friendships.filter((fshp) => fshp.id !== frienshipId)
-      }
-      catch (err) {
-        console.log(err)
+      } catch (err) {
+        handleHttpException(app, err)
       }
     },
   },

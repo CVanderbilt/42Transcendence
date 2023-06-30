@@ -37,11 +37,15 @@ export class UsersController {
     
     @UseGuards(JwtAdminGuard)
     @Post(':id/allow')
-    async allowUser(@Param('id') id: string) {
+    async allowUser(@Param('id') id: string, @Req() req: any) {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
         try {
+            const token = getAuthToken(req)
+            if (!token.hasRightsOverUser(token, await this.findUser(id)))
+                throw new UnauthorizedException("You don't have rights over this user")
+            
             return this.usersService.setUserIsBanned(id, false);
         } catch (error) {
             processError(error, "allow failed")
@@ -50,27 +54,35 @@ export class UsersController {
 
     @UseGuards(JwtAdminGuard)
     @Post(':id/promote')
-    async promoteUser(@Param('id') id: string): Promise<void> {
+    async promoteUser(@Param('id') id: string, @Req() req: any): Promise<void> {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
         try {
-            this.usersService.setUserAsAdmin(id);
+            const token = getAuthToken(req)
+            if (!token.hasRightsOverUser(token, await this.findUser(id)))
+                throw new UnauthorizedException("You don't have rights over this user")
+            
+            await this.usersService.setUserAsAdmin(id);
         } catch (error) {
-            processError(error, "allow failed")
+            processError(error, "promote failed")
         }
     }
     
     @UseGuards(JwtAdminGuard)
     @Post(':id/demote')
-    async demoteUser(@Param('id') id: string): Promise<void> {
+    async demoteUser(@Param('id') id: string, @Req() req: any): Promise<void> {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
         try {
+            const token = getAuthToken(req)
+            if (!token.hasRightsOverUser(token, await this.findUser(id)))
+                throw new UnauthorizedException("You don't have rights over this user")
+            
             await this.usersService.setUserAsCustomer(id);
         } catch (error) {
-            processError(error, "allow failed")
+            processError(error, "demote failed")
         }
     }
 
