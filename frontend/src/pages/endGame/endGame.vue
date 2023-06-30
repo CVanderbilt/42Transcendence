@@ -1,11 +1,14 @@
+<script setup lang="ts">
+  import ConfettiExplosion from "vue-confetti-explosion";
+</script>
+
 <template>
-  <section class="vh-100 gradient-custom">
+  <section>
     <div>
       <div id="layoutSidenav_nav"></div>
       <div id="layoutSidenav_content">
         <main>
           <div class="container-fluid px-4" style="margin-top: 200px">
-
             <h1 style="color: white; ;">GAME ENDED</h1>
             <h2> 
               {{ message }}
@@ -13,6 +16,8 @@
             <h2> 
               {{ userName }}
             </h2>
+            <ConfettiExplosion :stageHeight="1000" style="position: absolute; top: 70px;
+  left: 50vw;" v-if="cobetes"/>
           </div>
         </main>
       </div>
@@ -26,14 +31,19 @@ import "@/style/styles.css";
 import { getUserById } from "@/api/user";
 import { handleHttpException, throwFromAsync } from "@/utils/utils";
 import { app } from "@/main";
+import { store } from "../../store/store";
 declare var require: any;
 
 export default defineComponent({
   name: "EndGame",
   data() {
     let message = "NO MESSAGE TO SHOW"
+    let winner = "No winner"
+    let cobetes = false;
     return { 
       message,
+      winner,
+      cobetes
     }
   },
 
@@ -45,7 +55,11 @@ export default defineComponent({
         // parse message
         if (this.message.split(" ")[0] === "winner") {
           const winnerId = this.message.split(" ").slice(2).join(" "); 
-          this.message = "Winner is " + await (await getUserById(winnerId)).data.username;
+          this.winner = await (await getUserById(winnerId)).data.username;
+          this.message = "Winner is " + this.winner;
+          if (this.winner === store.state.user.username){
+            this.cobetes = true;
+          }
         }
       }
     } catch (error: any) {

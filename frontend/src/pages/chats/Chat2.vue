@@ -51,7 +51,7 @@
 
                 <!-- ------------------ chat area ------------------ -->
                 <div v-if="dateOK(currentMembership.bannedUntil)">
-                  <div ref="chatArea" class="chat-area" style="margin-bottom: 20px;">
+                  <div ref="chatArea" class="chat-area" style="margin-bottom: 10px;">
                     <div v-for="message in messages" v-bind:key="message.content">
                       <div v-if="isDisplayMessage(message.senderId as string)" class="message" :class="{
                         'message-out': message.senderName === user?.username,
@@ -811,6 +811,7 @@ export default defineComponent({
   width: 73%;
   height: 4vh;
   background: #d1d1d1;
+
 }
 
 .direct-chat-button {
@@ -837,7 +838,7 @@ export default defineComponent({
 }
 
 .chats-list {
-  background: #5b5b5b;
+  background: #27292f;
   height: 61vh;
   overflow-y: scroll;
   overflow-x: hidden;
@@ -847,7 +848,7 @@ export default defineComponent({
 
 .chat-area {
   /*   border: 1px solid #ccc; */
-  background: #343434;
+  background: #27292f;
   height: 54vh;
   overflow-y: scroll;
   overflow-x: hidden;
