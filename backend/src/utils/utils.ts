@@ -117,6 +117,33 @@ export function decodeToken(token: string) {
   }
 }
 
+let blacklisted: { userId: string, monitorUntil: Date }[] = []
+export function removeFromBlacklist(id) {
+  blacklisted = blacklisted.filter(item => {
+    if (item.userId === id || isPastDate(item.monitorUntil)) {
+      return false; // Remove the item from the blacklist
+    }
+    return true; // Keep the item in the blacklist
+  });
+}
+
+export function addToBlacklist(id: string) {
+  const currentTime = new Date();
+  const monitorUntil = new Date(currentTime.getTime() + 11 * 60000); // 11 minutes from now
+
+  const existingItemIndex = blacklisted.findIndex(item => item.userId === id);
+  if (existingItemIndex !== -1) {
+    // Update monitorUntil for existing item
+    blacklisted[existingItemIndex].monitorUntil = monitorUntil;
+  } else {
+    // Add new item to the blacklisted array
+    blacklisted.push({
+      userId: id,
+      monitorUntil: monitorUntil
+    });
+  }
+  console.log("blackLIst: " + JSON.stringify(blacklisted))
+}
 export function getAuthToken(request, validate = true) {
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer '))
@@ -128,6 +155,22 @@ export function getAuthToken(request, validate = true) {
       jwt.verify(token, process.env.JWT_KEY) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean } :
       jwt.decode(token) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean }
 
+    let isAllowed = true
+
+    blacklisted.forEach((it, index) => {
+      if (it.userId === decodedToken.userId) {
+        isAllowed = false;
+      } else if (it.monitorUntil) {
+        if (isPastDate(it.monitorUntil)) {
+          console.log(`removing ${it.userId} from blacklisted, from now on other valid tokens will have isBanned set to true`)
+          console.log(`blacklisted: ${JSON.stringify(blacklisted, null, 2)}`)
+          blacklisted.splice(index, 1);
+          index--;
+        }
+      }
+    });
+    if (!isAllowed)
+      throw new HttpException("Requester is banned", HttpStatus.UNAUTHORIZED)
     const ret = {
       role: decodedToken.role,
       userId: decodedToken.userId,

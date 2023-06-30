@@ -5,6 +5,7 @@ import { UserEntity } from './user.entity';
 import { User } from './user.interface';
 import * as bcrypt from 'bcrypt';
 import { Chats2Service } from 'src/chats2/chats2.service';
+import { addToBlacklist, removeFromBlacklist } from 'src/utils/utils';
 
 @Injectable()
 export class UsersService {
@@ -106,20 +107,24 @@ export class UsersService {
     async setUserIsBanned(id: string, isBanned: boolean) {
         const user = await this.usersRepo.findOneBy({ id: id })
         if (!user)
-            return new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
-        if (this.isAdmin(user) || this.isOwner(user))
-            return new HttpException("CANT_BAN_PRIVILEGED_USERS", HttpStatus.FORBIDDEN)
+            return new HttpException("User not found", HttpStatus.NOT_FOUND)
+        if (this.isOwner(user))
+            return new HttpException("Cant ban owner", HttpStatus.FORBIDDEN)
         user.isBanned = isBanned;
         user.save();
+        if (isBanned) addToBlacklist(id)
+        else removeFromBlacklist(id)
     }
 
     async setUserAsAdmin(id: string) {
         console.log("setUserAsAdmin", id)
         const user = await this.usersRepo.findOneBy({ id })
         if (!user)
-            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+            throw new HttpException("User not found", HttpStatus.NOT_FOUND)
+        if (user.isBanned)
+            throw new HttpException("A banned user cant be admin", HttpStatus.CONFLICT)
         if (this.isOwner(user))
-            throw new HttpException("CANT_SET_OWNER_AS_ADMIN", HttpStatus.FORBIDDEN)
+            throw new HttpException("Cant set owner as admin", HttpStatus.FORBIDDEN)
         user.role = "ADMIN";
         user.save();
     }
@@ -127,27 +132,11 @@ export class UsersService {
     async setUserAsCustomer(id: string) {
         const user = await this.usersRepo.findOneBy({ id })
         if (!user)
-            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
+            throw new HttpException("User not found", HttpStatus.NOT_FOUND)
         if (this.isOwner(user))
-            throw new HttpException("CANT_SET_OWNER_AS_CUSTOMER", HttpStatus.FORBIDDEN)
+            throw new HttpException("Cant set owner as customer", HttpStatus.FORBIDDEN)
         user.role = "CUSTOMER";
         user.save();
-    }
-
-    async setUserAsOwner(id: string, previousOwnerId: string) {
-        const user = await this.usersRepo.findOneBy({ id })
-        const previousOwner = await this.usersRepo.findOneBy({ id: previousOwnerId })
-
-        if (!user)
-            throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
-        if (this.isOwner(previousOwner))
-            throw new HttpException("ONLY_OWNER_CAN_CHANGE_OWNERSHIP", HttpStatus.FORBIDDEN);
-
-        user.role = "OWNER"
-        previousOwner.role = "ADMIN"
-
-        user.save();
-        previousOwner.save();
     }
 
     isOwner(user: UserEntity | User) { return user.role === "OWNER" }

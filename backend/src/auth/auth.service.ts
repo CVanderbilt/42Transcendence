@@ -61,7 +61,7 @@ export class AuthService {
     {
         const user = await this.usersRepo.findOne({
             where: { id: userId },
-            select: ["id", "email", "username", "password", "role", "is2fa"]
+            select: ["id", "email", "username", "password", "role", "is2fa", "isBanned"]
         })
 
         const payload = {
@@ -73,6 +73,8 @@ export class AuthService {
             isTwoFactorAuthenticated: false,
         }
 
+        if (user.isBanned)
+            throw new HttpException(`User ${user.username} is banned`, HttpStatus.UNAUTHORIZED)
         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
         const res: LoginResDto = {
             "userId": user.id,
@@ -231,7 +233,7 @@ export class AuthService {
 
         const user = await this.usersRepo.findOne({
             where: { id: userId },
-            select: ["id", "email", "username", "password", "role", "is2fa", "twofaSecret", "tentativeTwofaSecret"]
+            select: ["id", "email", "username", "password", "role", "is2fa", "twofaSecret", "tentativeTwofaSecret", "isBanned"]
         })
         if (!user) {
             throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
@@ -251,6 +253,8 @@ export class AuthService {
             isTwoFactorAuthenticated: true,
         };
 
+        if (user.isBanned)
+            throw new HttpException(`User ${user.username} is banned`, HttpStatus.UNAUTHORIZED)
         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
         const res: LoginResDto = {
             "userId": user.id,
