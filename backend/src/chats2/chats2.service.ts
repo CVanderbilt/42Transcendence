@@ -10,7 +10,6 @@ import { User } from 'src/users/user.interface';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
 import { isPastDate } from 'src/utils/utils';
 import { HttpStatusCode } from 'axios';
-// import { ChatGateway } from 'src/webSockets/chat.gateway';
 
 @Injectable()
 export class Chats2Service {
@@ -27,7 +26,7 @@ export class Chats2Service {
         // private readonly chatGateway = new ChatGateway(chatMembershipsRepo),
     ) { }
 
-    async createChatRoom(roomDto: ChatRoomDto, user: User = null): Promise<ChatRoom> {
+    async createChatRoom(roomDto: ChatRoomDto, user: User = null, withOwner: boolean = true): Promise<ChatRoom> {
         // check whether the room name is already taken
         const existingRoom = await this.chatRoomsRepo.findOne({ where: { name: roomDto.name } })
         if (existingRoom) {
@@ -48,7 +47,7 @@ export class Chats2Service {
             await this.chatMembershipsRepo.save({
                 user: { id: user.id },
                 chatRoom: { id: room.id },
-                isOwner: true,
+                isOwner: withOwner,
             })
         }
 
@@ -128,7 +127,7 @@ export class Chats2Service {
             password: "",
             isDirect: true,
         }
-        const roomCreated = await this.createChatRoom(roomDto)
+        const roomCreated = await this.createChatRoom(roomDto, null, false)
         const membershipDto1: ChatMembershipDto = {
             userId: userId1,
             chatRoomId: roomCreated.id,
@@ -421,7 +420,7 @@ export class Chats2Service {
 
     async deleteMembership(id: number, requesterId: string) {
         let deleteRoom = false;
-        const membership = await this.chatMembershipsRepo.findOne({ where: { id: id }, relations: ['chatRoom'] })
+        const membership = await this.chatMembershipsRepo.findOne({ where: { id: id }, relations: ['chatRoom', 'user'] })
         const memberships = await this.findChatRoomMembers(membership.chatRoom.id)
         const room = membership.chatRoom
 
@@ -429,13 +428,10 @@ export class Chats2Service {
             return new HttpException('Membership not found', HttpStatusCode.NotFound)
         const requesterMembership = await this.findMembershipByUserAndRoom(requesterId, membership.chatRoom.id)
         const requesterHasNotRightsErr = new HttpException("Requester doesnt have rights to delete membership", HttpStatusCode.Unauthorized)
-        if (membership.isOwner) {
-            if (!requesterMembership.isOwner)
-                throw requesterHasNotRightsErr
-            deleteRoom = true;
-        }
-        if (!requesterMembership.isOwner && !requesterMembership.isAdmin)
+
+        if (!requesterMembership.isOwner && !requesterMembership.isAdmin && membership.user.id != requesterId) {
             throw requesterHasNotRightsErr
+        }
 
         // if the user is the last member of the room, delete the room
         if (memberships.length == 0)
@@ -494,7 +490,8 @@ export class Chats2Service {
     async findChatRoomMessages(token: any, roomId: number): Promise<ChatMsgDto[]> {
         const msgs = await this.chatMsgsRepo.find({
             where: { chatRoom: { id: roomId } },
-            relations: ['sender', 'chatRoom']
+            relations: ['sender', 'chatRoom'],
+            order: { createdAt: 'ASC' }
         })
 
         let outMsgs: ChatMsgDto[] = []

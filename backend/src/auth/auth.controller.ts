@@ -61,13 +61,6 @@ export class AuthController {
   async generateQr(@Req() req, @Res() response: Response) {    
     const authToken = getAuthToken(req)
     const user : User = await this.authService.getUserById(authToken.userId)
-
-    //TODO esta validación no funciona, sospecho que es porque es cuando el login 42 es null. Necesitamos validar aquí el login 42 ???
-    // // validando solo los campos de user que realmente se usan
-    // validateInput(Joi.object({
-    //   login42: Joi.string().regex(/^[a-zA-Z0-9-_]+$/).required(),
-    //   id: Joi.string().guid().required(),
-    // }), user);
     
     const tentative = await this.authService.generateTwoFactorAuthenticationSecret(user)
     // update user secret

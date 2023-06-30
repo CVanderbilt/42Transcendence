@@ -75,6 +75,7 @@ export default defineComponent({
     }
 
     this.room = this.$route.query.id
+    this.io.socket.on(("endGame"), (reason: string) => { this.$router.push(`/endGame?reason=${reason}`) })
     this.io.socket.emit("event_join_game", { room: this.$route.query.id, username: this.user.id })
 
     this.canvas = this.$refs.canvas;
@@ -85,7 +86,6 @@ export default defineComponent({
     document.addEventListener("keyup", this.keyUpHandler, false);
     //this.draw();
     this.io.socket.on(("info"), (roomId: string) => { this.room = roomId })
-    this.io.socket.on(("endGame"), (reason: string) => { this.$router.push(`/endGame?reason=${reason}`) })
     this.io.socket.on(("draw"), (
       ballX: number,
       ballY: number,

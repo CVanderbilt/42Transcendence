@@ -11,7 +11,7 @@
               <!-- ------------------ chats list ------------------ -->
               <div class="col chats-list">
                 <!-- chat rooms -->
-                <b-button v-on:click='changeRoom(generalRoom.id, generalRoom.name)'
+                <b-button v-on:click='changeRoom(generalRoom.id)'
                   style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0; margin-top: 30px;">
                   chat general
                 </b-button>
@@ -19,7 +19,7 @@
                 <h6 style="color: white; margin-top: 30px;">Group chats</h6>
                 <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name">
                   <div v-if="!item.chatRoom.isDirect && item.chatRoom.id != generalRoom.id" style="display: flex;">
-                    <b-button v-on:click="changeRoom(item.chatRoom.id, item.chatRoom.name)"
+                    <b-button v-on:click="changeRoom(item.chatRoom.id)"
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                       {{ item.chatRoom.name }}
                     </b-button>
@@ -35,7 +35,7 @@
                 <h6 style="color: white; margin-top: 30px;">Direct chats</h6>
                 <div v-for="item in niceRoomNames" v-bind:key="item.niceName">
                   <div v-if="item.chatRoom.isDirect" style="display: flex;">
-                    <b-button v-on:click="changeRoom(item.chatRoom.id, item.chatRoom.name)"
+                    <b-button v-on:click="changeRoom(item.chatRoom.id)"
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                       {{ item.niceName }}
                     </b-button>
@@ -109,7 +109,6 @@
                   <h3>You are banned until</h3>
                   <h3>{{ getNiceDate(currentMembership.bannedUntil) }}</h3>
                 </div>
-
               </div>
             </div>
 
@@ -121,7 +120,7 @@
                 v-model="searchedChatPassword" />
 
               <b-button @click="joinRoomBySearchBar(searchedChat, searchedChatPassword); searchedChatPassword = '';">Join
-                room</b-button> <!-- TODO: cambiar por joinRoomWithId -->
+                room</b-button>
             </div>
           </div>
         </main>
@@ -263,7 +262,6 @@ import 'moment-timezone';
 import { handleHttpException, throwFromAsync } from "@/utils/utils";
 import { challenge, getCurrentMatch } from "@/api/gameApi";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
-import { publishNotification } from "@/utils/utils";
 import { inviteUsersReq } from "../../api/chatApi";
 
 export default defineComponent({
@@ -304,34 +302,39 @@ export default defineComponent({
     const io = useSocketIO();
 
     return {
-      message: "",
-      io,
-      chatRoomName: "general",
-      chatRoomId: "",
-      isAdmin: false,
-      searchedChat: "",
-      messages: chatMessages,
+      // current data
+      currentRoomName: "general",
       userMemberships: userMemberships,
       userFriendships: userFriendships,
+      currentMembership,
+      isAdmin: false,
+      // messages
+      io,
+      message: "",
+      messages: chatMessages,
+      // chat rooms
+      niceRoomNames: [] as { chatRoom: ChatRoom, niceName: string }[],
+      generalRoom,
+      // search
+      searchedChat: "",
+      searchedChatPassword: "",
+      searchedChatRequiresPassword: false,
+      // create chat
       modalShow: false,
       createdchatName: "",
       createdChatPassword: "",
       createdChatRequiresPassword: false,
       addParticipant: "",
       createdChatParticipants,
-      searchedChatPassword: "",
-      searchedChatRequiresPassword: false,
+      // manage chat
       modalChatAdmin: false,
-      banned: false,
-      muted: false,
       managedChatMemberships: managedChatMemberships,
       manageChatParticipants: manageChatParticipants,
-      currentMembership,
       managedChatPassword: "",
       managedChatRequiresPassword: false,
       managedBannedMinutes: 0,
       managedMutedMinutes: 0,
-      niceRoomNames: [] as { chatRoom: ChatRoom, niceName: string }[],
+      // friend options
       modalUserActions: {
         show: false,
         userId: "",
@@ -339,7 +342,7 @@ export default defineComponent({
         matchUrl: "",
         currentGameId: "",
       },
-      generalRoom,
+
     };
   },
 
@@ -349,66 +352,59 @@ export default defineComponent({
 
     let roomId = "";
     return {
-      roomId: roomId,
+      currentRoomId: roomId,
       user,
     };
   },
 
   async mounted() {
-
     try {
-      this.generalRoom = await (await getGeneralRoom()).data
-    } catch (error: any) {
-      handleHttpException(app, error)
-    }
-    this.isAdmin = false;
-    await this.joinRoomWithId(this.generalRoom.id)
+      // join chat socket
+      this.io.socket.offAny();
+      this.io.socket.on("new_message", (message, userName, senderId, roomId, isChallenge) => {
+        const msg: ChatMessage = {
+          content: message,
+          senderName: userName,
+          senderId: senderId,
+          chatRoomId: roomId,
+          isChallenge: isChallenge,
+        }
 
-    const requestedRoomId = this.$route.query.roomId as string;
-    if (requestedRoomId) {
-      this.changeRoom(requestedRoomId)
-    } else {
-      this.changeRoom(this.generalRoom.id)
-    }
-try {
-  this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
-} catch (error: any) {
-  handleHttpException(app, error)
-}
+        this.messages.push(msg)
+      });
 
-    // get current membership
-    const membership = this.userMemberships.find((membership: any) => membership.chatRoom.name === this.chatRoomName)
-    if (membership !== undefined)
-      this.currentMembership = membership
-
-    // get friendships
-    try {
       this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
+
+      // always join general room
+      this.isAdmin = false;
+      this.generalRoom = await (await getGeneralRoom()).data
+      await this.joinRoomWithId(this.generalRoom.id)
+
+      // join queried room
+      const requestedRoomId = this.$route.query.roomId as string;
+      if (requestedRoomId)
+        await this.changeRoom(requestedRoomId)
+
     } catch (error: any) {
       handleHttpException(app, error)
     }
 
-    // join chat socket
-    this.io.socket.offAny();
-    this.io.socket.on("new_message", (message, userName, senderId, roomId, isChallenge) => {
-      const msg: ChatMessage = {
-        content: message,
-        senderName: userName,
-        senderId: senderId,
-        chatRoomId: roomId,
-        isChallenge: isChallenge,
-      }
-
-      this.messages.push(msg)
-    });
-
-    this.io.socket.on("membership_update", () => {
-      this.fetchNiceRoomNames()
-    })
   },
 
   beforeRouteLeave() {
     this.io.socket.offAny();
+  },
+
+  watch: {
+    messages: {
+      handler(newList, oldList) {
+        // wait for DOM update
+        this.$nextTick(() => {
+          this.scroll2bottom();
+        });
+      },
+      deep: true
+    }
   },
 
   methods: {
@@ -426,14 +422,12 @@ try {
           } catch (error: any) { handleHttpException(app, error) }
         }
 
+        this.niceRoomNames = this.niceRoomNames.filter((value, index) => value.chatRoom.id !== room.id) // remove previous
         this.niceRoomNames.push({
           chatRoom: room,
           niceName: name,
         })
       })
-
-      // remove duplicates
-      this.niceRoomNames = this.niceRoomNames.filter((value, index) => this.niceRoomNames.indexOf(value) === index)
     },
 
     getNiceDate(date: string) {
@@ -448,87 +442,47 @@ try {
     },
 
     async sendMessage(isChallenge = false) {
-      // get all user memberships
-      try {
-        this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
-      } catch {(error: any) => {
-        handleHttpException(app, error)
+      if (this.message == "")
         return
-      }}
 
-      // update current membership
-      const membership = this.userMemberships.find((membership: any) => membership.chatRoom.name === this.chatRoomName)
-      if (membership !== undefined) {
-        this.currentMembership = membership
+      // send through socket
+      const msg2emit = {
+        roomId: this.currentRoomId,
+        userName: this.user.username,
+        message: this.message,
+        token: localStorage.getItem("token"),
+        isChallenge: isChallenge,
       }
-      else {
-        throwFromAsync(app, "Not a member")
-        this.changeRoom(this.generalRoom.id, this.generalRoom.name)
-        return;
+      this.io.socket.emit("event_message", msg2emit)
+
+      // post through api
+      const outMessage = {
+        content: this.message,
+        senderId: this.user.id,
+        isChallenge: isChallenge,
       }
-
-      if (!this.dateOK(this.currentMembership.mutedUntil) || !this.dateOK(this.currentMembership.bannedUntil)) {
-        throwFromAsync(app, "You can not send messages here")
-        return;
-      }
-
-      if (this.message !== "") {
-        if (!this.user) {
-          console.error("user not defined");
-          return;
-        }
-
-        // send through socket
-        const msg2emit = {
-          roomId: this.roomId,
-          userName: this.user.username,
-          message: this.message,
-          token: localStorage.getItem("token"),
-          isChallenge: isChallenge,
-        }
-
-        this.io.socket.emit("event_message", msg2emit)
-
-        // send through api
-        const outMessage = {
-          content: this.message,
-          //chatRoomId: this.roomId,
-          senderId: this.user.id,
-          isChallenge: isChallenge,
-        }
-
-        postChatMessageReq(this.roomId, outMessage).catch(err => handleHttpException(app, err))
-
+      try {
+        await postChatMessageReq(this.currentRoomId, outMessage)
         this.message = "";
+        this.scroll2bottom(true);
+      } catch (error: any) {
+        handleHttpException(app, error)
+        this.fetchMessages()
       }
+
     },
 
     async joinRoomWithId(roomId: string, password?: string) {
-      if (roomId === "")
+      if (roomId == "")
         return
 
-      let room: any
       try {
-        room = (await getChatRoomByIdReq(roomId)).data
-      } catch (error: any) {
-        handleHttpException(app, error)
-        return 
-      }
-
-      try {
-        const resp = await joinChatRoomReq(room.id, this.user?.id as string, password) // returns membership even if user is already a member of the room
+        const resp = await joinChatRoomReq(roomId, this.user?.id as string, password) // returns membership even if user is already a member of the room
         this.isAdmin = resp.data.isAdmin
-        if (!this.userMemberships.find((membership) => membership.chatRoom.id === room.id)) {
+        if (!this.userMemberships.find((membership) => membership.chatRoom.id === roomId)) {
           this.userMemberships.push(resp.data)
         }
-      } catch (error: any) {
-        handleHttpException(app, error)
-        return;
-      }
-
-      // change chat
-      try {
-        this.changeRoom(room.id, room.name); //TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
+        this.changeRoom(roomId);
       }
       catch (error: any) {
         handleHttpException(app, error)
@@ -537,41 +491,14 @@ try {
     },
 
     async joinRoomBySearchBar(roomName2join: string, password: string) {
-      if (roomName2join === "") {
+      if (roomName2join === "")
         return;
-      }
 
-      let room: any = null
       try {
-        room = (await getChatRoomByNameReq(roomName2join)).data
-      } catch (error) {
-        room = null
-      }
-      if (!room) {
-        publishNotification(`Room ${roomName2join} not found, setting room to ${this.generalRoom.name}`, false)
-        room = this.generalRoom
-      }
-      let resp
-      try {
-        resp = await joinChatRoomReq(room.id, this.user?.id as string, password) // returns membership even if user is already a member of the room
+        const room = (await getChatRoomByNameReq(roomName2join)).data
+        this.joinRoomWithId(room.id, password)
       } catch (error: any) {
         handleHttpException(app, error)
-        //const errorMsg = (error).response?.data?.message
-        //alert("Error joining the room: " + (errorMsg || "Unknown error"));
-        return;
-      }
-      
-      this.isAdmin = resp.data.isAdmin
-      if (!this.userMemberships.find((membership) => membership.chatRoom.id === room.id)) {
-        this.userMemberships.push(resp.data)
-      }
-
-      try {
-        this.changeRoom(room.id, room.name);//TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
-      }
-      catch (error: any) {
-        handleHttpException(app, error)
-        //throwFromAsync(app, "Error changing the room: " + (error.response?.data?.message || "Unknown error"))
       }
     },
 
@@ -579,92 +506,69 @@ try {
       // remove membership
       const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
       if (membership) {
-        // remove membership from list
-        this.userMemberships = this.userMemberships.filter((m) => m !== membership)
         try {
           await deleteChatRoomMembershipsReq(membership.id)
+          this.userMemberships = this.userMemberships.filter((m) => m !== membership)
+          this.niceRoomNames = this.niceRoomNames.filter((room) => room.chatRoom.id !== roomId)
         } catch (error: any) {
-          //const errorMsg = (error).response?.data?.message
-          //alert("Error leaving the room: " + (errorMsg || "Unknown error"));
           handleHttpException(app, error)
-
-          return
         }
-        // update memberships list
-        this.fetchNiceRoomNames()
       }
     },
 
-    async changeRoom(roomId: string, roomName = "") { // refactorizo para que se pueda llamar sin roomname
-      const currentRoomId = this.roomId
-      getUserMembershipsReq(this.user?.id as string).then((response) => {
-        this.userMemberships = response.data
+    async fetchMessages() {
+      this.messages = [];
+      const roomMessages = (await getChatRoomMessagesReq(this.currentRoomId)).data
+      for (var i in roomMessages) {
+        this.messages.push(roomMessages[i]);
+      }
+      this.scroll2bottom(true)
+    },
+
+    async changeRoom(roomId: string) {
+      try {
+        this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
         const membership = this.userMemberships.find((membership) => membership.chatRoom.id == roomId)
         if (!membership) {
-          throwFromAsync(app, "You are not a member of this room")
-
+          throwFromAsync(app, "You are not a member of this room") // TODO: edu aquí debería ser throw simplemente? hace falta el return?
           return
         }
-
         if (!this.dateOK(membership.bannedUntil)) {
           throwFromAsync(app, "You are banned from room " + membership.chatRoom.name)
-
           return;
         }
 
+        this.io.socket.emit("event_leave", this.currentRoomId);
+
         this.currentMembership = membership
-        this.roomId = roomId;
-        this.chatRoomName = membership.chatRoom.name;
-        this.io.socket.emit("event_leave", currentRoomId);
-        this.messages = [];
+        this.currentRoomId = roomId;
+        this.currentRoomName = membership.chatRoom.name;
         const payload = {
-          roomName: this.chatRoomName,
-          roomId: this.roomId,
+          roomName: this.currentRoomName,
+          roomId: this.currentRoomId,
           userId: this.user?.id,
           token: localStorage.getItem('token'),
         }
-
         this.io.socket.emit("event_join", payload);
 
         this.fetchNiceRoomNames()
-
-        //alert("roomId? " + roomId)
-        getChatRoomMessagesReq(roomId).then((response) => {
-          for (var i in response.data) {
-            this.messages.push(response.data[i]);
-          }
-        }).catch((error) => {
-          handleHttpException(app, error)
-        });
-      }).catch(err => handleHttpException(app, err))
+        this.fetchMessages()
+      }
+      catch (error: any) {
+        handleHttpException(app, error)
+      }
 
     },
 
     async createChatRoom(roomName: string, password: string, userNames: string[]) {
-      let room: any
       try {
-        room = await (await createChatRoomReq(roomName, this.user?.id as string, password)).data
-      }
-      catch (err: any) {
-        handleHttpException(app, err)
-        return;
-      }
-
-      try {
+        const room = await (await createChatRoomReq(roomName, this.user?.id as string, password)).data
         const membership = (await joinChatRoomReq(room.id, this.user?.id as string, password)).data
         membership.chatRoomName = room.name
         membership.chatRoomId = room.id
         membership.userName = membership.user.username
         this.userMemberships.push(membership)
-      }
 
-      catch (error: any) {
-        handleHttpException(app, error)
-        return
-      }
-
-      if (room) {
-        // invite users
         userNames.forEach(async (username) => {
           try {
             if (username !== this.user?.username && username !== "") {
@@ -673,15 +577,16 @@ try {
             }
           }
           catch (err: any) {
-            //throwFromAsync(app, "Could not invite user")
             handleHttpException(app, err)
-
           }
         })
 
         const niceRoomName = { chatRoom: room as ChatRoom, niceName: room.name }
         this.niceRoomNames.push(niceRoomName)
-        this.changeRoom(room.id, room.name)
+        this.changeRoom(room.id)
+      }
+      catch (err: any) {
+        handleHttpException(app, err)
       }
     },
 
@@ -690,10 +595,7 @@ try {
         await deleteChatRoomMembershipsReq(membershipId)
         this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.id !== membershipId)
       } catch (error: any) {
-        //alert("Can not remove user from chat room: " + error);
         handleHttpException(app, error)
-        
-        return
       }
     },
 
@@ -719,23 +621,19 @@ try {
       this.modalChatAdmin = !this.modalChatAdmin;
       this.manageChatParticipants = []
       this.managedChatPassword = ""
-      // get chat members
       try {
-        this.managedChatMemberships = (await getChatRoomMembershipsReq(this.roomId)).data
-        // delete current user from list
+        this.managedChatMemberships = (await getChatRoomMembershipsReq(this.currentRoomId)).data
         this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.user.id !== this.user?.id)
         // transform date to string and remove z at the end so it can be parsed by datepicker
         this.managedChatMemberships.forEach((membership) => {
           membership.bannedUntil = this.time2local(membership.bannedUntil)
           membership.mutedUntil = this.time2local(membership.mutedUntil)
         })
-        const room = (await getChatRoomByNameReq(this.chatRoomName)).data
-        if (room) {
+        const room = (await getChatRoomByNameReq(this.currentRoomName)).data
+        if (room)
           this.managedChatRequiresPassword = room.isPrivate
-        }
       }
       catch (err: any) {
-        //throwFromAsync(app, "Error getting chat room memberships: " + err)
         handleHttpException(app, err)
         return
       }
@@ -758,17 +656,14 @@ try {
     },
 
     async handleManageChat() {
-      // update password      
       if (this.managedChatPassword !== "") {
-        await updateChatRoomPasswordReq(this.roomId, this.managedChatPassword).catch(err => console.log(err))
+        await updateChatRoomPasswordReq(this.currentRoomId, this.managedChatPassword).catch(err => console.log(err))
       }
-
       // update current chat members
       this.managedChatMemberships.forEach(async (membership) => {
         membership.bannedUntil = this.time2utc(membership.bannedUntil)
         membership.mutedUntil = this.time2utc(membership.mutedUntil)
         try {
-          
           await updateChatRoomMembershipsReq(membership.id, {
             isBanned: membership.isBanned,
             isMuted: membership.isMuted,
@@ -782,17 +677,16 @@ try {
       })
 
       // add new members
-      try {
-        this.manageChatParticipants.forEach(async (username) => {
+      this.manageChatParticipants.forEach(async (username) => {
+        try {
           if (username !== this.user?.username && username !== "") {
             const invitee = (await getUserByName(username)).data
-            inviteUsersReq(this.roomId, invitee.id)
+            inviteUsersReq(this.currentRoomId, invitee.id)
           }
-        })
-      } catch (error: any) {
-        handleHttpException(app, error)
-        return
-      }
+        } catch (error: any) {
+          handleHttpException(app, error)
+        }
+      })
     },
 
     async showUserActions(clickedUserId: string) {
@@ -811,12 +705,13 @@ try {
     },
 
     WatchUserGame(player?: string) {
-      if (!player) return
+      if (!player)
+        return
 
       getCurrentMatch(player)
         .then(response => {
           this.$router.push("/game?id=" + response.data);
-        }).catch(err => console.log(err) )
+        }).catch(err => console.log(err))
     },
 
     async challengePlayer() {
@@ -837,13 +732,9 @@ try {
     },
 
     async openDirectChat(friendId: string) {
-      // Search if chat already exists
       try {
-        
         const chatRoom = await (await getDirectChatRoomReq(this.user.id, friendId)).data
-        
-        this.changeRoom(chatRoom.id, chatRoom.name)
-        
+        this.changeRoom(chatRoom.id)
         this.$router.push("/chats?roomId=" + chatRoom.id);
       } catch (error: any) {
         handleHttpException(app, error)
@@ -854,6 +745,18 @@ try {
       if (date == null)
         return true
       return moment(date).isBefore(moment())
+    },
+
+    scroll2bottom(force = false) {
+      const container = document.querySelector('.chat-area');
+      if (!container)
+        return
+
+      let isScrolledToBottom = container.scrollTop / container.scrollHeight >= 0.8;
+      if (force)
+        isScrolledToBottom = true
+      if (isScrolledToBottom)
+        container.scrollTop = container.scrollHeight;
     },
 
     modifyProfileRoute() {

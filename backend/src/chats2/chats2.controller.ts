@@ -49,20 +49,19 @@ export class Chats2Controller {
         }
     }
 
-    // // get chat room by name
-    // @UseGuards(JwtAuthenticatedGuard)
-    // @Get('rooms/name/:name')
-    // async findRoomByName(@Param('name') name: string): Promise<ChatRoom> {
-    //     //todo: revisar si se sigue usando, de ser así revisar si se name está bien validado
-    //     validateInput(Joi.object({
-    //         name: CHATNAME_VALIDATOR.required()
-    //     }), { name })
-    //     try {
-    //         return await (this.chatsService.findChatRoomByName(name))
-    //     } catch (error) {
-    //         throw processError(error, "cannot find room");
-    //     }
-    // }
+    // get chat room by name
+    @UseGuards(JwtAuthenticatedGuard)
+    @Get('rooms/name/:name')
+    async findRoomByName(@Param('name') name: string): Promise<ChatRoom> {
+        validateInput(Joi.object({
+            name: CHATNAME_VALIDATOR.required()
+        }), { name })
+        try {
+            return await (this.chatsService.findChatRoomByName(name))
+        } catch (error) {
+            throw processError(error, "cannot find room");
+        }
+    }
 
     // get chat rooms for user
     @UseGuards(JwtAuthenticatedGuard)

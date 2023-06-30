@@ -69,5 +69,5 @@ export async function demoteUser(id: string) {
 }
 
 export async function getLadder() {
-    return (await apiClient.post(`${URL}/ladder`)).data //TODO: cambiar a /ladder
+    return (await apiClient.post(`${URL}/ladder`)).data
 }
