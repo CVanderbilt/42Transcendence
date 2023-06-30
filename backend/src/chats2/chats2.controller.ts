@@ -174,8 +174,8 @@ export class Chats2Controller {
             userId: ID_VALIDATOR.required(),
             password: FORBIDDEN
         }), { ...data, roomId })
-        try {
         const token = getAuthToken(req)
+        try {
             return this.chatsService.inviteUser(token.userId, roomId, data)
         } catch (error) {
             throw processError(error, `Error inviting with input ${JSON.stringify({ ...data, roomId }, null, 2)}}`)
@@ -414,7 +414,7 @@ export class Chats2Controller {
     }
 
     // get chat messages for room
-    @UseGuards(JwtAuthenticatedGuard)
+    @UseGuards(JwtAuthenticatedGuard)   
     @Get('/messages/:roomId')
     async findRoomMessages(@Req() req, @Param('roomId') roomId: number): Promise<ChatMsgDto[]> {
         validateInput(Joi.object({

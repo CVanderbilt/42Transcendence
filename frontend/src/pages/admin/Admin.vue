@@ -70,11 +70,6 @@ interface Action {
   (param: any): Promise<void>
 }
 
-//todo:
-// - hacer que list-row-header no scrollee con el contenido de la lista si no hace falta, debería ser estático
-// - updatear pagina de chats para aceptar una query con el nombre/id del chat, al entrar si el usuario pertenece al chat, el chat es público o el usuario es un admin entra en el chat y puede participar/leer
-// - clikc en chatname redirige a chat, los admins pueden "see al chat channels without joinning", es decir entrar en un chat
-// - add notification system for succesful and failed actions -> top banner que aparece en rojo o verde
 export default defineComponent({
   data() {
     const userlist: IUser[] = []
@@ -104,7 +99,6 @@ export default defineComponent({
                       if (room.members.length > 1)
                         name += " - " + room.members[1].user.username
                       room.name = name
-                      console.log(room.name)
                     } else throwFromAsync(app, new Error("Cant get chatRoomMemberships"))
                   }
                 })
