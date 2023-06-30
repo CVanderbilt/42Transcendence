@@ -88,13 +88,15 @@ export default defineComponent({
       login42page: LOGIN_42_URL,
       is2faEnabled: false,
       twoFactorCode: "",
-      isNew: false,
       io,
     };
   },
   async mounted() {
     // comprueba si ya hay un token válido
     await this.tokenLogin()
+
+    if (this.$route.query.expired !== undefined)
+      throwFromAsync(app, "Token expired, you have to log in again")
 
     // comprueba si hay un codigo en la url
     if (this.$route.query.code) {
@@ -129,8 +131,6 @@ export default defineComponent({
           if (response.data.is2fa) {
             this.is2faCodeRequired.status = true
           }
-
-
           else {
             const user: IUser = {
               id: response.data.userId,
@@ -143,7 +143,6 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned,
             }
-            this.isNew = response.data.isNew
             this.DoLogin(user)
           }
         }).catch(err => handleHttpException(app, err))
@@ -174,7 +173,6 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned
             }
-            this.isNew = response.data.isNew
             this.DoLogin(user)
           }
         }).catch(error => console.log(error))
@@ -191,8 +189,8 @@ export default defineComponent({
     async submit2faCode() {
       console.log("submitCode: " + this.twoFactorCode + "")
       apiClient.post(`${AUTHENTICATE_2FA_ENDPOINT}/${this.twoFactorCode}`)
-      .then(response => {
-        const user: IUser = {
+        .then(response => {
+          const user: IUser = {
             id: response.data.userId,
             username: response.data.name,
             email: response.data.email,
@@ -204,26 +202,20 @@ export default defineComponent({
             isBanned: response.data.isBanned
           }
 
-        console.log("2fa token: " + localStorage.getItem("token"))
-        localStorage.setItem("token", response.data.token)
+          console.log("2fa token: " + localStorage.getItem("token"))
+          localStorage.setItem("token", response.data.token)
 
-        this.DoLogin(user)
-      }).catch (error => {
-        handleHttpException(app, error)
-      })
+          this.DoLogin(user)
+        }).catch(error => {
+          handleHttpException(app, error)
+        })
     },
 
-    DoLogin(user: any, ){
+    DoLogin(user: any,) {
       this.io.socket.offAny();
-      this.io.socket.emit("user_state_updated", {userId: user.id, state:"online"});
+      this.io.socket.emit("user_state_updated", { userId: user.id, state: "online" });
       store.commit("changeUser", user)
-
-      if (this.isNew) {
-        this.$router.push("/settings")
-      }
-      else {
-        this.$router.push("/")
-      }
+      this.$router.push("/")
     }
   },
 

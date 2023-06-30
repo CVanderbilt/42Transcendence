@@ -46,7 +46,9 @@
 import { signup } from "@/api/auth";
 import { computed, defineComponent } from "vue";
 import { useStore, mapActions } from "vuex";
-import { key } from "../../store/store";
+import { IUser, key, store } from "../../store/store";
+import { app, stateSocketIO } from "@/main";
+import { handleHttpException } from "@/utils/utils";
 
 export default defineComponent({
   name: "SignUp",
@@ -59,12 +61,14 @@ export default defineComponent({
     };
   },
   data() {
+    const io = stateSocketIO()
     return {
       username: "",
       email: "",
       repeatedemail: "",
       password: "",
       apiData: null,
+      io,
     };
   },
 
@@ -72,18 +76,38 @@ export default defineComponent({
     onSubmit() {
       // prevents the form from redirecting to a resource
     },
-    signUpNewUser() {
+    async signUpNewUser() {
       try {
-        signup({
+        const response = await (await signup({
           username: this.username,
           password: this.password,
           email: this.email,
-        })
-        alert("You can now login!");
-        this.$router.push("/login");
+        }))
+
+        console.log(JSON.stringify(response))
+
+        localStorage.setItem("token", response.data.token)
+
+        const user: IUser = {
+          id: response.data.userId,
+          username: response.data.name,
+          email: response.data.email,
+          password: response.data.password,
+          pic: response.data.pic,
+          is2fa: response.data.is2fa,
+          is2faEnabled: response.data.is2faEnabled || false,
+          role: response.data.role,
+          isBanned: response.data.isBanned,
+        }
+
+        this.io.socket.offAny();
+        this.io.socket.emit("user_state_updated", { userId: user.id, state: "online" });
+        store.commit("changeUser", user)
+
+        this.$router.push("/settings")
       }
       catch (error) {
-        console.log(error);
+        handleHttpException(app, error);
       }
     },
     ...mapActions(["mockLogin"]),

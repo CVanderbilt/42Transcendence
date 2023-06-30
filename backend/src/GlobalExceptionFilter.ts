@@ -8,7 +8,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
 
     if (exception instanceof HttpException) {
-      const status = exception.getStatus();
+      const status = exception.getStatus() === HttpStatus.INTERNAL_SERVER_ERROR ? HttpStatus.I_AM_A_TEAPOT : exception.getStatus();
       const message = exception.getResponse();
 
       response.status(status).json({
@@ -16,9 +16,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message: message,
       });
     } else {
-      response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: 'Internal server error',
+      console.log("handling non http exception in global hadler:" + JSON.stringify(exception))
+      response.status(HttpStatus.I_AM_A_TEAPOT).json({
+        statusCode: HttpStatus.I_AM_A_TEAPOT,
+        message: 'error code: TEAPOT',
       });
     }
   }

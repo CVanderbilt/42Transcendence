@@ -5,7 +5,7 @@ const URL = "/matches";
 
 export interface Match {
     id?: string
-    playerScore: number
+    userScore: number
     opponentScore: number
     powerups: string
     state: string
@@ -20,7 +20,6 @@ export async function enterCompetitiveGameApi(userId: string) {
     return apiClient.get(`${URL}/competitiveMatch/${userId}`)
 }
 
-//todo: revisar con pablo. Usamos esto? Si no lo vamos a usar lo borramos aquí y en el backend
 export async function getMatchesReq(userId: string) {
     return apiClient.get(`${URL}/user/${userId}`)
 }

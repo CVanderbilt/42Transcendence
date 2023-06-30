@@ -49,20 +49,19 @@ export class Chats2Controller {
         }
     }
 
-    // // get chat room by name
-    // @UseGuards(JwtAuthenticatedGuard)
-    // @Get('rooms/name/:name')
-    // async findRoomByName(@Param('name') name: string): Promise<ChatRoom> {
-    //     //todo: revisar si se sigue usando, de ser así revisar si se name está bien validado
-    //     validateInput(Joi.object({
-    //         name: CHATNAME_VALIDATOR.required()
-    //     }), { name })
-    //     try {
-    //         return await (this.chatsService.findChatRoomByName(name))
-    //     } catch (error) {
-    //         throw processError(error, "cannot find room");
-    //     }
-    // }
+    // get chat room by name
+    @UseGuards(JwtAuthenticatedGuard)
+    @Get('rooms/name/:name')
+    async findRoomByName(@Param('name') name: string): Promise<ChatRoom> {
+        validateInput(Joi.object({
+            name: CHATNAME_VALIDATOR.required()
+        }), { name })
+        try {
+            return await (this.chatsService.findChatRoomByName(name))
+        } catch (error) {
+            throw processError(error, "cannot find room");
+        }
+    }
 
     // get chat rooms for user
     @UseGuards(JwtAuthenticatedGuard)
@@ -91,6 +90,8 @@ export class Chats2Controller {
             user2: ID_VALIDATOR.required()
         }), body)
 
+        if (body.user1 === body.user2)
+            throw new HttpException("Cant create direct chat with itself", HttpStatusCode.BadRequest)
         try {
             const token = getAuthToken(req)
             if (!token.hasRightsOverUser(token, await this.usersService.findOneById(body.user1)) &&

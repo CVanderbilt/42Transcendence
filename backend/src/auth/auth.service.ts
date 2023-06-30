@@ -11,6 +11,8 @@ import { generateRandomSquaresImage } from 'src/utils/utils';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
+import { get } from 'http';
+import { boolean } from 'joi';
 const PNG = require('pngjs').PNG;
 
 
@@ -51,27 +53,16 @@ export class AuthService {
         const png = generateRandomSquaresImage();
         const buffer = PNG.sync.write(png);
         await this.usersService.uploadDatabaseFile(buffer, user.id);
+
+        return await this.getLoginDto(user.id)
     }
 
-    async loginWithEmail(login: LoginEmailDto) {
-        if (login === undefined)
-            throw new HttpException("INVALID_DATA", HttpStatus.BAD_REQUEST)
-
+    async getLoginDto(userId: string)
+    {
         const user = await this.usersRepo.findOne({
-            where: { email: login.email },
-            select: ["id", "email", "username", "password", "role", "is2fa", "isNew"]
+            where: { id: userId },
+            select: ["id", "email", "username", "password", "role", "is2fa"]
         })
-
-        console.log("user", { user })
-
-        if (!user) {
-            throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.NOT_FOUND)
-        }
-
-        const passCheck = await bcrypt.compare(login.password, user.password)
-        if (!passCheck) {
-            throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.FORBIDDEN)
-        }
 
         const payload = {
             userId: user.id,
@@ -82,7 +73,7 @@ export class AuthService {
             isTwoFactorAuthenticated: false,
         }
 
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m" })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -90,14 +81,30 @@ export class AuthService {
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
-            "isNew": user.isNew,
         }
 
-        console.log("res", { res })
-        if (user.isNew) {
-            user.isNew = false
-            this.usersRepo.save(user)
+        return res
+    }
+
+    async loginWithEmail(login: LoginEmailDto) {
+        if (login === undefined)
+            throw new HttpException("INVALID_DATA", HttpStatus.BAD_REQUEST)
+
+        const user = await this.usersRepo.findOne({
+            where: { email: login.email },
+            select: ["id", "email", "username", "password", "role", "is2fa"]
+        })
+
+        if (!user) {
+            throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.NOT_FOUND)
         }
+
+        const passCheck = await bcrypt.compare(login.password, user.password)
+        if (!passCheck) {
+            throw new HttpException("Usuario o contraseña incorrectos", HttpStatus.FORBIDDEN)
+        }
+
+        const res = this.getLoginDto(user.id)
 
         return res
     }
@@ -146,14 +153,24 @@ export class AuthService {
         const accessData = await this.exchangeCodeForAccessData(code)
 
         const me42 = await this.exchange42TokenForUserData(accessData.access_token)
-        const name = me42.first_name + " " + me42.last_name
-        const login42 = me42.login
 
-        var user: User = await this.usersService.findBy42Login(me42.login)
+        var user = await this.usersService.findBy42Login(me42.login)
         if (!user) {
+            // pick a name
+            let nameAvailable = false
+            let name = me42.login
+            let i = 1
+            while (!nameAvailable) {
+                const existingUser = await this.usersService.findOneByName(name)
+                if (!existingUser) 
+                break;
+                name = me42.login + i
+                i++
+            }
+            
             // create user
             const newUserData: User = {
-                login42: login42,
+                login42: me42.login,
                 username: name,
                 isBanned: false,
                 role: "CUSTOMER",
@@ -173,7 +190,7 @@ export class AuthService {
             isTwoFactorAuthenticated: false,
         }
 
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m" })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -181,12 +198,6 @@ export class AuthService {
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
-            "isNew": user.isNew,
-        }
-
-        if (user.isNew) {
-            user.isNew = false
-            this.usersRepo.save(user)
         }
 
         return res
@@ -240,7 +251,7 @@ export class AuthService {
             isTwoFactorAuthenticated: true,
         };
 
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "10m" })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -248,7 +259,6 @@ export class AuthService {
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
-            "isNew": user.isNew,
         }
 
         return res

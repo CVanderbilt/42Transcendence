@@ -16,7 +16,7 @@ export const CHATROOM_ID_VALIDATOR = Joi.number()
 export const FORBIDDEN = Joi.forbidden()
 export const DATE_VALIDATOR = Joi.date()
 export const BOOLEAN_VALIDATOR = Joi.boolean()
-export const MESSAGE_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9\s-_]+$/) //TODO: revisar que funcione bien, ahora mismo solo permite chars, digits y espacios
+export const MESSAGE_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9\s.,!?@#$%^&*()\-_+=~{}[\]|\\/<>:;'"`áéíóúÁÉÍÓÚñÑ]+$/);
 
 export function validateInput(schema: Joi.ObjectSchema<any>, toValidate: any) {
   const validation = schema.validate(toValidate);
@@ -193,6 +193,7 @@ export function isPastDate(date: Date): boolean {
 }
 
 export function processError(error: any, defaultMsg: string): HttpException {
+  console.log("processing error: " + JSON.stringify(error))
   if (error instanceof HttpException)
     return error
   return new HttpException(defaultMsg, HttpStatusCode.ImATeapot);

@@ -17,8 +17,7 @@ apiClient.interceptors.request.use((config) => {
     if (decodedToken.exp * 1000 < Date.now()) {
       store.commit("changeUser", undefined)
       localStorage.removeItem("token");
-      window.location.href = 'http://localhost:8080/';
-      throwFromAsync(app, "Token expired, loging out")
+      window.location.href = 'http://localhost:8080/login?expired';
     }
     config.headers.Authorization = `Bearer ${token}`;
   }
