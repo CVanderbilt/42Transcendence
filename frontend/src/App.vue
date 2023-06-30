@@ -1,7 +1,7 @@
 <template>
-  <div id="nav" class="gradient-custom">
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" v-if=user>
+  <div class="vh-100 gradient-custom">
+    <!-- Navbar --><div v-if="user.username !== ''">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" >
       <div class="container-fluid">
         <router-link to="/"><img src="./assets/logo.png" height="30" style="margin-right: 20px ; border-radius: 10%"
             /></router-link>
@@ -40,9 +40,12 @@
         </div>
       </div>
     </nav>
+    </div>
+    <div>
     <router-view />
   </div>
   <notification-banner />
+  </div>
 </template>
 
 <script lang="ts">
@@ -54,8 +57,9 @@ import { useStore } from "vuex";
 import { key, store } from "./store/store";
 import { RouterView } from "vue-router";
 import { getUserByName } from "./api/user";
-import { generateImageURL, handleHttpException } from "./utils/utils";
-import { app, stateSocketIO } from "./main";
+import { isAuthenticated, generateImageURL, handleHttpException } from "./utils/utils";
+import { app,stateSocketIO } from "./main";
+
 import { UserStateSocket } from "./utils/types";
 
 export default defineComponent({
@@ -63,11 +67,13 @@ export default defineComponent({
   setup() {
     const store = useStore(key);
     const user = computed(() => store.state.user);
-    const io = stateSocketIO()
+    const io = stateSocketIO();
+    const auth = isAuthenticated();
 
     return {
       user,
       ioUserState: io,
+      auth
     };
   },
 
@@ -87,7 +93,7 @@ export default defineComponent({
     this.ioUserState.socket.on("who_is_alive", (payload: any) => {
       this.ioUserState.socket.emit("alive", {userId: this.user.id});
     })
-
+    this.auth = isAuthenticated();
     console.log("created");
   },
 
@@ -104,6 +110,13 @@ export default defineComponent({
       isError: false
     };
   },
+  computed: {
+      checkUser(){
+        if (store.state.user)
+          return true;
+        return false;
+      }
+    },
   components: {
     Home,
     Login,
@@ -136,17 +149,6 @@ export default defineComponent({
 <style>
 .gradient-custom {
   /* fallback for old browsers */
-  background: #3609da;
-
-  /* Chrome 10-25, Safari 5.1-6 */
-  background: -webkit-linear-gradient(to right,
-      rgba(4, 8, 22, 0.804),
-      rgb(193, 209, 237));
-
-  /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-  background: linear-gradient(to right,
-      rgba(4, 8, 22, 0.804),
-      rgb(193, 209, 237));
 }
 
 #app {
@@ -155,7 +157,6 @@ export default defineComponent({
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 0px;
 }
 
 .form-white.input-group>.form-control:focus {
@@ -163,9 +164,6 @@ export default defineComponent({
   box-shadow: inset 0 0 0 1px #fff;
 }
 
-.navbar-dark .navbar-nav .nav-link {
-  color: #fff;
-}
 
 .navbar-dark .navbar-nav .nav-link:hover,
 .navbar-dark .navbar-nav .nav-link:focus {

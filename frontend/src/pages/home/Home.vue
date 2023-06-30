@@ -1,15 +1,11 @@
 <template>
-  <section class="vh-100 gradient-custom">
-
+  <section >
     <div>
       <div id="layoutSidenav_nav"></div>
       <div id="layoutSidenav_content">
         <main>
-          <div class="container-fluid px-4">
-            <h1 class="mt-0" style="color: white">FT_TRASCENDENCE</h1>
-            <ol class="breadcrumb mb-4">
-              <li class="breadcrumb-item active">Dashboard</li>
-            </ol>
+          <div class="container-fluid px-4 mt-10">
+            <h1 class="mt-10" style="color: white; padding-top: 50px; padding-bottom: 30px; font-family: 'Geneva'; font-weight:bolder;">FT_TRASCENDENCE</h1>
             <div class="row">
               <div class="col-xl-6 col-md-12">
                 <div class="card bg-primary text-white mb-4">
@@ -148,20 +144,6 @@ export default defineComponent({
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.gradient-custom {
-  /* fallback for old browsers */
-  background: #3609da;
-
-  /* Chrome 10-25, Safari 5.1-6 */
-  background: -webkit-linear-gradient(to right,
-      rgba(4, 8, 22, 0.804),
-      rgb(193, 209, 237));
-
-  /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-  background: linear-gradient(to right,
-      rgba(4, 8, 22, 0.804),
-      rgb(193, 209, 237));
-}
 
 .my-table {
   border-collapse: separate;
@@ -178,4 +160,9 @@ export default defineComponent({
 .alternate-row {
   background-color: #a3f2f2;
 }
+
+.invent{
+  height: 90%;
+}
+
 </style>

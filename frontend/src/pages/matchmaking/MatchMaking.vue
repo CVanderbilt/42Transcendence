@@ -1,15 +1,7 @@
 <template>
-  <section class="vh-100 gradient-custom">
-
-    <div>
-      <div id="layoutSidenav_nav"></div>
-      <div id="layoutSidenav_content">
+  <section >
         <main>
-          <div class="container-fluid px-4">
-            <h1 class="mt-3" style="color: white">PONG!</h1>
-            <ol class="breadcrumb mb-4">
-              <li class="breadcrumb-item active">Dashboard</li>
-            </ol>
+            <h1 style="color: white; padding-top: 10px;">PONG!</h1>
 
             <div class="row">
               <div class="col-xl-6">
@@ -67,10 +59,7 @@
                 </b-button>
               </div>
             </div>
-          </div>
         </main>
-      </div>
-    </div>
   </section>
 </template>
 
