@@ -195,7 +195,11 @@ export function isPastDate(date: Date): boolean {
 export function processError(error: any, defaultMsg: string): HttpException {
   console.log("processing error: " + JSON.stringify(error))
   if (error instanceof HttpException)
+  {
+    console.log("error is http exception")
     return error
+  }
+  console.log("error is not http exception")
   return new HttpException(defaultMsg, HttpStatusCode.ImATeapot);
 }
 

@@ -81,34 +81,34 @@ export default defineComponent({
   },
 
   methods: {
-    
-  
-    updateInfo() {
-      getAllUsers()
-        .then(list => {
-          this.userList = list
-          getAllChatRoomsReq()
-            .then(list => {
-              this.chatList = list;
-              this.chatList.forEach(async element => {
-                this.chatList.forEach(async room => {
-                  room.members = await (await getChatRoomMembershipsReq(room.id)).data
-                  if (room.isDirect) {
-                    if (room.members.length > 0) {
-                      let name = room.members[0].user.username
-                      if (room.members.length > 1)
-                        name += " - " + room.members[1].user.username
-                      room.name = name
-                    } else throwFromAsync(app, new Error("Cant get chatRoomMemberships"))
-                  }
-                })
-              });
-            })
+
+
+    async updateInfo() {
+      try {
+        const allusers = await getAllUsers()
+        this.userList = allusers
+        this.userList.sort((a, b) => a.username.localeCompare(b.username))
+        const allrooms = await getAllChatRoomsReq()
+        this.chatList = allrooms
+        this.chatList.forEach(async room => {
+          room.members = await (await getChatRoomMembershipsReq(room.id)).data
+          if (room.isDirect) {
+            if (room.members.length > 0) {
+              let name = room.members[0].user.username
+              if (room.members.length > 1)
+                name += " - " + room.members[1].user.username
+              room.name = name
+            }
+          }
         })
+      } catch (error: any) {
+        handleHttpException(app, error)
+      }
+
     },
 
-    async openChat(chatId : string) {
-      this.$router.push("/chats?roomId=" + chatId);      
+    async openChat(chatId: string) {
+      this.$router.push("/chats?roomId=" + chatId);
     },
 
     async executeAction(action: Action, param: any) {

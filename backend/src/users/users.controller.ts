@@ -20,11 +20,19 @@ export class UsersController {
 
     @UseGuards(JwtAdminGuard)
     @Post(':id/ban')
-    async banUser(@Param('id') id: string) {
+    async banUser(@Param('id') id: string, @Req() req: any) {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        return this.usersService.setUserIsBanned(id, true);
+        try {
+            const token = getAuthToken(req)
+            if (!token.hasRightsOverUser(token, await this.findUser(id)))
+                throw new UnauthorizedException("You don't have rights over this user")
+            
+            return this.usersService.setUserIsBanned(id, true);
+        } catch (error) {
+            processError(error, "ban failed")
+        }
     }
     
     @UseGuards(JwtAdminGuard)
