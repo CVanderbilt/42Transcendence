@@ -117,33 +117,30 @@ export function decodeToken(token: string) {
   }
 }
 
-let blacklisted: { userId: string, monitorUntil: Date }[] = []
-export function removeFromBlacklist(id) {
-  blacklisted = blacklisted.filter(item => {
-    if (item.userId === id || isPastDate(item.monitorUntil)) {
-      return false; // Remove the item from the blacklist
-    }
-    return true; // Keep the item in the blacklist
-  });
-}
+let blacklisted: { userId: string, invalidBefore: Date }[] = []
 
 export function addToBlacklist(id: string) {
-  const currentTime = new Date();
-  const monitorUntil = new Date(currentTime.getTime() + 11 * 60000); // 11 minutes from now
+  const invalidBefore = new Date();
+  const duration = process.env.TOKEN_LIFETIME_MIN as unknown as number * 1000;
 
-  const existingItemIndex = blacklisted.findIndex(item => item.userId === id);
-  if (existingItemIndex !== -1) {
-    // Update monitorUntil for existing item
-    blacklisted[existingItemIndex].monitorUntil = monitorUntil;
-  } else {
-    // Add new item to the blacklisted array
-    blacklisted.push({
-      userId: id,
-      monitorUntil: monitorUntil
-    });
-  }
-  console.log("blackLIst: " + JSON.stringify(blacklisted))
+  const currentTime = new Date().getTime();
+  const updatedBlacklisted = blacklisted.filter(item => {
+    const expirationTime = item.invalidBefore.getTime() + duration;
+    return expirationTime >= currentTime;
+  });
+
+  blacklisted = updatedBlacklisted;
+
+  // Agregar nuevo elemento a la lista negra
+  blacklisted.push({
+    userId: id,
+    invalidBefore: invalidBefore
+  });
+
+  console.log("blackList: " + JSON.stringify(blacklisted));
 }
+
+
 export function getAuthToken(request, validate = true) {
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer '))
@@ -160,8 +157,8 @@ export function getAuthToken(request, validate = true) {
     blacklisted.forEach((it, index) => {
       if (it.userId === decodedToken.userId) {
         isAllowed = false;
-      } else if (it.monitorUntil) {
-        if (isPastDate(it.monitorUntil)) {
+      } else if (it.invalidBefore) {
+        if (isPastDate(it.invalidBefore)) {
           console.log(`removing ${it.userId} from blacklisted, from now on other valid tokens will have isBanned set to true`)
           console.log(`blacklisted: ${JSON.stringify(blacklisted, null, 2)}`)
           blacklisted.splice(index, 1);
@@ -236,13 +233,9 @@ export function isPastDate(date: Date): boolean {
 }
 
 export function processError(error: any, defaultMsg: string): HttpException {
-  console.log("processing error: " + JSON.stringify(error))
   if (error instanceof HttpException)
-  {
-    console.log("error is http exception")
     return error
-  }
-  console.log("error is not http exception")
+
   return new HttpException(defaultMsg, HttpStatusCode.ImATeapot);
 }
 

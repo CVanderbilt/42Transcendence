@@ -5,7 +5,7 @@ import { UserEntity } from './user.entity';
 import { User } from './user.interface';
 import * as bcrypt from 'bcrypt';
 import { Chats2Service } from 'src/chats2/chats2.service';
-import { addToBlacklist, removeFromBlacklist } from 'src/utils/utils';
+import { addToBlacklist } from 'src/utils/utils';
 
 @Injectable()
 export class UsersService {
@@ -112,8 +112,7 @@ export class UsersService {
             return new HttpException("Cant ban owner", HttpStatus.FORBIDDEN)
         user.isBanned = isBanned;
         user.save();
-        if (isBanned) addToBlacklist(id)
-        else removeFromBlacklist(id)
+        addToBlacklist(user.id)
     }
 
     async setUserAsAdmin(id: string) {
@@ -127,6 +126,7 @@ export class UsersService {
             throw new HttpException("Cant set owner as admin", HttpStatus.FORBIDDEN)
         user.role = "ADMIN";
         user.save();
+        addToBlacklist(user.id)
     }
 
     async setUserAsCustomer(id: string) {
@@ -137,6 +137,7 @@ export class UsersService {
             throw new HttpException("Cant set owner as customer", HttpStatus.FORBIDDEN)
         user.role = "CUSTOMER";
         user.save();
+        addToBlacklist(user.id)
     }
 
     isOwner(user: UserEntity | User) { return user.role === "OWNER" }

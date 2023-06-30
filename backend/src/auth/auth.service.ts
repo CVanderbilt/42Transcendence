@@ -13,6 +13,7 @@ import { UserEntity } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
 import { get } from 'http';
 import { boolean } from 'joi';
+
 const PNG = require('pngjs').PNG;
 
 
@@ -75,7 +76,7 @@ export class AuthService {
 
         if (user.isBanned)
             throw new HttpException(`User ${user.username} is banned`, HttpStatus.UNAUTHORIZED)
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: `${process.env.TOKEN_LIFETIME_MIN}m`})
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -192,7 +193,7 @@ export class AuthService {
             isTwoFactorAuthenticated: false,
         }
 
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: `${process.env.TOKEN_LIFETIME_MIN}m`})
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -255,7 +256,7 @@ export class AuthService {
 
         if (user.isBanned)
             throw new HttpException(`User ${user.username} is banned`, HttpStatus.UNAUTHORIZED)
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: "100m" })
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: `${process.env.TOKEN_LIFETIME_MIN}m`})
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,

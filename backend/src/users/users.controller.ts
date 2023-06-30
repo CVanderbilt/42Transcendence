@@ -31,7 +31,7 @@ export class UsersController {
             
             return this.usersService.setUserIsBanned(id, true);
         } catch (error) {
-            processError(error, "ban failed")
+            throw processError(error, "ban failed")
         }
     }
     
@@ -48,7 +48,7 @@ export class UsersController {
             
             return this.usersService.setUserIsBanned(id, false);
         } catch (error) {
-            processError(error, "allow failed")
+            throw processError(error, "allow failed")
         }
     }
 
@@ -65,7 +65,7 @@ export class UsersController {
             
             await this.usersService.setUserAsAdmin(id);
         } catch (error) {
-            processError(error, "promote failed")
+            throw processError(error, "promote failed")
         }
     }
     
@@ -82,7 +82,7 @@ export class UsersController {
             
             await this.usersService.setUserAsCustomer(id);
         } catch (error) {
-            processError(error, "demote failed")
+            throw processError(error, "demote failed")
         }
     }
 
@@ -93,7 +93,7 @@ export class UsersController {
             const users = await this.usersService.findAllUsers()
             return users.map(user => new UserDto(user))
         } catch (error) {
-            processError(error, "allow failed")
+            throw processError(error, "allow failed")
         }
     }
 
@@ -110,7 +110,7 @@ export class UsersController {
 
             return new UserDto(user)
         } catch (error) {
-            processError(error, "allow failed")
+            throw processError(error, "allow failed")
         }
     }
     
@@ -123,7 +123,7 @@ export class UsersController {
         try {
             return new UserDto( await this.usersService.findOneById(id) )
         } catch (error) {
-            processError(error, "allow failed")
+            throw processError(error, "allow failed")
         }
     }
 
@@ -147,7 +147,7 @@ export class UsersController {
                 return this.usersService.updateUser(id, user)
             throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to modify user ${id}`)
         } catch (error) {
-            processError(error, "allow failed")
+            throw processError(error, "allow failed")
         }
     }
 
@@ -163,7 +163,7 @@ export class UsersController {
             return this.usersService.deleteUser(id)
             throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to delete user ${id}`)
         } catch (error) {
-            processError(error, "allow failed")
+            throw processError(error, "allow failed")
         }
     }
 
@@ -181,7 +181,7 @@ export class UsersController {
             
             stream.pipe(response);
         } catch (error) {
-            processError(error, "allow failed")
+            throw processError(error, "allow failed")
         }
     }
 
@@ -198,7 +198,7 @@ export class UsersController {
             return this.usersService.uploadDatabaseFile(file.buffer, id)
             throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to change image of user: ${id}`)
         } catch (error) {
-            processError(error, "allow failed")
+            throw processError(error, "allow failed")
         }
     }
 
@@ -208,7 +208,7 @@ export class UsersController {
         try {
             return this.usersService.getLadder()
         } catch (error) {
-            processError(error, "allow failed")
+            throw processError(error, "allow failed")
         }
     }
 }
