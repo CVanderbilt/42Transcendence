@@ -109,7 +109,6 @@
                   <h3>You are banned until</h3>
                   <h3>{{ getNiceDate(currentMembership.bannedUntil) }}</h3>
                 </div>
-
               </div>
             </div>
 
@@ -121,7 +120,7 @@
                 v-model="searchedChatPassword" />
 
               <b-button @click="joinRoomBySearchBar(searchedChat, searchedChatPassword); searchedChatPassword = '';">Join
-                room</b-button> <!-- TODO: cambiar por joinRoomWithId -->
+                room</b-button>
             </div>
           </div>
         </main>

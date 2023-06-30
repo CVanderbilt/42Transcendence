@@ -154,7 +154,7 @@ export class AuthService {
 
         const me42 = await this.exchange42TokenForUserData(accessData.access_token)
 
-        var user: User = await this.usersService.findBy42Login(me42.login)
+        var user = await this.usersService.findBy42Login(me42.login)
         if (!user) {
             // pick a name
             let nameAvailable = false
@@ -170,7 +170,7 @@ export class AuthService {
             
             // create user
             const newUserData: User = {
-                login42: me42.login42,
+                login42: me42.login,
                 username: name,
                 isBanned: false,
                 role: "CUSTOMER",
