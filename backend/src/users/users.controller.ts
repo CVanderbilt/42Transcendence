@@ -8,7 +8,7 @@ import { Readable } from 'typeorm/platform/PlatformTools';
 var fs  = require('fs'),
 path    = require('path'),
 url     = require('url');
-import { BOOLEAN_VALIDATOR, EMAIL_VALIDATOR, getAuthToken, ID_VALIDATOR, PASSWORD_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
+import { BOOLEAN_VALIDATOR, EMAIL_VALIDATOR, getAuthToken, ID_VALIDATOR, PASSWORD_VALIDATOR, processError, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
 import * as Joi from 'joi';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
 import { UserDto } from './user.dto';
@@ -17,18 +17,6 @@ import { JwtAuthenticatedGuard } from 'src/auth/jwt-authenticated-guard';
 @Controller('users')
 export class UsersController {
     constructor(private usersService: UsersService) { }
-
-    @Post()
-    async create(@Body() user: User) {
-        validateInput(Joi.object({
-            id: ID_VALIDATOR.required(),
-            email: EMAIL_VALIDATOR.required(),
-            password: PASSWORD_VALIDATOR.required(),
-            login42: USERNAME_VALIDATOR.required(),
-            username: USERNAME_VALIDATOR.required(),
-        }), user);
-        return this.usersService.createUser(user)
-    }
 
     @UseGuards(JwtAdminGuard)
     @Post(':id/ban')
@@ -45,7 +33,11 @@ export class UsersController {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        return this.usersService.setUserIsBanned(id, false);
+        try {
+            return this.usersService.setUserIsBanned(id, false);
+        } catch (error) {
+            processError(error, "allow failed")
+        }
     }
 
     @UseGuards(JwtAdminGuard)
@@ -54,7 +46,11 @@ export class UsersController {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        this.usersService.setUserAsAdmin(id);
+        try {
+            this.usersService.setUserAsAdmin(id);
+        } catch (error) {
+            processError(error, "allow failed")
+        }
     }
     
     @UseGuards(JwtAdminGuard)
@@ -63,14 +59,22 @@ export class UsersController {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        await this.usersService.setUserAsCustomer(id);
+        try {
+            await this.usersService.setUserAsCustomer(id);
+        } catch (error) {
+            processError(error, "allow failed")
+        }
     }
 
     @UseGuards(JwtAuthenticatedGuard)
     @Get()
     async findAll(): Promise<UserDto[]> {
-        const users = await this.usersService.findAllUsers()
-        return users.map(user => new UserDto(user))
+        try {
+            const users = await this.usersService.findAllUsers()
+            return users.map(user => new UserDto(user))
+        } catch (error) {
+            processError(error, "allow failed")
+        }
     }
 
     @UseGuards(JwtAuthenticatedGuard)
@@ -79,11 +83,15 @@ export class UsersController {
         validateInput(Joi.object({
             username: USERNAME_VALIDATOR.required(),
         }), { username });
-        const user = await this.usersService.findOneByName(username)
-        if (!user)
-            throw new HttpException(`User ${username} not found`, 404)
+        try {
+            const user = await this.usersService.findOneByName(username)
+            if (!user)
+                throw new HttpException(`User ${username} not found`, 404)
 
-        return new UserDto(user)
+            return new UserDto(user)
+        } catch (error) {
+            processError(error, "allow failed")
+        }
     }
     
     @UseGuards(JwtAuthenticatedGuard)
@@ -92,7 +100,11 @@ export class UsersController {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        return new UserDto( await this.usersService.findOneById(id) )
+        try {
+            return new UserDto( await this.usersService.findOneById(id) )
+        } catch (error) {
+            processError(error, "allow failed")
+        }
     }
 
     // todo: deberíamos probar a llamar a todas las apis comprobando todos los casos de unauthorized
@@ -109,10 +121,14 @@ export class UsersController {
             is2fa: BOOLEAN_VALIDATOR,
             twofaSecret: BOOLEAN_VALIDATOR,
         }), { ...user, id });
-        const token = getAuthToken(request)
-        if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
-            return this.usersService.updateUser(id, user)
-        throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to modify user ${id}`)
+        try {
+            const token = getAuthToken(request)
+            if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
+                return this.usersService.updateUser(id, user)
+            throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to modify user ${id}`)
+        } catch (error) {
+            processError(error, "allow failed")
+        }
     }
 
     @UseGuards(JwtAuthenticatedGuard)
@@ -121,10 +137,14 @@ export class UsersController {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        const token = getAuthToken(request)
-        if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
+        try {
+            const token = getAuthToken(request)
+            if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
             return this.usersService.deleteUser(id)
-        throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to delete user ${id}`)
+            throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to delete user ${id}`)
+        } catch (error) {
+            processError(error, "allow failed")
+        }
     }
 
     //Public info
@@ -133,12 +153,16 @@ export class UsersController {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        const image = await this.usersService.getFileById(id);
-        const stream = !image ?
+        try {
+            const image = await this.usersService.getFileById(id);
+            const stream = !image ?
             fs.createReadStream(path.join(process.cwd(), 'public/noPictureProfile.png')) :
             Readable.from(image);
-        
-        stream.pipe(response);
+            
+            stream.pipe(response);
+        } catch (error) {
+            processError(error, "allow failed")
+        }
     }
 
     @UseGuards(JwtAuthenticatedGuard)
@@ -148,15 +172,23 @@ export class UsersController {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
-        const token = getAuthToken(request)
-        if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
+        try {
+            const token = getAuthToken(request)
+            if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
             return this.usersService.uploadDatabaseFile(file.buffer, id)
-        throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to change image of user: ${id}`)
+            throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to change image of user: ${id}`)
+        } catch (error) {
+            processError(error, "allow failed")
+        }
     }
 
     @UseGuards(JwtAuthenticatedGuard)
     @Post('ladder')
     async getLadder(): Promise<User[]> {
-        return this.usersService.getLadder()
+        try {
+            return this.usersService.getLadder()
+        } catch (error) {
+            processError(error, "allow failed")
+        }
     }
 }
