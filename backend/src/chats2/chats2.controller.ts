@@ -174,8 +174,8 @@ export class Chats2Controller {
             userId: ID_VALIDATOR.required(),
             password: FORBIDDEN
         }), { ...data, roomId })
-        const token = getAuthToken(req)
         try {
+        const token = getAuthToken(req)
             return this.chatsService.inviteUser(token.userId, roomId, data)
         } catch (error) {
             throw processError(error, `Error inviting with input ${JSON.stringify({ ...data, roomId }, null, 2)}}`)
