@@ -224,15 +224,7 @@ export default defineComponent({
   align-items: center;
   padding: 20px;
   background: #787878;
-  height: 100vh;
-}
-
-.admin-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  padding: 20px;
+  height: 100em;
 }
 
 .users-list {
