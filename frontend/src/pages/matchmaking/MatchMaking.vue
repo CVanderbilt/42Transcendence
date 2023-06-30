@@ -51,11 +51,11 @@
             <div class="card mb-4">
               <div class="card-header">
                 <i class="fas fa-table me-1"></i>
-                <b-button v-on:click='cancelMatchmakingAction()'
-                  style="width: 100%; background-color: #c2c1c1; color:red; border-radius: 0; margin-top: 30px;">
-                  Cancel matchmaking
+                <b-button v-on:click="cancelMatchmakingAction()"
+                  style="width: fit-content; background-color:  #c2c1c1; color:red; border-radius: 0; margin-top: 30px;">
+                Cancel matchmaking
                 </b-button>
-              </div>
+                          </div>
             </div>
           </div>
         </main>
@@ -96,7 +96,9 @@ export default defineComponent({
   methods: {
     cancelMatchmakingAction() {
       cancelMatchmaking()
-      .then((res) => {console.log("matchmaking canceled succeded: " + JSON.stringify(res, null, 2))})//publishNotification("Matchmaking cancelled successfully, you can match again!!", false))
+      .then((res) => {
+        console.log("matchmaking canceled succeded: " + JSON.stringify(res, null, 2))
+      })
       .catch((err) => handleHttpException(app, err))
     },
     modifyProfileRoute() {
@@ -122,7 +124,11 @@ export default defineComponent({
       }
       enterExhibitionGameApi(this.user.id, powerups)
       .then(response => {
-        this.$router.push("/game?id=" + response.data);
+        if (response.data.statusCode === 202){
+          publishNotification("Matchmaking canceled succesfully", false)
+        }
+        else
+          this.$router.push("/game?id=" + response.data);
       }).catch(err => handleHttpException(app, err))
     }
   },
