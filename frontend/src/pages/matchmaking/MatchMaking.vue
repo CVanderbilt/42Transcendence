@@ -30,7 +30,12 @@
                         </div>
                       </form>
                     </div>
-                    <a class="btn btn-primary" v-on:click="enterExhibitionMatch()">Enter Match</a>
+                    <b-button v-on:click="enterExhibitionMatch()"
+                      style="width: fit-content; background-color: #c2c1c1; color:blue; border-radius: 0; margin-top: 30px;"
+                      :disabled="inMatchmaking"
+                      :class="{ 'disabled': inMatchmaking }">
+                    Friendly Match
+                    </b-button>
                   </div>
                   <div class="card-body">
                   </div>
@@ -41,7 +46,12 @@
                   <div class="card-header">
                     <i class="fas fa-chart-area me-1 bg-warning"></i>
                     <h3>Competitive Match</h3>
-                    <a class="btn btn-primary" v-on:click="enterCompetitiveMatch()">Enter Match</a>
+                    <b-button v-on:click="enterCompetitiveMatch()"
+                      style="width: fit-content; background-color:  #c2c1c1; color:blue; border-radius: 0; margin-top: 30px;"
+                      :disabled="inMatchmaking"
+                      :class="{ 'disabled': inMatchmaking }">
+                    Competitive Match
+                    </b-button>
                   </div>
                   <div class="card-body">
                   </div>
@@ -55,7 +65,7 @@
                   style="width: fit-content; background-color:  #c2c1c1; color:red; border-radius: 0; margin-top: 30px;">
                 Cancel matchmaking
                 </b-button>
-                          </div>
+              </div>
             </div>
           </div>
         </main>
@@ -89,6 +99,7 @@ export default defineComponent({
         smallPaddle: false,
         fastServe: false,
       },
+      inMatchmaking: false
     };
   },
 
@@ -98,6 +109,8 @@ export default defineComponent({
       cancelMatchmaking()
       .then((res) => {
         console.log("matchmaking canceled succeded: " + JSON.stringify(res, null, 2))
+        if (this.inMatchmaking)
+        publishNotification("Matchmaking cancelation in process...", false)
       })
       .catch((err) => handleHttpException(app, err))
     },
@@ -105,17 +118,23 @@ export default defineComponent({
       this.$router.push("/settings");
     },
     async enterCompetitiveMatch() {
+      this.inMatchmaking = true
       enterCompetitiveGameApi(this.user.id)
       .then(response => {
         if (response.data.statusCode === 202) {
+          this.inMatchmaking = false
           publishNotification("Matchmaking canceled succesfully", false)
         } else {
           //alert("will reroute: " + JSON.stringify(response, null, 2))
           this.$router.push("/game?id=" + response.data);
         }
-      }).catch(err => handleHttpException(app, err))
+      }).catch(err => {
+        this.inMatchmaking = false
+        handleHttpException(app, err)
+      })
     },
     async enterExhibitionMatch() {
+      this.inMatchmaking = true
       let powerups = "";
       powerups = powerups.concat(this.options.smallPaddle ? "S" : "");
       powerups = powerups.concat(this.options.fastServe ? "F" : "");
@@ -124,12 +143,16 @@ export default defineComponent({
       }
       enterExhibitionGameApi(this.user.id, powerups)
       .then(response => {
-        if (response.data.statusCode === 202){
+        if (response.data.statusCode === 202) {
+          this.inMatchmaking = false
           publishNotification("Matchmaking canceled succesfully", false)
-        }
-        else
+        } else {
           this.$router.push("/game?id=" + response.data);
-      }).catch(err => handleHttpException(app, err))
+        }
+      }).catch(err => {
+        this.inMatchmaking = false
+        handleHttpException(app, err)
+      })
     }
   },
 });
