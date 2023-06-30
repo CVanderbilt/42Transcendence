@@ -59,6 +59,7 @@ export default defineComponent({
           this.message = "Winner is " + this.winner;
           if (this.winner === store.state.user.username){
             this.cobetes = true;
+            this.message = "YOU ARE THE WINNER!!";
           }
         }
       }

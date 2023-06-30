@@ -5,7 +5,7 @@
       <div id="layoutSidenav_content">
         <main>
           <div class="container-fluid px-4">
-            <h1 class="mt-0" style="color: white">CHAT</h1>
+            <h1 class="mt-0" style="color: white; padding-top: 20px;">CHAT</h1>
 
             <div class="row chats-window">
               <!-- ------------------ chats list ------------------ -->
