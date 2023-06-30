@@ -16,7 +16,7 @@ export const CHATROOM_ID_VALIDATOR = Joi.number()
 export const FORBIDDEN = Joi.forbidden()
 export const DATE_VALIDATOR = Joi.date()
 export const BOOLEAN_VALIDATOR = Joi.boolean()
-export const MESSAGE_VALIDATOR = Joi.string().regex(/^[\p{L}\p{N}\s.,!?@#$%^&*()\-_+=~{}[\]|\\/<>:;'"`]+$/);
+export const MESSAGE_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9\s.,!?@#$%^&*()\-_+=~{}[\]|\\/<>:;'"`áéíóúÁÉÍÓÚñÑ]+$/);
 
 export function validateInput(schema: Joi.ObjectSchema<any>, toValidate: any) {
   const validation = schema.validate(toValidate);

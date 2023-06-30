@@ -12,6 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
 import { get } from 'http';
+import { boolean } from 'joi';
 const PNG = require('pngjs').PNG;
 
 
@@ -152,14 +153,24 @@ export class AuthService {
         const accessData = await this.exchangeCodeForAccessData(code)
 
         const me42 = await this.exchange42TokenForUserData(accessData.access_token)
-        const name = me42.login
-        const login42 = me42.login
 
         var user: User = await this.usersService.findBy42Login(me42.login)
         if (!user) {
+            // pick a name
+            let nameAvailable = false
+            let name = me42.login
+            let i = 1
+            while (!nameAvailable) {
+                const existingUser = await this.usersService.findOneByName(name)
+                if (!existingUser) 
+                break;
+                name = me42.login + i
+                i++
+            }
+            
             // create user
             const newUserData: User = {
-                login42: login42,
+                login42: me42.login42,
                 username: name,
                 isBanned: false,
                 role: "CUSTOMER",
