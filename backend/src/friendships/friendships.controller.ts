@@ -21,10 +21,12 @@ export class FriendshipsController {
     @Post()
     @UseGuards(JwtAuthenticatedGuard)
     createFriendship(@Body() data: FriendshipDto, @Req() req) {
-        // validateInput(Joi.object({
-        //     userId: ID_VALIDATOR.required(),
-        //     // friendId: ID_VALIDATOR.required(),
-        // }), data);
+        validateInput(Joi.object({
+            userId: ID_VALIDATOR.required(),
+            friendId: ID_VALIDATOR.required(),
+            isBlocked: Joi.boolean(),
+            isFriend: Joi.boolean(),
+        }), data);
         const token = getAuthToken(req)
         if (token.userId !== data.userId)
             throw new UnauthorizedException("Unauthorized to create friendships on behalf of other users")

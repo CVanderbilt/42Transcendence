@@ -528,7 +528,7 @@ try {
 
       // change chat
       try {
-        this.changeRoom(room.id, room.name); //TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
+        this.changeRoom(room.id, room.name);
       }
       catch (error: any) {
         handleHttpException(app, error)
@@ -556,8 +556,6 @@ try {
         resp = await joinChatRoomReq(room.id, this.user?.id as string, password) // returns membership even if user is already a member of the room
       } catch (error: any) {
         handleHttpException(app, error)
-        //const errorMsg = (error).response?.data?.message
-        //alert("Error joining the room: " + (errorMsg || "Unknown error"));
         return;
       }
       
@@ -567,11 +565,10 @@ try {
       }
 
       try {
-        this.changeRoom(room.id, room.name);//TODO: esta excepcion no se captura ( cuando intentas meterte en un chat directo de otros)
+        this.changeRoom(room.id, room.name);
       }
       catch (error: any) {
         handleHttpException(app, error)
-        //throwFromAsync(app, "Error changing the room: " + (error.response?.data?.message || "Unknown error"))
       }
     },
 

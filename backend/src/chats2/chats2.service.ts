@@ -27,7 +27,7 @@ export class Chats2Service {
         // private readonly chatGateway = new ChatGateway(chatMembershipsRepo),
     ) { }
 
-    async createChatRoom(roomDto: ChatRoomDto, user: User = null): Promise<ChatRoom> {
+    async createChatRoom(roomDto: ChatRoomDto, user: User = null, withOwner: boolean = true): Promise<ChatRoom> {
         // check whether the room name is already taken
         const existingRoom = await this.chatRoomsRepo.findOne({ where: { name: roomDto.name } })
         if (existingRoom) {
@@ -48,7 +48,7 @@ export class Chats2Service {
             await this.chatMembershipsRepo.save({
                 user: { id: user.id },
                 chatRoom: { id: room.id },
-                isOwner: true,
+                isOwner: withOwner,
             })
         }
 
@@ -128,7 +128,7 @@ export class Chats2Service {
             password: "",
             isDirect: true,
         }
-        const roomCreated = await this.createChatRoom(roomDto)
+        const roomCreated = await this.createChatRoom(roomDto, null, false)
         const membershipDto1: ChatMembershipDto = {
             userId: userId1,
             chatRoomId: roomCreated.id,

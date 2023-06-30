@@ -95,6 +95,8 @@ export class MatchesService {
 
         match.user.save()
         match.opponent.save()
+
+        match.save()
     }
 
     async findOne(matchId: string): Promise<{ match: Match, player: User, opponent: User }> {
@@ -122,6 +124,7 @@ export class MatchesService {
     //----------------------------------------------
 
     async getMatchesByUser(userId: string): Promise<Match[]> {
+        console.log(userId)
         const list: MatchEntity[] = await this.matchesRepo
             .createQueryBuilder("match")
             .leftJoinAndSelect("match.user", "user")
@@ -130,6 +133,8 @@ export class MatchesService {
                 userId: userId
             })
             .getMany();
+
+        console.log(list)
 
         for (let index = 0; index < list.length; index++) {
             const element = list[index];
@@ -144,7 +149,7 @@ export class MatchesService {
             }
         }
 
-        // console.log(await list)
+        console.log(await list)
 
         return await (list as Match[])
     }

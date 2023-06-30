@@ -23,8 +23,8 @@
                     <div v-for="item in exhibitions" v-bind:key="item.id"
                       style="display: flex; justify-content: space-around;">
                       <p>{{ item.opponent?.username }}</p>
-                      <p>{{ item.playerScore }} - {{ item.opponentScore }}</p>
-                      <p>{{ item.playerScore > item.opponentScore ? 'WON' : 'LOST' }}</p>
+                      <p>{{ item.userScore }} - {{ item.opponentScore }}</p>
+                      <p>{{ item.userScore > item.opponentScore ? 'WON' : 'LOST' }}</p>
                     </div>
                   </div>
                 </div>
@@ -41,8 +41,8 @@
                     <div v-for="item in competitions" v-bind:key="item.id"
                       style="display: flex; justify-content: space-around;">
                       <p>{{ item.opponent?.username }}</p>
-                      <p>{{ item.playerScore }} - {{ item.opponentScore }}</p>
-                      <p>{{ item.playerScore > item.opponentScore ? 'WON' : 'LOST' }}</p>
+                      <p>{{ item.userScore }} - {{ item.opponentScore }}</p>
+                      <p>{{ item.userScore > item.opponentScore ? 'WON' : 'LOST' }}</p>
                     </div>
                   </div>
                 </div>
@@ -109,9 +109,10 @@ export default defineComponent({
     async function fetchMatches() {
       const res = (await getMatchesReq(user().id)).data as Match[]
       matches.value = res;
+      console.log(res);
       if (res.length > 0) {
-        exhibitions.value = res.filter((m) => m.type === "exhibition");
-        competitions.value = res.filter((m) => m.type === "competitive");
+        exhibitions.value = res.filter((m) => m.type.toLowerCase() === "exhibition");
+        competitions.value = res.filter((m) => m.type.toLowerCase() === "competitive");
       }
     }
 
@@ -122,7 +123,6 @@ export default defineComponent({
       } catch (error: any) {
         handleHttpException(app, error)
       }
-        
     }
 
     onMounted(fetchMatches)
