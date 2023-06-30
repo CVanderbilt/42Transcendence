@@ -5,7 +5,7 @@ import { User } from 'src/users/user.interface';
 import { EmailSignupDto, LoginEmailDto } from './auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import * as Joi from 'joi'
-import { EMAIL_VALIDATOR, PASSWORD_VALIDATOR, USERNAME_VALIDATOR, validateInput } from 'src/utils/utils';
+import { EMAIL_VALIDATOR, PASSWORD_VALIDATOR, USERNAME_VALIDATOR, processError, validateInput } from 'src/utils/utils';
 import { getAuthToken } from 'src/utils/utils';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
@@ -27,7 +27,11 @@ export class AuthController {
       password: PASSWORD_VALIDATOR.required(),
       username: USERNAME_VALIDATOR.required(),
     }), data);
-    return await this.authService.registerWithEmail(data)
+    try {
+      return await this.authService.registerWithEmail(data)
+    } catch (error) {
+      throw processError(error, "problems during signup")
+    }
   }
 
   @HttpCode(200) // cambia el código por defecto que en post es 201
@@ -39,10 +43,8 @@ export class AuthController {
     }), data);
     try {
       return this.authService.loginWithEmail(data);
-    }
-    catch (cause) {
-      Logger.log(cause)
-      throw cause
+    } catch (error) {
+      throw processError(error, "problems during signup")
     }
   }
 
@@ -52,21 +54,25 @@ export class AuthController {
       const res = await this.authService.signIn42(data.code)
       Logger.log(res)
       return res
-    } catch (cause) {
-        Logger.log(cause)
+    } catch (error) {
+      throw processError(error, "problems during login")
     }
   }
 
   @Get('2fa/qr')
   async generateQr(@Req() req, @Res() response: Response) {    
-    const authToken = getAuthToken(req)
-    const user : User = await this.authService.getUserById(authToken.userId)
-    
-    const tentative = await this.authService.generateTwoFactorAuthenticationSecret(user)
-    // update user secret
-    this.usersService.setTentativeTwofaSecret(user.id, tentative.secret)
-    // return qr
-    this.authService.pipeQrCodeStream(response, tentative.otpauthUrl)
+    try {
+      const authToken = getAuthToken(req)
+      const user : User = await this.authService.getUserById(authToken.userId)
+      
+      const tentative = await this.authService.generateTwoFactorAuthenticationSecret(user)
+      // update user secret
+      this.usersService.setTentativeTwofaSecret(user.id, tentative.secret)
+      // return qr
+      this.authService.pipeQrCodeStream(response, tentative.otpauthUrl)
+    } catch (error) {
+      throw processError(error, "problems generting qr")
+    }
   }
 
   @Post('2fa/turn-on/:code')
@@ -77,20 +83,24 @@ export class AuthController {
       twoFactorCode: Joi.string().pattern(/^\d{6}$/).required()
     }), {twoFactorCode});
 
-    console.log("turnOnTwoFactorAuthentication")
-    const authToken = getAuthToken(req)
-    const user = await this.usersRepo.findOne({ 
-      where: { id: authToken.userId },
-      select: ["id", "email", "username", "password", "role", "is2fa", "twofaSecret", "tentativeTwofaSecret"] })
-
-    Logger.log("turnOnTwoFactorAuthentication with 2fa code : " + twoFactorCode + " for user " + user.username)
-    console.log(user)
-
-    const isCodeValid = await this.authService.isTwoFactorAuthenticationCodeValid(twoFactorCode, user.tentativeTwofaSecret)
-    if (!isCodeValid) {
-      throw new UnauthorizedException('Wrong authentication code');
-    }
-    return await this.usersService.EnableTwofa(user.id);
+    try {
+      console.log("turnOnTwoFactorAuthentication")
+      const authToken = getAuthToken(req)
+      const user = await this.usersRepo.findOne({ 
+        where: { id: authToken.userId },
+        select: ["id", "email", "username", "password", "role", "is2fa", "twofaSecret", "tentativeTwofaSecret"] })
+        
+        Logger.log("turnOnTwoFactorAuthentication with 2fa code : " + twoFactorCode + " for user " + user.username)
+        console.log(user)
+        
+        const isCodeValid = await this.authService.isTwoFactorAuthenticationCodeValid(twoFactorCode, user.tentativeTwofaSecret)
+        if (!isCodeValid) {
+          throw new UnauthorizedException('Wrong authentication code');
+        }
+        return await this.usersService.EnableTwofa(user.id);
+      } catch (error) {
+        throw processError(error, "problems during turnOnTwoFactorAuthentication")
+      }
   }
 
   @Post('2fa/authenticate/:code')
@@ -105,9 +115,8 @@ export class AuthController {
       const authToken = getAuthToken(request)
       console.log(authToken)
       return await this.authService.loginWith2fa(authToken.userId, twoFactorCode);
-    }
-    catch (cause: any) {
-      throw cause
+    } catch (error) {
+      throw processError(error, "problems during authenticate")
     }
   }
 }
