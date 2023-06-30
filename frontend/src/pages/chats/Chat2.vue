@@ -421,7 +421,7 @@ export default defineComponent({
             name = memberships[0].user.username + "-" + memberships[1].user.username
           } catch (error: any) { handleHttpException(app, error) }
         }
-        
+
         this.niceRoomNames = this.niceRoomNames.filter((value, index) => value.chatRoom.id !== room.id) // remove previous
         this.niceRoomNames.push({
           chatRoom: room,
@@ -461,10 +461,15 @@ export default defineComponent({
         senderId: this.user.id,
         isChallenge: isChallenge,
       }
-      postChatMessageReq(this.currentRoomId, outMessage).catch(err => handleHttpException(app, err))
+      try {
+        await postChatMessageReq(this.currentRoomId, outMessage)
+        this.message = "";
+        this.scroll2bottom(true);
+      } catch (error: any) {
+        handleHttpException(app, error)
+        this.fetchMessages()
+      }
 
-      this.message = "";
-      this.scroll2bottom(true);
     },
 
     async joinRoomWithId(roomId: string, password?: string) {
@@ -511,6 +516,15 @@ export default defineComponent({
       }
     },
 
+    async fetchMessages() {
+      this.messages = [];
+      const roomMessages = (await getChatRoomMessagesReq(this.currentRoomId)).data
+      for (var i in roomMessages) {
+        this.messages.push(roomMessages[i]);
+      }
+      this.scroll2bottom(true)
+    },
+
     async changeRoom(roomId: string) {
       try {
         this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
@@ -538,12 +552,7 @@ export default defineComponent({
         this.io.socket.emit("event_join", payload);
 
         this.fetchNiceRoomNames()
-        this.messages = [];
-        const roomMessages = (await getChatRoomMessagesReq(roomId)).data
-        for (var i in roomMessages) {
-          this.messages.push(roomMessages[i]);
-        }
-        this.scroll2bottom(true)
+        this.fetchMessages()
       }
       catch (error: any) {
         handleHttpException(app, error)
