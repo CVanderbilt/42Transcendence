@@ -1,5 +1,5 @@
 <template>
-  <h1>Friends</h1>
+  <h1 style="color: white; padding-top: 20px; padding-bottom: 20px; font-family: 'Geneva'; font-weight:bolder;">Friends</h1>
   <div style="display: flex; flex-direction: row;">
     <div v-for="fshp in friendships" v-bind:key="fshp.id">
       <div class="friend-block">
@@ -10,8 +10,11 @@
         <p v-if="friendsStates.find(x => x.userId == fshp.friend.id)?.state === 'online'" style="color: rgb(0, 255, 72);">
           {{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}
         </p>
-        <p v-if="friendsStates.find(x => x.userId == fshp.friend.id)?.state === 'inGame'" style="color: rgb(0, 255, 72);">
+        <p v-else-if="friendsStates.find(x => x.userId == fshp.friend.id)?.state === 'inGame'" style="color: rgb(0, 255, 72);">
           {{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}
+        </p>
+        <p v-else style="color: rgb(255, 0, 0);">
+          offline
         </p>
 
         <h3>Victories: {{ fshp.friend.victories }}</h3>
