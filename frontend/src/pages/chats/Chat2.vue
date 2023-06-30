@@ -985,8 +985,7 @@ try {
 }
 
 .background {
-  background: #787878;
-  height: 100vh;
+  
 }
 
 .message-text {
