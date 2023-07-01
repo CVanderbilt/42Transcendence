@@ -98,8 +98,6 @@ export default defineComponent({
   },
 
   onmounted() {
-    
-
     console.log("mounted");
   },
 

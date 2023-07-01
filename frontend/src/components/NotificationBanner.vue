@@ -5,10 +5,8 @@
 </template>
 
 <script lang="ts">
-import { ref, defineComponent } from 'vue';
+import { defineComponent } from 'vue';
 import { store } from '@/store/store';
-import { stateSocketIO } from '@/main';
-import { UserStateSocket } from '@/utils/types';
 
 export default defineComponent({
   name: 'NotificationBanner',
@@ -27,8 +25,6 @@ export default defineComponent({
         this.showMessage(notification);
       }
     );
-
-
 
   },
   methods: {

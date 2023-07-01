@@ -1,7 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { API_END_POINT } from "@/config";
-import { throwFromAsync } from "@/utils/utils";
-import { app } from "@/main";
+import { publishNotification } from "@/utils/utils";
 import jwtDecode from 'jwt-decode';
 import { store } from "@/store/store";
 
@@ -12,7 +11,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
-    const decodedToken = jwtDecode<{ exp: number; [key: string]: any }>(token);
+    const decodedToken = jwtDecode<{ exp: number;[key: string]: any }>(token);
 
     if (decodedToken.exp * 1000 < Date.now()) {
       store.commit("changeUser", undefined)
@@ -24,9 +23,17 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-/*apiClient.interceptors.response.use(
-    (response) => response,
-    (error: AxiosError) => { alert("!!!");throwFromAsync(app, (error.response?.data as any).message ?? error.message) }
-);*/
+// apiClient.interceptors.response.use(
+//   (response) => {
+//     return response
+//   },
+//   (error: AxiosError) => {
+//     console.log(error.response)
+//     if (error.response) {
+//       if (error.response.status === 442)
+//         publishNotification("Token no longer valid. Signing out...", false);
+//     }
+//   }
+// );
 
 export { apiClient };

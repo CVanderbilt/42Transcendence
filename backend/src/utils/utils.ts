@@ -121,25 +121,21 @@ let blacklisted: { userId: string, invalidBefore: Date }[] = []
 
 export function addToBlacklist(id: string) {
   const invalidBefore = new Date();
-  const duration = process.env.TOKEN_LIFETIME_MIN as unknown as number * 1000;
+  const msDuration = process.env.TOKEN_LIFETIME_MIN as unknown as number * 60 * 1000;
 
+  // remove elements that are no longer expired
   const currentTime = new Date().getTime();
   const updatedBlacklisted = blacklisted.filter(item => {
-    const expirationTime = item.invalidBefore.getTime() + duration;
-    return expirationTime >= currentTime;
+    return item.invalidBefore.getTime() + msDuration >= currentTime;
   });
 
   blacklisted = updatedBlacklisted;
 
-  // Agregar nuevo elemento a la lista negra
   blacklisted.push({
     userId: id,
     invalidBefore: invalidBefore
   });
-
-  console.log("blackList: " + JSON.stringify(blacklisted));
 }
-
 
 export function getAuthToken(request, validate = true) {
   const authHeader = request.headers.authorization;
@@ -149,25 +145,17 @@ export function getAuthToken(request, validate = true) {
     const token = request.headers.authorization.split(' ')[1];
 
     const decodedToken = validate ?
-      jwt.verify(token, process.env.JWT_KEY) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean } :
-      jwt.decode(token) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean }
+      jwt.verify(token, process.env.JWT_KEY) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean, iat: number } :
+      jwt.decode(token) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean, iat: number }
 
-    let isAllowed = true
+    const entries = blacklisted.filter((it) => it.userId === decodedToken.userId)
+    // get last entry
+    const entrie = entries.length > 0 ? entries[entries.length - 1] : null;
+    if (entrie) {
+      if (decodedToken.iat < Math.round(entrie.invalidBefore.getTime() / 1000))
+        throw new HttpException("Token no longer valid. Sign in again", 442)
+    }
 
-    blacklisted.forEach((it, index) => {
-      if (it.userId === decodedToken.userId) {
-        isAllowed = false;
-      } else if (it.invalidBefore) {
-        if (isPastDate(it.invalidBefore)) {
-          console.log(`removing ${it.userId} from blacklisted, from now on other valid tokens will have isBanned set to true`)
-          console.log(`blacklisted: ${JSON.stringify(blacklisted, null, 2)}`)
-          blacklisted.splice(index, 1);
-          index--;
-        }
-      }
-    });
-    if (!isAllowed)
-      throw new HttpException("Requester is banned", HttpStatus.UNAUTHORIZED)
     const ret = {
       role: decodedToken.role,
       userId: decodedToken.userId,
@@ -188,7 +176,7 @@ export function getAuthToken(request, validate = true) {
     };
     return ret;
   } catch (err) {
-    throw new HttpException("Invalid token", HttpStatusCode.ImATeapot)
+    throw processError(err, "Invalid token")
   }
 }
 
@@ -203,7 +191,6 @@ export function get42Token(request, validate = true) {
       jwt.verify(token, process.env.JWT_KEY) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean } :
       jwt.decode(token) as { [key: string]: any, role: string, userId: string, email: string, isTwoFactorAuthenticationEnabled: boolean, isTwoFactorAuthenticated: boolean }
 
-    console.log("decoded token:")
     console.log(decodedToken)
     const ret = {
       role: decodedToken.role,
@@ -221,7 +208,6 @@ export function get42Token(request, validate = true) {
         return false;
       }
     };
-    Logger.log(ret)
     return ret;
   } catch (err) {
     throw new UnauthorizedException('Invalid token');
@@ -232,7 +218,7 @@ export function isPastDate(date: Date): boolean {
   return date < new Date();
 }
 
-export function processError(error: any, defaultMsg: string): HttpException {
+export function processError(error: Error, defaultMsg: string): HttpException {
   if (error instanceof HttpException)
     return error
 

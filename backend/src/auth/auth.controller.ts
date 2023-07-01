@@ -52,7 +52,6 @@ export class AuthController {
   async login42(@Body() data: {code: string}) {
     try {
       const res = await this.authService.signIn42(data.code)
-      Logger.log(res)
       return res
     } catch (error) {
       throw processError(error, "problems during login")
@@ -84,14 +83,12 @@ export class AuthController {
     }), {twoFactorCode});
 
     try {
-      console.log("turnOnTwoFactorAuthentication")
       const authToken = getAuthToken(req)
       const user = await this.usersRepo.findOne({ 
         where: { id: authToken.userId },
         select: ["id", "email", "username", "password", "role", "is2fa", "twofaSecret", "tentativeTwofaSecret"] })
         
         Logger.log("turnOnTwoFactorAuthentication with 2fa code : " + twoFactorCode + " for user " + user.username)
-        console.log(user)
         
         const isCodeValid = await this.authService.isTwoFactorAuthenticationCodeValid(twoFactorCode, user.tentativeTwofaSecret)
         if (!isCodeValid) {
@@ -113,7 +110,6 @@ export class AuthController {
 
     try {
       const authToken = getAuthToken(request)
-      console.log(authToken)
       return await this.authService.loginWith2fa(authToken.userId, twoFactorCode);
     } catch (error) {
       throw processError(error, "problems during authenticate")

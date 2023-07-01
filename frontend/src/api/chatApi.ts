@@ -1,4 +1,3 @@
-import { throwFromAsync } from "@/utils/utils";
 import { apiClient } from "./baseApi";
 import { getUserByName } from "./user";
 
