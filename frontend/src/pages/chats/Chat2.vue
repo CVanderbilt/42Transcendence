@@ -376,7 +376,6 @@ export default defineComponent({
       });
 
       this.io.socket.on("on_chat_updated", () => {
-        console.log("evento recibido")
         this.updateInfo(false);
       })
 
@@ -416,7 +415,7 @@ export default defineComponent({
 
   methods: {
     async notify() {
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 1000));
       this.io.socket.emit("chat_update");
     },
 
