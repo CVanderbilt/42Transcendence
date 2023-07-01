@@ -123,14 +123,12 @@ export default defineComponent({
   },
   methods: {
     searchFriend(username: string) { //todo: update para usar apis
-      try {
+      alert("search friend se llama")
       getUserByName(username)
         .then((response) => {
           this.$router.push("/user?uuid=" + response.data.id);
         })
-      } catch (error) {
-        handleHttpException(app, error)
-      }
+        .catch(err => handleHttpException(app, err))
     },
     modifyProfileRoute() {
       this.$router.push("/settings");
