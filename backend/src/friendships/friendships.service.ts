@@ -13,37 +13,38 @@ export class FriendshipsService {
         @InjectRepository(FriendshipEntity)
         private readonly friendshipsRepo: Repository<FriendshipEntity>
     ) { }
-    
+
     async getUserFriendships(userId: string) {
         const friendships = await this.friendshipsRepo.find({
-            where: {user: {id: userId}},
+            where: { user: { id: userId } },
             relations: ["friend"]
         });
         return friendships;
     }
 
     //create a friendship
-    async createFriendship(data: FriendshipDto) {
-        let friendship = await this.friendshipsRepo.findOne({where: {user: {id: data.userId}, friend: {id: data.friendId}}})
+    async createFriendship(userId: string, data: FriendshipDto) {
+        console.log("creating friendship");
+        let friendship = await this.friendshipsRepo.findOne({ where: { user: { id: userId }, friend: { id: data.friendId } } })
         if (!friendship) {
             friendship = new FriendshipEntity();
-            friendship.user = await this.usersRepo.findOneBy({id: data.userId});
-            friendship.friend = await this.usersRepo.findOneBy({id: data.friendId}); 
-            friendship.isBlocked = false;
+            friendship.user = await this.usersRepo.findOneBy({ id: userId });
+            friendship.friend = await this.usersRepo.findOneBy({ id: data.friendId });
+            friendship.isBlocked = false;        
         }
-        friendship.isFriend = true;
+        
+        console.log("is friend " + friendship.isFriend);
+        friendship.isFriend = data.isFriend ? data.isFriend : true;
         friendship = await this.friendshipsRepo.save(friendship);
-
         return friendship
     }
 
     //update a friendship
     async updateFriendship(friendshipId: string, data: FriendshipDto) {
-        console.log(data);
-        console.log({data})
+        console.log("updating friendship");
         try {
-            const friendship = await this.friendshipsRepo.findOneOrFail({where: {id: friendshipId}})
-            if (data.isBlocked !== undefined) 
+            const friendship = await this.friendshipsRepo.findOneOrFail({ where: { id: friendshipId } })
+            if (data.isBlocked !== undefined)
                 friendship.isBlocked = data.isBlocked;
             if (data.isFriend !== undefined)
                 friendship.isFriend = data.isFriend;

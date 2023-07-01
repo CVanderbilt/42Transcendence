@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Logger, Param, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
-import { getAuthToken, ID_VALIDATOR, processError, validateInput } from 'src/utils/utils';
+import { getAuthToken, ID_VALIDATOR, INT_VALIDATOR, processError, validateInput } from 'src/utils/utils';
 import { FriendshipDto } from './friendships.dtos';
 import { FriendshipsService } from './friendships.service';
 import * as Joi from 'joi'
@@ -7,7 +7,7 @@ import { JwtAuthenticatedGuard } from 'src/auth/jwt-authenticated-guard';
 
 @Controller('friendships')
 export class FriendshipsController {
-    constructor(private friendsipsService: FriendshipsService) { }
+    constructor(private friendshipsService: FriendshipsService) { }
 
     @Get("/user/:userId")
     @UseGuards(JwtAuthenticatedGuard)
@@ -15,11 +15,12 @@ export class FriendshipsController {
         validateInput(Joi.object({
             userId: ID_VALIDATOR.required(),
         }), { userId });
+        
         try {
-            return this.friendsipsService.getUserFriendships(userId);
+            return this.friendshipsService.getUserFriendships(userId);
         }
         catch (error) {
-            processError(error, "can not get friendships");
+            throw processError(error, "can not get friendships");
         }
     }
 
@@ -28,18 +29,19 @@ export class FriendshipsController {
     createFriendship(@Body() data: FriendshipDto, @Req() req) {
         validateInput(Joi.object({
             userId: ID_VALIDATOR.required(),
-            friendId: ID_VALIDATOR.required(),
             isBlocked: Joi.boolean(),
             isFriend: Joi.boolean(),
+            friendId: ID_VALIDATOR,
         }), data);
         try {
             const token = getAuthToken(req)
             if (token.userId !== data.userId)
                 throw new UnauthorizedException("Unauthorized to create friendships on behalf of other users")
-            return this.friendsipsService.createFriendship(data);
+
+            return this.friendshipsService.createFriendship(token.userId, data);
         }
         catch (error) {
-            processError(error, "can not get friendships");
+            throw processError(error, "can not create friendships");
         }
     }
 
@@ -47,15 +49,23 @@ export class FriendshipsController {
     @UseGuards(JwtAuthenticatedGuard)
     updateFriendship(@Param('friendshipId') friendshipId: string, @Body() data: FriendshipDto, @Req() req) {
         validateInput(Joi.object({
-            friendshipId: Joi.string().regex(/^\d+$/).required(),
             userId: ID_VALIDATOR.required(),
-            friendId: ID_VALIDATOR.required(),
+            friendshipId: INT_VALIDATOR.required(),
             isBlocked: Joi.boolean(),
             isFriend: Joi.boolean(),
-        }), {...data, friendshipId });
-        const token = getAuthToken(req)
-        if (token.userId === data.userId)
-            throw new UnauthorizedException("Unauthorized to update friendships on behalf of other users")
-        return this.friendsipsService.updateFriendship(friendshipId, data);
+        }), { ...data, friendshipId });
+        try {
+
+            console.log("updating friendship");
+            const token = getAuthToken(req)
+            if (token.userId !== data.userId)
+                throw new UnauthorizedException("Unauthorized to update friendships on behalf of other users")
+
+            console.log("updating friendship2");
+            return this.friendshipsService.updateFriendship(friendshipId, data);
+        }
+        catch (error) {
+            throw processError(error, "can not update friendships");
+        }
     }
 }

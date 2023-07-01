@@ -52,7 +52,6 @@ export class MatchesController {
         validateInput(Joi.object({
             userName: ID_VALIDATOR.required()
         }), { userName: userId });
-        console.log("getMatches called with userId: " + userId)
         try {
             return await this.matchesService.getMatchesByUser(userId);
         } catch (error) {

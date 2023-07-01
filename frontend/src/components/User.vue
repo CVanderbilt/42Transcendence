@@ -1,5 +1,5 @@
 <template>
-  <section >
+  <section>
     <div class="container py-5 h-100">
       <div class="row d-flex justify-content-center align-items-center h-100">
         <div class="col-12 col-md-8 col-lg-6 col-xl-5">
@@ -20,7 +20,7 @@
                 <h4 v-if="lookedUpEmail != undefined" class="fw-bold mt-1 mb-5">Email: {{ lookedUpEmail }}</h4>
 
                 <div>
-                <!-- <div style="display: flex; flex-direction: column;"> -->
+                  <!-- <div style="display: flex; flex-direction: column;"> -->
                   <OpenDirectChatButton v-if="!isBlocked" :userId="userId" :friendId="lookedUpId" />
                   <button v-if="!isBlocked" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
                     v-on:click="setBlock(true)">
@@ -35,13 +35,24 @@
                     Make friend
                   </button>
                   <button v-if="areFriends" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
-                  v-on:click="unfriend()">
-                  Unfriend
+                    v-on:click="unfriend()">
+                    Unfriend
                   </button>
                   <p v-if="areFriends">already in friends list</p>
                   <p v-if="!areFriends"> </p>
-                  
+
                   <p v-if="isBlocked">user blocked</p>
+                </div>
+
+                <h3 style="margin-top: 50px;">Matches: {{ matches.length }}</h3>
+                <div style="height: 200px; overflow-y: scroll;">
+                  <div v-for="match in matches" v-bind:key="match.id"
+                    style="display: flex; justify-content: space-around;">
+                    <p>{{ match.type }}</p>
+                    <p>{{ match.opponent?.username }}</p>
+                    <p>{{ match.userScore }} - {{ match.opponentScore }}</p>
+                    <p>{{ match.userScore > match.opponentScore ? 'WON' : 'LOST' }}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -61,6 +72,7 @@ import { getFriendshipsRequest, makeFriendshipRequest, setBlockFriendRequest, un
 import { generateImageURL, handleHttpException, throwFromAsync } from "@/utils/utils";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
 import { app } from "@/main";
+import { Match, getMatchesReq } from "@/api/gameApi";
 
 export default defineComponent({
   name: "User",
@@ -70,7 +82,8 @@ export default defineComponent({
   },
 
   setup() {
-    const store = useStore(key);
+    const store = useStore(key);    
+    const user = store.state.user;
     const profilePicture = "";
     const _user = computed(() => store.state.user);
 
@@ -83,6 +96,7 @@ export default defineComponent({
   data() {
     const store = useStore(key);
     const user = store.state.user;
+    const matches: Match[] = []
 
     return {
       lookedUpId: "",
@@ -92,6 +106,7 @@ export default defineComponent({
       friendshipId: "",
       userId: user.id,
       isBlocked: false,
+      matches: matches,
     };
   },
 
@@ -101,6 +116,7 @@ export default defineComponent({
       console.log("looked id: " + this.lookedUpId)
       this.getUserInfo(this.lookedUpId)
       this.getFriendship()
+      this.matches = (await getMatchesReq(this.lookedUpId)).data
     }
   },
 
@@ -130,11 +146,12 @@ export default defineComponent({
 
     async makeFriend() {
       try {
-        const res = await makeFriendshipRequest(this.currentUser?.id as string, this.lookedUpId)
+        const res = await makeFriendshipRequest(this.currentUser.id as string, this.lookedUpId)
         if (res.status === 201) {
           this.areFriends = res.data.isFriend
           this.friendshipId = res.data.id
-        } 
+          console.log("are friends: " + this.areFriends)
+        }
       } catch (error: any) {
         handleHttpException(app, error)
       }
@@ -142,7 +159,7 @@ export default defineComponent({
 
     unfriend() {
       try {
-        unfriendRequest(this.friendshipId)
+        unfriendRequest(this.currentUser.id, this.friendshipId)
         this.areFriends = false
         this.friendshipId = ""
       }
@@ -153,7 +170,7 @@ export default defineComponent({
 
     setBlock(isBlocked: boolean) {
       try {
-        setBlockFriendRequest(this.friendshipId, isBlocked)
+        setBlockFriendRequest(this.currentUser.id, this.friendshipId, isBlocked)
         this.isBlocked = isBlocked
       }
       catch (err) {

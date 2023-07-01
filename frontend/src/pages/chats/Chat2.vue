@@ -373,17 +373,19 @@ export default defineComponent({
         this.messages.push(msg)
       });
 
-      this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
+      // this.updateInfo();
 
       // always join general room
       this.isAdmin = false;
-      this.generalRoom = await (await getGeneralRoom()).data
-      await this.joinRoomWithId(this.generalRoom.id)
 
       // join queried room
       const requestedRoomId = this.$route.query.roomId as string;
       if (requestedRoomId)
         await this.changeRoom(requestedRoomId)
+      else {
+        this.generalRoom = await (await getGeneralRoom()).data
+        await this.changeRoom(this.generalRoom.id)
+      }
 
     } catch (error: any) {
       handleHttpException(app, error)
@@ -408,6 +410,15 @@ export default defineComponent({
   },
 
   methods: {
+    async updateInfo() {
+      try {
+        this.userMemberships = (await getUserMembershipsReq(this.user?.id as string)).data
+        this.fetchNiceRoomNames()
+        this.fetchMessages()
+      }
+      catch (error: any) { handleHttpException(app, error) }
+    },
+
     async fetchNiceRoomNames() {
       this.niceRoomNames = []
       let chatRooms: ChatRoom[] =
@@ -429,6 +440,17 @@ export default defineComponent({
         })
       })
     },
+
+    async fetchMessages() {
+      this.messages = [];
+      const roomMessages = (await getChatRoomMessagesReq(this.currentRoomId)).data
+      console.log(roomMessages)
+      for (var i in roomMessages) {
+        this.messages.push(roomMessages[i]);
+      }
+      this.scroll2bottom(true)
+    },
+
 
     getNiceDate(date: string) {
       return moment(date).format('MMMM Do YYYY, h:mm:ss a')
@@ -472,21 +494,46 @@ export default defineComponent({
 
     },
 
-    async joinRoomWithId(roomId: string, password?: string) {
-      if (roomId == "")
+    async changeRoom(roomId: string, password = "") {
+      if (!roomId)
+        return
+      if (roomId == this.currentRoomId)
         return
 
       try {
-        const resp = await joinChatRoomReq(roomId, this.user?.id as string, password) // returns membership even if user is already a member of the room
-        this.isAdmin = resp.data.isAdmin
-        if (!this.userMemberships.find((membership) => membership.chatRoom.id === roomId)) {
+        // find membership
+        this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
+        let membership = this.userMemberships.find((membership) => membership.chatRoom.id == roomId)
+        if (!membership) {
+          const resp = await joinChatRoomReq(roomId, this.user?.id as string, password) // returns membership even if user is already a member of the room
+          this.isAdmin = resp.data.isAdmin
           this.userMemberships.push(resp.data)
+          membership = resp.data
         }
-        this.changeRoom(roomId);
+        if (!membership) {
+          throw new Error("You are not a member of this room")
+        }
+        if (!this.dateOK(membership.bannedUntil)) {
+          throw new Error("You are banned from this room")
+        }
+
+        this.io.socket.emit("event_leave", this.currentRoomId);
+
+        this.currentMembership = membership
+        this.currentRoomId = roomId;
+        this.currentRoomName = membership.chatRoom.name;
+        const payload = {
+          roomName: this.currentRoomName,
+          roomId: this.currentRoomId,
+          userId: this.user?.id,
+          token: localStorage.getItem('token'),
+        }
+        this.io.socket.emit("event_join", payload);
+
+        this.updateInfo()
       }
       catch (error: any) {
         handleHttpException(app, error)
-        return;
       }
     },
 
@@ -496,7 +543,11 @@ export default defineComponent({
 
       try {
         const room = (await getChatRoomByNameReq(roomName2join)).data
-        this.joinRoomWithId(room.id, password)
+        if (!room) {
+          throw new Error("Room does not exist")
+        }
+        
+        await this.changeRoom(room.id, password)
       } catch (error: any) {
         handleHttpException(app, error)
       }
@@ -516,49 +567,7 @@ export default defineComponent({
       }
     },
 
-    async fetchMessages() {
-      this.messages = [];
-      const roomMessages = (await getChatRoomMessagesReq(this.currentRoomId)).data
-      for (var i in roomMessages) {
-        this.messages.push(roomMessages[i]);
-      }
-      this.scroll2bottom(true)
-    },
 
-    async changeRoom(roomId: string) {
-      try {
-        this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
-        const membership = this.userMemberships.find((membership) => membership.chatRoom.id == roomId)
-        if (!membership) {
-          throwFromAsync(app, "You are not a member of this room") // TODO: edu aquí debería ser throw simplemente? hace falta el return?
-          return
-        }
-        if (!this.dateOK(membership.bannedUntil)) {
-          throwFromAsync(app, "You are banned from room " + membership.chatRoom.name)
-          return;
-        }
-
-        this.io.socket.emit("event_leave", this.currentRoomId);
-
-        this.currentMembership = membership
-        this.currentRoomId = roomId;
-        this.currentRoomName = membership.chatRoom.name;
-        const payload = {
-          roomName: this.currentRoomName,
-          roomId: this.currentRoomId,
-          userId: this.user?.id,
-          token: localStorage.getItem('token'),
-        }
-        this.io.socket.emit("event_join", payload);
-
-        this.fetchNiceRoomNames()
-        this.fetchMessages()
-      }
-      catch (error: any) {
-        handleHttpException(app, error)
-      }
-
-    },
 
     async createChatRoom(roomName: string, password: string, userNames: string[]) {
       try {
@@ -885,9 +894,7 @@ export default defineComponent({
   max-width: 45%;
 }
 
-.background {
-  
-}
+.background {}
 
 .message-text {
   overflow-wrap: break-word;

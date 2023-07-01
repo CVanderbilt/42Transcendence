@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   OnGatewayConnection,
@@ -8,9 +7,10 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import Joi from 'joi';
 import { Server, Socket } from 'socket.io';
 import { ChatMembershipEntity } from 'src/chats2/chatEntities.entity';
-import { decodeToken } from 'src/utils/utils';
+import { BOOLEAN_VALIDATOR, INT_VALIDATOR, MESSAGE_VALIDATOR, USERNAME_VALIDATOR, decodeToken, validateInput } from 'src/utils/utils';
 import { Repository } from 'typeorm';
 
 @WebSocketGateway(81, {
@@ -32,19 +32,20 @@ export class ChatGateway
   }
 
   handleConnection(client: any, ...args: any[]) {
-    console.log('Client connected to socket👌')
   }
 
   handleDisconnect(client: any) {
-    console.log('Client disconnected from socket👋')
   }
 
 
   @SubscribeMessage('event_join')
   async handleJoinRoom(client: Socket, payload: JoinPayload) {
-    console.log(`alguien se unió al chat ${payload.roomName}`)
-
     try {
+      // validateInput(Joi.object({
+      //   roomId: INT_VALIDATOR.required(),
+      //   token: Joi.string().required()
+      // }), payload)
+
       const decodedToken = decodeToken(payload.token)
       const roomId = payload.roomId as unknown as number
       const membership = await this.chatMembershipsRepo.findOne({
@@ -53,7 +54,6 @@ export class ChatGateway
       })
 
       if (membership?.isBanned) {
-        console.log(`el usuario ${decodedToken.userId} está baneado`)
         return
       }
 
@@ -66,6 +66,14 @@ export class ChatGateway
   @SubscribeMessage('event_message')
   async handleIncommingMessage(client: Socket, payload: MessagePayload,) {
     try {
+      // validateInput(Joi.object({
+      //   roomId: INT_VALIDATOR.required(),
+      //   message: MESSAGE_VALIDATOR.required(),
+      //   userName: USERNAME_VALIDATOR.required(),
+      //   isGame: BOOLEAN_VALIDATOR,
+      //   token: Joi.string().required()
+      // }), payload)
+
       const decodedToken = decodeToken(payload.token)
       const roomId = payload.roomId as unknown as number
       const membership = await this.chatMembershipsRepo.findOne({
@@ -74,9 +82,9 @@ export class ChatGateway
       })
 
       if (membership?.isBanned || membership?.isMuted) {
-        console.log(`el usuario ${decodedToken.userId} está baneado o muteado`)
         return
       }
+
 
       this.server.to(`room_${payload.roomId}`).emit('new_message', payload.message, payload.userName, decodedToken.userId, roomId, payload.isGame);
     } catch (error) {
@@ -86,19 +94,12 @@ export class ChatGateway
 
   @SubscribeMessage('event_leave')
   handleRoomLeave(client: Socket, room: string) {
-    console.log(`chao room_${room}`)
     client.leave(`room_${room}`);
   }
-
-  // membershipUpdateEvent() {
-  //   this.server.emit('membership_update')
-  // }
 }
 
 interface JoinPayload {
-  roomName: string;
   roomId: string;
-  userId: string;
   token: string;
 }
 

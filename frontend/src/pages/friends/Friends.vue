@@ -74,6 +74,8 @@ export default defineComponent({
   },
 
   setup() {
+    const store = useStore(key);
+    const user = store.state.user;
     const io = stateSocketIO();
     const friendsStates = ref<UserState[]>([])
     const clearStates = () => {
@@ -135,7 +137,7 @@ export default defineComponent({
     generateImageURL,
     setBlock(friendshipId: string, isBlocked: boolean) {
       try {
-        setBlockFriendRequest(friendshipId, isBlocked)
+        setBlockFriendRequest(this.user.id, friendshipId, isBlocked)
         const f = this.friendships.find((fshp) => fshp.id === friendshipId)
         if (f)
           f.isBlocked = isBlocked
@@ -146,7 +148,7 @@ export default defineComponent({
 
     unfriend(frienshipId: string) {
       try {
-        unfriendRequest(frienshipId)
+        unfriendRequest(this.user.id, frienshipId)
         this.friendships = this.friendships.filter((fshp) => fshp.id !== frienshipId)
       } catch (err) {
         handleHttpException(app, err)

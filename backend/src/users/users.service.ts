@@ -144,13 +144,11 @@ export class UsersService {
     isAdmin(user: UserEntity | User) { return user.role === "ADMIN" }
 
     async getLadder() : Promise<User[]> {
-        console.log("getLadder")
-        
         const topUsers = await this.usersRepo.find({
             order: {
-              score: "DESC" // Sort by score in descending order
+              score: "DESC"
             },
-            take: 20 // Retrieve up to 20 users
+            take: 50 // Retrieve up to 50 users
           });
         
           return topUsers;
