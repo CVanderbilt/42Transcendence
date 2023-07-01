@@ -105,7 +105,6 @@ export default defineComponent({
     async function fetchMatches() {
       const res = (await getMatchesReq(user().id)).data as Match[]
       matches.value = res;
-      console.log(res);
       if (res.length > 0) {
         exhibitions.value = res.filter((m) => m.type.toLowerCase() === "exhibition");
         competitions.value = res.filter((m) => m.type.toLowerCase() === "competitive");

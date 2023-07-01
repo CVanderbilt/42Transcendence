@@ -7,7 +7,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import Joi from 'joi';
+import * as Joi from 'joi';
 import { Server, Socket } from 'socket.io';
 import { ID_VALIDATOR, usersInGame, validateInput } from 'src/utils/utils';
 

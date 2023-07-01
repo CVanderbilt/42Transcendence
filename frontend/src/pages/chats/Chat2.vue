@@ -10,6 +10,7 @@
             <div class="row chats-window">
               <!-- ------------------ chats list ------------------ -->
               <div class="col chats-list">
+                <b-button @click="updateInfo(false)" style="margin: 10px;">Update</b-button>
                 <!-- chat rooms -->
                 <b-button v-on:click='changeRoom(generalRoom.id)'
                   style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0; margin-top: 30px;">
@@ -374,6 +375,10 @@ export default defineComponent({
         this.messages.push(msg)
       });
 
+      this.io.socket.on("on_chat_updated", () => {
+        this.updateInfo(false);
+      })
+
       // always join general room
       this.isAdmin = false;
 
@@ -409,38 +414,16 @@ export default defineComponent({
   },
 
   methods: {
-    async updateInfo() {
+    async updateInfo(updateMessages = true) {
       try {
         const memberships = await (await getUserMembershipsReq(this.user?.id as string)).data as Membership[]
         this.userMemberships = memberships
-        this.fetchNiceRoomNames()
-        this.fetchMessages()
+        // this.fetchNiceRoomNames()
+        if (updateMessages)
+          this.fetchMessages()
         this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
       }
       catch (error: any) { handleHttpException(app, error) }
-    },
-
-    async fetchNiceRoomNames() {
-      const newNiceRoomNames = [] as { chatRoom: ChatRoom, niceName: string }[]
-      let chatRooms: ChatRoom[] =
-        this.userMemberships.map((membership) => membership.chatRoom)
-
-      chatRooms.forEach(async room => {
-        let name = room.name
-        if (room.isDirect) {
-          try {
-            const memberships = await (await (getChatRoomMembershipsReq(room.id))).data as Membership[]
-            name = memberships[0].user.username + "-" + memberships[1].user.username
-          } catch (error: any) { handleHttpException(app, error) }
-        }
-
-        newNiceRoomNames.push({
-          chatRoom: room,
-          niceName: name,
-        })
-      })
-
-      this.niceRoomNames = newNiceRoomNames
     },
 
     async fetchMessages() {
@@ -558,8 +541,8 @@ export default defineComponent({
       if (membership) {
         try {
           await deleteChatRoomMembershipsReq(membership.id)
-          this.userMemberships = this.userMemberships.filter((m) => m !== membership)
-          this.niceRoomNames = this.niceRoomNames.filter((room) => room.chatRoom.id !== roomId)
+          this.io.socket.emit("chat_update");
+          this.updateInfo()
         } catch (error: any) {
           handleHttpException(app, error)
         }
@@ -587,8 +570,7 @@ export default defineComponent({
           }
         })
 
-        const niceRoomName = { chatRoom: room as ChatRoom, niceName: room.name }
-        this.niceRoomNames.push(niceRoomName)
+        this.io.socket.emit("chat_update");
         this.changeRoom(room.id)
       }
       catch (err: any) {

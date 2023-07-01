@@ -7,7 +7,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import Joi from 'joi';
+import * as Joi from 'joi';
 import { Server, Socket } from 'socket.io';
 import { ChatMembershipEntity } from 'src/chats2/chatEntities.entity';
 import { BOOLEAN_VALIDATOR, CHATROOM_ID_VALIDATOR, ID_VALIDATOR, MESSAGE_VALIDATOR, USERNAME_VALIDATOR, decodeToken, validateInput } from 'src/utils/utils';
@@ -35,6 +35,11 @@ export class ChatGateway
   }
 
   handleDisconnect(client: any) {
+  }
+
+  @SubscribeMessage('chat_update')
+  async handleChatUpdate(client: Socket) {
+    this.server.emit('on_chat_updated');
   }
 
 
