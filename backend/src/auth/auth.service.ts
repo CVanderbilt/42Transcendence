@@ -193,6 +193,8 @@ export class AuthService {
             isTwoFactorAuthenticated: false,
         }
 
+        if (user.isBanned)
+            throw new HttpException(`User ${user.username} is banned`, HttpStatus.UNAUTHORIZED)
         const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: `${process.env.TOKEN_LIFETIME_MIN}m`})
         const res: LoginResDto = {
             "userId": user.id,
