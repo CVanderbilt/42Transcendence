@@ -256,14 +256,7 @@ export class GameGateway
     // check for lag
     if (payload.date < Date.now() - 1000) {
       // console.log(`Lag detected for ${username}`)
-      _room.gameStatus = "FINISHED"
-      clearInterval(_room.refreshIntervalId);
-      this.server.to(`room_${_room.id}`).emit('endGame', "Lag_detected");
-      this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
-      // console.log(`${username} deleting room ${room}(4)`)
-      delete gameRooms[_room.id]
-      usersInGame.delete(username);
-      this.stateGateway.UpdateUserState(username)
+      cliWent.disconnect()
       return;
     }
 
