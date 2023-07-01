@@ -131,7 +131,7 @@ export class UsersController {
     // admins y el propio usuario a modificar (ese check es más complejo y se hace abajo con token.hasRightsOverUser)
     @UseGuards(JwtAuthenticatedGuard)
     @Put(':id')
-    async update(@Body() user: User, @Param('id') id: string, @Req() request: Request): Promise<UpdateResult> {
+    async update(@Body() user: User, @Param('id') id: string, @Req() request): Promise<UpdateResult> {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
             email: EMAIL_VALIDATOR,
@@ -153,7 +153,7 @@ export class UsersController {
 
     @UseGuards(JwtAuthenticatedGuard)
     @Delete(':id')
-    async delete(@Param('id') id: string, @Req() request: Request): Promise<DeleteResult> {
+    async delete(@Param('id') id: string, @Req() request): Promise<DeleteResult> {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
@@ -169,7 +169,7 @@ export class UsersController {
 
     //Public info
     @Get(':id/image')
-    async getImageById(@Res({ passthrough: false }) response: Response, @Param('id') id: string) {
+    async getImageById(@Res({ passthrough: false }) response, @Param('id') id: string) {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
@@ -188,7 +188,7 @@ export class UsersController {
     @UseGuards(JwtAuthenticatedGuard)
     @Put(':id/image')
     @UseInterceptors(FileInterceptor('file'))
-    async setImage(@Param('id') id: string, @UploadedFile() file: Multer.File, @Req() request: Request) {
+    async setImage(@Param('id') id: string, @UploadedFile() file: Multer.File, @Req() request) {
         validateInput(Joi.object({
             id: ID_VALIDATOR.required(),
         }), { id });
