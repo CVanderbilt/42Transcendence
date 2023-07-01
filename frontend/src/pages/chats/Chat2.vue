@@ -597,7 +597,7 @@ export default defineComponent({
           this.createdChatRequiresPassword = false;
           this.addParticipant = "";
           this.createdChatParticipants = [];
-        }).catch(err => console.log(err));
+        }).catch(err => handleHttpException(app, err));
       }
     },
 
@@ -641,7 +641,7 @@ export default defineComponent({
 
     async handleManageChat() {
       if (this.managedChatPassword !== "") {
-        await updateChatRoomPasswordReq(this.currentRoomId, this.managedChatPassword).catch(err => console.log(err))
+        await updateChatRoomPasswordReq(this.currentRoomId, this.managedChatPassword).catch(err => handleHttpException(app, err))
       }
       // update current chat members
       this.managedChatMemberships.forEach(async (membership) => {
@@ -695,7 +695,7 @@ export default defineComponent({
       getCurrentMatch(player)
         .then(response => {
           this.$router.push("/game?id=" + response.data);
-        }).catch(err => console.log(err))
+        }).catch(err => handleHttpException(app, err))
     },
 
     async challengePlayer() {
