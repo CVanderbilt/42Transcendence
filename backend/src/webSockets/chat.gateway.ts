@@ -10,7 +10,7 @@ import {
 import Joi from 'joi';
 import { Server, Socket } from 'socket.io';
 import { ChatMembershipEntity } from 'src/chats2/chatEntities.entity';
-import { BOOLEAN_VALIDATOR, INT_VALIDATOR, MESSAGE_VALIDATOR, USERNAME_VALIDATOR, decodeToken, validateInput } from 'src/utils/utils';
+import { BOOLEAN_VALIDATOR, CHATROOM_ID_VALIDATOR, ID_VALIDATOR, MESSAGE_VALIDATOR, USERNAME_VALIDATOR, decodeToken, validateInput } from 'src/utils/utils';
 import { Repository } from 'typeorm';
 
 @WebSocketGateway(81, {
@@ -41,10 +41,10 @@ export class ChatGateway
   @SubscribeMessage('event_join')
   async handleJoinRoom(client: Socket, payload: JoinPayload) {
     try {
-      // validateInput(Joi.object({
-      //   roomId: INT_VALIDATOR.required(),
-      //   token: Joi.string().required()
-      // }), payload)
+      validateInput(Joi.object({
+         roomId: CHATROOM_ID_VALIDATOR.required(),
+         token: Joi.string().required()
+      }), payload)
 
       const decodedToken = decodeToken(payload.token)
       const roomId = payload.roomId as unknown as number
@@ -66,13 +66,13 @@ export class ChatGateway
   @SubscribeMessage('event_message')
   async handleIncommingMessage(client: Socket, payload: MessagePayload,) {
     try {
-      // validateInput(Joi.object({
-      //   roomId: INT_VALIDATOR.required(),
-      //   message: MESSAGE_VALIDATOR.required(),
-      //   userName: USERNAME_VALIDATOR.required(),
-      //   isGame: BOOLEAN_VALIDATOR,
-      //   token: Joi.string().required()
-      // }), payload)
+      validateInput(Joi.object({
+         roomId: CHATROOM_ID_VALIDATOR.required(),
+         message: MESSAGE_VALIDATOR.required(),
+         userName: USERNAME_VALIDATOR.required(),
+         isGame: BOOLEAN_VALIDATOR.required(),
+         token: Joi.string().required()
+      }), payload)
 
       const decodedToken = decodeToken(payload.token)
       const roomId = payload.roomId as unknown as number
@@ -94,6 +94,9 @@ export class ChatGateway
 
   @SubscribeMessage('event_leave')
   handleRoomLeave(client: Socket, room: string) {
+    validateInput(Joi.object({
+      room: CHATROOM_ID_VALIDATOR.required()
+    }), { room });
     client.leave(`room_${room}`);
   }
 }

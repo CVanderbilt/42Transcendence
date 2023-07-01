@@ -8,7 +8,7 @@ import {
 } from '@nestjs/websockets';
 import * as Joi from 'joi'
 import { Server, Socket } from 'socket.io';
-import { ID_VALIDATOR, usersInGame, validateInput } from 'src/utils/utils';
+import { DATE_VALIDATOR, ID_VALIDATOR, usersInGame, validateInput } from 'src/utils/utils';
 import { MatchesService} from '../matches/matches.service'; 
 import { StateGateway } from 'src/webSockets/state.gateway';
 
@@ -232,6 +232,13 @@ export class GameGateway
     cliWent: Socket,
     payload: { room: string, username: string, movement: "down" | "up", type: "press" | "release", date: number },
   ) {
+    validateInput(Joi.object({
+      room: ID_VALIDATOR.required(),
+      username: ID_VALIDATOR.required(),
+      movement: Joi.string().valid('down', 'up').required(),
+      type: Joi.string().valid('press', 'release').required(),
+      date: Joi.number().required()
+  }), payload);
     const { room, username, movement, type } = payload;
     const _room: GameRoom = gameRooms[room]
     if (!_room) {
@@ -273,6 +280,10 @@ export class GameGateway
   @SubscribeMessage('event_leave')
   handleRoomLeave(client: Socket, payload: { room: string, username: string }) {
     const { room, username } = payload;
+    validateInput(Joi.object({
+      room: ID_VALIDATOR.required(),
+      username: ID_VALIDATOR.required()
+  }), payload);
     // console.log(`${username} se salio del juego ${room}`)
     client.leave(`room_${room}`);
   }
