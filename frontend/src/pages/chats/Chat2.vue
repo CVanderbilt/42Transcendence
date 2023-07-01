@@ -19,14 +19,16 @@
 
                 <h6 style="color: white; margin-top: 30px;">Group chats</h6>
                 <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name">
-                  <div v-if="!item.chatRoom.isDirect && item.chatRoom.id != generalRoom.id" style="display: flex;">
-                    <b-button v-on:click="changeRoom(item.chatRoom.id)"
-                      style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
-                      {{ item.chatRoom.name }}
-                    </b-button>
-                    <button v-if="item.chatRoom.name !== generalRoom.name && user.role !== 'ADMIN'"
-                      @click="leaveRoom(item.chatRoom.id)"> x
-                    </button>
+                  <div v-if="item.chatRoom.id != generalRoom.id">
+                    <div v-if="!item.chatRoom.isDirect" style="display: flex;">
+                      <b-button v-on:click="changeRoom(item.chatRoom.id)"
+                        style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
+                        {{ item.chatRoom.name }}
+                      </b-button>
+                      <button v-if="item.chatRoom.name !== generalRoom.name && user.role !== 'ADMIN'"
+                        @click="leaveRoom(item.chatRoom.id)"> x
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -47,7 +49,7 @@
 
               <div class="col-9 chat-column" style="margin-bottom: 20px;">
                 <div class="chat-header">
-                  {{ niceRoomNames.find((room) => room.chatRoom.id == currentMembership.chatRoom.id)?.niceName }}
+                  {{ currentMembership.chatRoom.name }}
                 </div>
 
                 <!-- ------------------ chat area ------------------ -->
@@ -360,6 +362,7 @@ export default defineComponent({
 
   async mounted() {
     try {
+      this.generalRoom = (await getGeneralRoom()).data;
       this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
       // join chat socket
       this.io.socket.offAny();
@@ -376,6 +379,7 @@ export default defineComponent({
       });
 
       this.io.socket.on("on_chat_updated", () => {
+        console.log("on_chat_updated")
         this.updateInfo(false);
       })
 
@@ -396,7 +400,7 @@ export default defineComponent({
     }
 
   },
-
+  
   beforeRouteLeave() {
     this.io.socket.offAny();
   },
@@ -479,7 +483,6 @@ export default defineComponent({
         handleHttpException(app, error)
         this.fetchMessages()
       }
-
     },
 
     async changeRoom(roomId: string, password = "") {
@@ -544,7 +547,7 @@ export default defineComponent({
         try {
           await deleteChatRoomMembershipsReq(membership.id)
           this.notify()
-          this.updateInfo()
+          this.changeRoom(this.generalRoom.id)
         } catch (error: any) {
           handleHttpException(app, error)
         }
@@ -718,8 +721,9 @@ export default defineComponent({
     async openDirectChat(friendId: string) {
       try {
         const chatRoom = await (await getDirectChatRoomReq(this.user.id, friendId)).data
+        this.notify()
         this.changeRoom(chatRoom.id)
-        this.$router.push("/chats?roomId=" + chatRoom.id);
+        // this.$router.push("/chats?roomId=" + chatRoom.id);
       } catch (error: any) {
         handleHttpException(app, error)
       }

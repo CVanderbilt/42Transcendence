@@ -37,6 +37,8 @@ export class FriendshipsController {
             const token = getAuthToken(req)
             if (token.userId !== data.userId)
                 throw new UnauthorizedException("Unauthorized to create friendships on behalf of other users")
+            if (data.userId === data.friendId)
+                throw new UnauthorizedException("You can not befriend yourself")
 
             return this.friendshipsService.createFriendship(token.userId, data);
         }

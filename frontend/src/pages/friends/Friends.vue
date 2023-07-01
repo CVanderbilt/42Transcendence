@@ -74,9 +74,7 @@ export default defineComponent({
   },
 
   setup() {
-    const store = useStore(key);
-    const user = store.state.user;
-    const io = stateSocketIO();
+    const ioState = stateSocketIO();
     const friendsStates = ref<UserState[]>([])
     const clearStates = () => {
       friendsStates.value = []
@@ -90,7 +88,7 @@ export default defineComponent({
     }
 
     return {
-      ioUserState: io,
+      ioUserState: ioState,
       friendsStates,
       addState,
       clearStates,

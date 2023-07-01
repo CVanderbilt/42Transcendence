@@ -170,7 +170,6 @@ export default defineComponent({
         if (res.status === 201) {
           this.areFriends = res.data.isFriend
           this.friendshipId = res.data.id
-          console.log("are friends: " + this.areFriends)
         }
       } catch (error: any) {
         handleHttpException(app, error)

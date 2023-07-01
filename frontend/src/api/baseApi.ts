@@ -32,7 +32,7 @@ apiClient.interceptors.response.use(
     return response
   },
   (error: AxiosError) => {
-    console.log(error.response)
+    // console.log(error.response)
     if (error.response) {
       if (error.response.status === 442)
         logOut()

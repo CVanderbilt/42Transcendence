@@ -97,10 +97,8 @@ export class Chats2Controller {
             if (!token.hasRightsOverUser(token, await this.usersService.findOneById(body.user1)) &&
                 !token.hasRightsOverUser(token, await this.usersService.findOneById(body.user2)))
                 throw new UnauthorizedException(`Requester ${token.userId} does not have rights to retrieve private room between ${body.user1} and ${body.user2}`)
-            Logger.log({ body })
             const id1 = body.user1
             const id2 = body.user2
-            Logger.log(`id1: ${id1}, id2: ${id2}`)
             return await (this.chatsService.getDirectChatRoom(id1, id2))
         } catch (error) {
             throw processError(error, "cannot get direc room");

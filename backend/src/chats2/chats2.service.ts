@@ -122,7 +122,7 @@ export class Chats2Service {
 
         const names = [u1.username, u2.username]
         names.sort()
-        const roomName = "directMessage¿" + names[0] + "¿" + names[1]
+        const roomName = names[0] + "-" + names[1]
         // if no room is found create one
         const roomDto: ChatRoomDto = {
             name: roomName,
