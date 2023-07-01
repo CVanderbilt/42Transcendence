@@ -109,14 +109,34 @@ export default defineComponent({
       matches: matches,
     };
   },
+  
+  watch: {
+    '$route'(to, from) {
+      // Check if the query parameters have changed
+      if (to.query.uuid !== from.query.uuid) {
+        this.lookedUpId = this.$route.query.uuid as string
+        console.log("looked id: " + this.lookedUpId)
+        this.getUserInfo(this.lookedUpId)
+        this.getFriendship()
+        getMatchesReq(this.lookedUpId)
+        .then(res => this.matches = res.data)
+        .catch(err => handleHttpException(app, err))
+      }
+    }
+  },
 
   async mounted() {
-    if (this.$route.query.uuid !== undefined) {
-      this.lookedUpId = this.$route.query.uuid as string
-      console.log("looked id: " + this.lookedUpId)
-      this.getUserInfo(this.lookedUpId)
-      this.getFriendship()
-      this.matches = (await getMatchesReq(this.lookedUpId)).data
+    try {
+      
+      if (this.$route.query.uuid !== undefined) {
+        this.lookedUpId = this.$route.query.uuid as string
+        console.log("looked id: " + this.lookedUpId)
+        this.getUserInfo(this.lookedUpId)
+        this.getFriendship()
+        this.matches = (await getMatchesReq(this.lookedUpId)).data
+      }
+    } catch (error) {
+      handleHttpException(app, error)
     }
   },
 
@@ -131,7 +151,7 @@ export default defineComponent({
           this.isBlocked = found.isBlocked
         }
       } catch (err) {
-        console.log(err)
+        handleHttpException(app, err)
       }
     },
     generateImageURL,
@@ -164,7 +184,7 @@ export default defineComponent({
         this.friendshipId = ""
       }
       catch (err) {
-        alert("could not unfriend")
+        handleHttpException(app, err)
       }
     },
 
@@ -174,7 +194,7 @@ export default defineComponent({
         this.isBlocked = isBlocked
       }
       catch (err) {
-        console.log(err)
+        handleHttpException(app, err)
       }
     },
   },
