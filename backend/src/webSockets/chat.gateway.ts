@@ -81,12 +81,12 @@ export class ChatGateway
 
       const decodedToken = decodeToken(payload.token)
       const roomId = payload.roomId as unknown as number
-      const membership = await this.chatMembershipsRepo.findOne({
+      const membership: ChatMembershipEntity = await this.chatMembershipsRepo.findOne({
         where:
           { user: { id: decodedToken.userId }, chatRoom: { id: roomId } }
       })
 
-      if (membership?.isBanned || membership?.isMuted) {
+      if (!membership || (membership.isBanned || membership.isMuted)) {
         return
       }
 
