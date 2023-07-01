@@ -376,6 +376,7 @@ export default defineComponent({
       });
 
       this.io.socket.on("on_chat_updated", () => {
+        console.log("evento recibido")
         this.updateInfo(false);
       })
 
@@ -414,11 +415,15 @@ export default defineComponent({
   },
 
   methods: {
+    async notify() {
+      await new Promise(r => setTimeout(r, 500));
+      this.io.socket.emit("chat_update");
+    },
+
     async updateInfo(updateMessages = true) {
       try {
         const memberships = await (await getUserMembershipsReq(this.user?.id as string)).data as Membership[]
         this.userMemberships = memberships
-        // this.fetchNiceRoomNames()
         if (updateMessages)
           this.fetchMessages()
         this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
@@ -539,7 +544,7 @@ export default defineComponent({
       if (membership) {
         try {
           await deleteChatRoomMembershipsReq(membership.id)
-          this.io.socket.emit("chat_update");
+          this.notify()
           this.updateInfo()
         } catch (error: any) {
           handleHttpException(app, error)
@@ -550,17 +555,11 @@ export default defineComponent({
     async createChatRoom(roomName: string, password: string, userNames: string[]) {
       try {
         const room = await (await createChatRoomReq(roomName, this.user?.id as string, password)).data
-        const membership = (await joinChatRoomReq(room.id, this.user?.id as string, password)).data
-        membership.chatRoomName = room.name
-        membership.chatRoomId = room.id
-        membership.userName = membership.user.username
-        this.userMemberships.push(membership)
-
         userNames.forEach(async (username) => {
           try {
             if (username !== this.user?.username && username !== "") {
               const invitee = await getUserByName(username)
-              inviteUsersReq(room.id, invitee.data.id)
+              await inviteUsersReq(room.id, invitee.data.id)
             }
           }
           catch (err: any) {
@@ -568,7 +567,7 @@ export default defineComponent({
           }
         })
 
-        this.io.socket.emit("chat_update");
+        this.notify()
         this.changeRoom(room.id)
       }
       catch (err: any) {
