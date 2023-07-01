@@ -7,7 +7,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import * as Joi from 'joi';
+import * as Joi from 'joi'
 import { Server, Socket } from 'socket.io';
 import { ID_VALIDATOR, usersInGame, validateInput } from 'src/utils/utils';
 
@@ -38,11 +38,15 @@ export class StateGateway
 
   @SubscribeMessage('alive')
   HandleAlive(client: Socket, payload: { userId: string }) {
-    validateInput(Joi.object({
-      userId: ID_VALIDATOR
-  }), payload);
-    this.aliveUsers.push(payload.userId)
-    this.server.emit('user_states', this.GetUserStates());
+    try {
+      validateInput(Joi.object({
+        userId: ID_VALIDATOR
+      }), payload);
+      this.aliveUsers.push(payload.userId)
+      this.server.emit('user_states', this.GetUserStates());
+    } catch (error) {
+      console.log("error handlealive: " + JSON.stringify(error))
+    }
   }
 
   UpdateUserState(userId: string) {

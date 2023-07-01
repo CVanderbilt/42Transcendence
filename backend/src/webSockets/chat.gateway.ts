@@ -7,7 +7,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import * as Joi from 'joi';
+import * as Joi from 'joi'
 import { Server, Socket } from 'socket.io';
 import { ChatMembershipEntity } from 'src/chats2/chatEntities.entity';
 import { BOOLEAN_VALIDATOR, CHATROOM_ID_VALIDATOR, ID_VALIDATOR, MESSAGE_VALIDATOR, USERNAME_VALIDATOR, decodeToken, validateInput } from 'src/utils/utils';
@@ -99,10 +99,14 @@ export class ChatGateway
 
   @SubscribeMessage('event_leave')
   handleRoomLeave(client: Socket, room: string) {
-    validateInput(Joi.object({
-      room: CHATROOM_ID_VALIDATOR.required()
-    }), { room });
-    client.leave(`room_${room}`);
+    try {  
+      validateInput(Joi.object({
+        room: CHATROOM_ID_VALIDATOR.required()
+      }), { room });
+      client.leave(`room_${room}`);
+    } catch (error) {
+     console.log("error handleroomleave: " + JSON.stringify(error))
+    }
   }
 }
 
