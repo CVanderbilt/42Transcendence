@@ -8,8 +8,10 @@ import { UserEntity } from 'src/users/user.entity';
 import { ChatMembershipDto, ChatMsgDto, ChatRoomDto, JoinChatRoomDto } from './chats.dto';
 import { User } from 'src/users/user.interface';
 import { JwtAdminGuard } from 'src/auth/jwt-admin-guard';
-import { isPastDate } from 'src/utils/utils';
+import { isPastDate, processError } from 'src/utils/utils';
 import { HttpStatusCode } from 'axios';
+import { Namespace } from 'socket.io';
+import e from 'express';
 
 @Injectable()
 export class Chats2Service {
@@ -329,7 +331,7 @@ export class Chats2Service {
         // update isBanned and isMutted fields for each member depending on the date
 
         res.then(memberships => {
-            memberships.forEach(membership => {
+            memberships.forEach(async membership => {
                 if (isPastDate(membership.bannedUntil)) {
                     membership.isBanned = false
                     this.chatMembershipsRepo.save(membership)
@@ -337,6 +339,19 @@ export class Chats2Service {
                 if (isPastDate(membership.mutedUntil)) {
                     membership.isMuted = false
                     this.chatMembershipsRepo.save(membership)
+                }
+
+                //update roomName if it is a direct room
+                if (membership.chatRoom.isDirect) {
+                    const roomMemberships = await this.findChatRoomMembers(membership.chatRoom.id) as any[]
+                    const otherMember = roomMemberships.find(m => m.user.id !== userId)
+                    if (otherMember){
+                        const names = [membership.user.username, otherMember.user.username]
+                        names.sort()
+                        membership.chatRoom.name = names.join(' - ')
+                        membership.chatRoom.save()
+                        this.chatRoomsRepo.save(membership.chatRoom)
+                    }
                 }
             })
         })
@@ -418,34 +433,50 @@ export class Chats2Service {
         }
     }
 
-    async deleteMembership(id: number, requesterId: string) {
-        let deleteRoom = false;
-        const membership = await this.chatMembershipsRepo.findOne({ where: { id: id }, relations: ['chatRoom', 'user'] })
-        const memberships = await this.findChatRoomMembers(membership.chatRoom.id)
-        const room = membership.chatRoom
-
-        if (!membership)
-            return new HttpException('Membership not found', HttpStatusCode.NotFound)
-        const requesterMembership = await this.findMembershipByUserAndRoom(requesterId, membership.chatRoom.id)
-        const requesterHasNotRightsErr = new HttpException("Requester doesnt have rights to delete membership", HttpStatusCode.Unauthorized)
-
-        if (!requesterMembership.isOwner && !requesterMembership.isAdmin && membership.user.id != requesterId) {
-            throw requesterHasNotRightsErr
+    async deleteMembership(mshpId: number, requesterId: string) {
+        try {
+            let deleteRoom = false;
+            const membership = await this.chatMembershipsRepo.findOne({ where: { id: mshpId }, relations: ['chatRoom', 'user'] })
+            const memberships = await this.findChatRoomMembers(membership.chatRoom.id)
+            const room = membership.chatRoom
+    
+            if (!membership)
+                return new HttpException('Membership not found', HttpStatusCode.NotFound)
+            const requesterMembership = await this.findMembershipByUserAndRoom(requesterId, membership.chatRoom.id)
+            const requesterHasNotRightsErr = new HttpException("Requester doesnt have rights to delete membership", HttpStatusCode.Unauthorized)
+    
+            if (!requesterMembership.isOwner && !requesterMembership.isAdmin && membership.user.id != requesterId) {
+                throw requesterHasNotRightsErr
+            }
+    
+            // if the user is the owner of the room, assign the ownership to another member
+            if (membership.isOwner) { 
+                const newOwner = memberships.find(m => m.id !== membership.id)
+                if (newOwner) {
+                    const entity = await this.chatMembershipsRepo.findOne({ where: { id: newOwner.id } })
+                    entity.isOwner = true
+                    entity.save()
+                }
+            }
+            // if the user is the last member of the room, delete the room
+            if (memberships.length <= 1)
+                deleteRoom = true;
+            // if it was a direct room, delete the room
+            if (membership.chatRoom.isDirect)
+                deleteRoom = true;
+    
+            const res = await this.chatMembershipsRepo.delete({ id: mshpId })
+    
+            if (deleteRoom)
+            {
+                const membershipsIds = memberships.map(m => m.id)
+                this.chatMembershipsRepo.delete(membershipsIds)
+                this.chatRoomsRepo.delete(room.id)
+            }
         }
-
-        // if the user is the last member of the room, delete the room
-        if (memberships.length == 0)
-            deleteRoom = true;
-        // if it was a direct room, delete the room
-        if (membership.chatRoom.isDirect)
-            deleteRoom = true;
-
-        const res = await this.chatMembershipsRepo.delete({ id: id })
-
-        if (deleteRoom)
-            this.chatRoomsRepo.delete(room.id)
-
-        return res
+        catch (e) {
+            throw processError(e, "Error deleting membership")
+        }
     }
 
     async deleteRoom(chatRoomId: number) {

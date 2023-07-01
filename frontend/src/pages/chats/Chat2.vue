@@ -33,11 +33,11 @@
 
                 <!-- direct chats -->
                 <h6 style="color: white; margin-top: 30px;">Direct chats</h6>
-                <div v-for="item in niceRoomNames" v-bind:key="item.niceName">
+                <div v-for="item in userMemberships" v-bind:key="item.chatRoom.name">
                   <div v-if="item.chatRoom.isDirect" style="display: flex;">
                     <b-button v-on:click="changeRoom(item.chatRoom.id)"
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
-                      {{ item.niceName }}
+                      {{ item.chatRoom.name }}
                     </b-button>
                     <button v-if="user.role !== 'ADMIN'" @click="leaveRoom(item.chatRoom.id)"> x </button>
                   </div>
@@ -359,6 +359,7 @@ export default defineComponent({
 
   async mounted() {
     try {
+      this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
       // join chat socket
       this.io.socket.offAny();
       this.io.socket.on("new_message", (message, userName, senderId, roomId, isChallenge) => {
@@ -372,8 +373,6 @@ export default defineComponent({
 
         this.messages.push(msg)
       });
-
-      // this.updateInfo();
 
       // always join general room
       this.isAdmin = false;
@@ -412,15 +411,17 @@ export default defineComponent({
   methods: {
     async updateInfo() {
       try {
-        this.userMemberships = (await getUserMembershipsReq(this.user?.id as string)).data
+        const memberships = await (await getUserMembershipsReq(this.user?.id as string)).data as Membership[]
+        this.userMemberships = memberships
         this.fetchNiceRoomNames()
         this.fetchMessages()
+        this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
       }
       catch (error: any) { handleHttpException(app, error) }
     },
 
     async fetchNiceRoomNames() {
-      this.niceRoomNames = []
+      const newNiceRoomNames = [] as { chatRoom: ChatRoom, niceName: string }[]
       let chatRooms: ChatRoom[] =
         this.userMemberships.map((membership) => membership.chatRoom)
 
@@ -433,18 +434,18 @@ export default defineComponent({
           } catch (error: any) { handleHttpException(app, error) }
         }
 
-        this.niceRoomNames = this.niceRoomNames.filter((value, index) => value.chatRoom.id !== room.id) // remove previous
-        this.niceRoomNames.push({
+        newNiceRoomNames.push({
           chatRoom: room,
           niceName: name,
         })
       })
+
+      this.niceRoomNames = newNiceRoomNames
     },
 
     async fetchMessages() {
       this.messages = [];
       const roomMessages = (await getChatRoomMessagesReq(this.currentRoomId)).data
-      console.log(roomMessages)
       for (var i in roomMessages) {
         this.messages.push(roomMessages[i]);
       }
@@ -457,9 +458,9 @@ export default defineComponent({
     },
 
     isDisplayMessage(senderId: string): boolean {
-      const membership = this.userFriendships.find(x => x.friend.id === senderId)
-      if (membership)
-        return !membership.isBlocked
+      const friendship = this.userFriendships.find(x => x.friend.id === senderId)
+      if (friendship)
+        return !friendship.isBlocked
       return true
     },
 
@@ -496,8 +497,6 @@ export default defineComponent({
 
     async changeRoom(roomId: string, password = "") {
       if (!roomId)
-        return
-      if (roomId == this.currentRoomId)
         return
 
       try {
@@ -566,8 +565,6 @@ export default defineComponent({
         }
       }
     },
-
-
 
     async createChatRoom(roomName: string, password: string, userNames: string[]) {
       try {

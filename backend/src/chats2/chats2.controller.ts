@@ -425,7 +425,7 @@ export class Chats2Controller {
             return await (this.chatsService.findChatRoomMessages(token, roomId))
         }
         catch (error) {
-            processError(error, "could not retrieve messages");
+            throw processError(error, "could not retrieve messages");
         }
     }
 
@@ -447,7 +447,7 @@ export class Chats2Controller {
             return this.chatsService.createChatRoomMessage(roomId, getAuthToken(req).userId, msg)
         }
         catch (error) {
-            processError(error, "could not post message");
+            throw processError(error, "could not post message");
         }
     }
 }
