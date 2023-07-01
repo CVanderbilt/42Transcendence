@@ -175,7 +175,7 @@ export default defineComponent({
             }
             this.DoLogin(user)
           }
-        }).catch(error => console.log(error))
+        }).catch(err => handleHttpException(app, err))
     },
 
     // Check token validity
