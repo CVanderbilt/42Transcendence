@@ -59,7 +59,7 @@ export class AuthController {
   }
 
   @Get('2fa/qr')
-  async generateQr(@Req() req, @Res() response: Response) {    
+  async generateQr(@Req() req, @Res() response) {    
     try {
       const authToken = getAuthToken(req)
       const user : User = await this.authService.getUserById(authToken.userId)
