@@ -274,7 +274,7 @@ export class Chats2Controller {
             if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
 
             const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
-            if (token.hasRightsOverUser(token, user) && requestedMembership) {
+            if (token.hasRightsOverUser(token, user) && (requestedMembership || token.role === "ADMIN" || token.role === "OWNER")) {
                 this.chatsService.setIsBanned(user.id, input.roomId, true);
             }
             else
@@ -298,7 +298,7 @@ export class Chats2Controller {
             if (!user) throw new HttpException("USER_NOT_FOUND", HttpStatus.NOT_FOUND)
 
             const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
-            if (token.hasRightsOverUser(token, user) && requestedMembership) {
+            if (token.hasRightsOverUser(token, user) && (requestedMembership || token.role === "ADMIN" || token.role === "OWNER")) {
                 this.chatsService.setIsBanned(user.id, input.roomId, false);
             }
             else
@@ -326,7 +326,7 @@ export class Chats2Controller {
                 throw new HttpException("MEMBERSHIP_NOT_FOUND", HttpStatus.NOT_FOUND)
 
             const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
-            if (token.hasRightsOverUser(token, user) && requestedMembership) {
+            if (token.hasRightsOverUser(token, user) && (requestedMembership || token.role === "ADMIN" || token.role === "OWNER")) {
                 this.chatsService.setIsAdmin(user.id, input.roomId, true);
             }
             else
@@ -354,7 +354,7 @@ export class Chats2Controller {
                 throw new HttpException("MEMBERSHIP_NOT_FOUND", HttpStatus.NOT_FOUND)
 
             const requestedMembership = await this.chatsService.findMembershipByUserAndRoom(input.userId, input.roomId)
-            if (token.hasRightsOverUser(token, user) && requestedMembership) {
+            if (token.hasRightsOverUser(token, user) && (requestedMembership || token.role === "ADMIN" || token.role === "OWNER")) {
                 this.chatsService.setIsAdmin(user.id, input.roomId, false);
             }
             else
