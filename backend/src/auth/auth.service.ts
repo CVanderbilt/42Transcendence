@@ -217,7 +217,7 @@ export class AuthService {
         return { secret, otpauthUrl }
     }
 
-    public async pipeQrCodeStream(stream: Response, otpauthUrl: string) {
+    public async pipeQrCodeStream(stream, otpauthUrl: string) {
         return toFileStream(stream, otpauthUrl)
     }
 
