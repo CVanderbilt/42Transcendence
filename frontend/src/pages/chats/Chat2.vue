@@ -350,7 +350,7 @@ export default defineComponent({
     const store = useStore(key);
     const user = store.state.user;
 
-    let roomId = "";
+    let roomId = "0";
     return {
       currentRoomId: roomId,
       user,
@@ -522,9 +522,7 @@ export default defineComponent({
         this.currentRoomId = roomId;
         this.currentRoomName = membership.chatRoom.name;
         const payload = {
-          roomName: this.currentRoomName,
           roomId: this.currentRoomId,
-          userId: this.user?.id,
           token: localStorage.getItem('token'),
         }
         this.io.socket.emit("event_join", payload);

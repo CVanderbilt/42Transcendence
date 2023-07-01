@@ -70,7 +70,7 @@ export class ChatGateway
          roomId: CHATROOM_ID_VALIDATOR.required(),
          message: MESSAGE_VALIDATOR.required(),
          userName: USERNAME_VALIDATOR.required(),
-         isGame: BOOLEAN_VALIDATOR.required(),
+         isChallenge: BOOLEAN_VALIDATOR.required(),
          token: Joi.string().required()
       }), payload)
 
@@ -86,7 +86,7 @@ export class ChatGateway
       }
 
 
-      this.server.to(`room_${payload.roomId}`).emit('new_message', payload.message, payload.userName, decodedToken.userId, roomId, payload.isGame);
+      this.server.to(`room_${payload.roomId}`).emit('new_message', payload.message, payload.userName, decodedToken.userId, roomId, payload.isChallenge);
     } catch (error) {
       console.log(error)
     }
@@ -94,7 +94,7 @@ export class ChatGateway
 
   @SubscribeMessage('event_leave')
   handleRoomLeave(client: Socket, room: string) {
-    try {  
+    try {
       validateInput(Joi.object({
         room: CHATROOM_ID_VALIDATOR.required()
       }), { room });
@@ -115,5 +115,5 @@ interface MessagePayload {
   userName: string;
   message: string;
   token: string;
-  isGame: boolean;
+  isChallenge: boolean;
 }
