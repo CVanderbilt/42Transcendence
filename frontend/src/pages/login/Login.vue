@@ -156,7 +156,7 @@ export default defineComponent({
       bodyFormData.append("code", code);
       get42Token(code)
         .then((response) => {
-          console.log("guardando token: " + localStorage.getItem("token"))
+          console.log("guardando token: " + localStorage.getItem(response.data.userId))
 
           if (response.data.is2fa) {
             this.is2faCodeRequired.status = true

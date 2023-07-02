@@ -123,7 +123,7 @@ export default defineComponent({
     },
 
     logOut() {
-      localStorage.removeItem("token");
+      localStorage.removeItem(store.state.user.id);
       store.commit("logout");
 
       this.io.socket.offAny();
