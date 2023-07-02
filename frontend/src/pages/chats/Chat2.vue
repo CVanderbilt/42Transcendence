@@ -485,7 +485,7 @@ export default defineComponent({
         roomId: this.currentRoomId,
         userName: this.user.username,
         message: this.message,
-        token: store.state.token,
+        token: localStorage.getItem(store.state.user.id),
         isChallenge: isChallenge,
       }
       this.io.socket.emit("event_message", msg2emit)
@@ -534,8 +534,7 @@ export default defineComponent({
         this.currentRoomName = membership.chatRoom.name;
         const payload = {
           roomId: this.currentRoomId,
-          // token: localStorage.getItem('token'),
-          token: store.state.token,
+          token: localStorage.getItem(store.state.user.id)
         }
         this.io.socket.emit("event_join", payload);
 
