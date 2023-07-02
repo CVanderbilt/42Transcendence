@@ -472,8 +472,8 @@ export class Chats2Service {
             if (deleteRoom)
             {
                 const membershipsIds = memberships.map(m => m.id)
-                this.chatMembershipsRepo.delete(membershipsIds)
-                this.chatRoomsRepo.delete(room.id)
+                await this.chatMembershipsRepo.delete(membershipsIds)
+                await this.chatRoomsRepo.delete(room.id)
             }
         }
         catch (e) {

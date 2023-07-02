@@ -397,6 +397,24 @@ export class Chats2Controller {
 
     // delete membership
     @UseGuards(JwtAuthenticatedGuard)
+    @Post('memberships/leave/:id')
+    async leaveRoom(@Param('id') roomId: number, @Req() req) {
+        // Admins should not be able to delete memberships
+        try {
+            if (roomId < 0)  // admin gets memberships for all rooms with id = -1
+                return null
+            validateInput(Joi.object({
+                roomId: CHATROOM_ID_VALIDATOR.required()
+            }), { roomId })
+            const token = getAuthToken(req)
+            return this.chatsService.deleteMembership(roomId, token.userId, token.role === "ADMIN" || token.role === "OWNER")
+        } catch (error) {
+            throw processError(error, "leaving failed")
+        }
+    }
+
+    // delete membership
+    @UseGuards(JwtAuthenticatedGuard)
     @Delete('memberships/:id')
     async deleteMembership(@Param('id') roomId: number, @Req() req) {
         // Admins should not be able to delete memberships
