@@ -25,7 +25,7 @@
                         style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                         {{ item.chatRoom.name }}
                       </b-button>
-                      <button v-if="item.chatRoom.name !== generalRoom.name && user.role !== 'ADMIN'"
+                      <button v-if="item.chatRoom.name !== generalRoom.name && user.role === 'CUSTOMER'"
                         @click="leaveRoom(item.chatRoom.id)"> x
                       </button>
                     </div>
@@ -42,7 +42,7 @@
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                       {{ item.chatRoom.name }}
                     </b-button>
-                    <button v-if="user.role !== 'ADMIN'" @click="leaveRoom(item.chatRoom.id)"> x </button>
+                    <button v-if="user.role !== 'ADMIN' && user.role !== 'OWNER' " @click="leaveRoom(item.chatRoom.id)"> x </button>
                   </div>
                 </div>
               </div>
@@ -383,7 +383,7 @@ export default defineComponent({
       });
 
       this.io.socket.on("on_chat_updated", () => {
-        console.log("on_chat_updated")
+        alert("on_chat_updated")
         this.updateInfo(false);
       })
 
@@ -430,11 +430,9 @@ export default defineComponent({
     async updateInfo(updateMessages = true) {
       try {
         await this.fetchMemberships()
-        console.log("currentid", this.currentRoomId)
         
         let has2change = true
         this.userMemberships.forEach(m => {
-          console.log(m.chatRoom.id)
           if (m.chatRoom.id == this.currentRoomId)
             has2change = false
         }) 

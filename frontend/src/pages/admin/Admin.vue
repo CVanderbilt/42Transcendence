@@ -59,7 +59,7 @@ import { defineComponent } from 'vue';
 import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'
 import { allowUserFromChat, banUserFromChat, ChatRoom, deleteChatRoom, demoteUserInChat, getAllChatRoomsReq, getChatRoomMembershipsReq, Membership, promoteUserInChat } from '@/api/chatApi';
 import { handleHttpException, publishNotification, throwFromAsync } from '@/utils/utils';
-import { app } from '@/main';
+import { app, useSocketIO } from '@/main';
 
 interface ChatRoomRow extends ChatRoom {
   userName: string
@@ -80,6 +80,12 @@ export default defineComponent({
     }
   },
 
+  setup() {
+    const io = useSocketIO();
+    return {
+      io
+    }
+  },
   methods: {
 
     async updateInfo() {
@@ -115,6 +121,8 @@ export default defineComponent({
         await action(param)
         publishNotification("Action succesful", false)
         this.updateInfo()
+        console.log("update")
+        this.io.socket.emit("chat_update")
       } catch (error: any) {
         handleHttpException(app, error)
       }
@@ -176,6 +184,7 @@ export default defineComponent({
         res = await (await deleteChatRoom(chat.id)).data
       } catch (error: any) { handleHttpException(app, error) }
       this.updateInfo()
+      this.io.socket.emit("chat_update")
       return res
     },
 
