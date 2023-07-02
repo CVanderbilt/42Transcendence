@@ -21,8 +21,6 @@ export class StateGateway
 
   handleConnection(client: any, ...args: any[]) { }
 
-  // connections = new Array<Connections>();
-
   @WebSocketServer() server: Server;
 
   afterInit(server: any) {
@@ -39,24 +37,26 @@ export class StateGateway
   @SubscribeMessage('alive')
   HandleAlive(client: Socket, payload: { userId: string }) {
     try {
-      validateInput(Joi.object({
-        userId: ID_VALIDATOR
-      }), payload);
-      this.aliveUsers.push(payload.userId)
-      this.server.emit('user_states', this.GetUserStates());
+      // validateInput(Joi.object({
+      //   userId: ID_VALIDATOR
+      // }), payload);
+      // this.aliveUsers.push(payload.userId)
+      // this.server.emit('user_states', this.GetUserStates());
+      
     } catch (error) {
       console.log("error handlealive: " + JSON.stringify(error))
     }
   }
-
-  @SubscribeMessage('user_state_updated')
+  
+  @SubscribeMessage('user_state_update')
   UpdateUserState(userId: string) {
-    validateInput(Joi.object({
-      userId: ID_VALIDATOR.required(),
-   }),{userId})
-    console.log ( "update user state called")
-    this.aliveUsers.push(userId)
-    this.server.emit('user_states', this.GetUserStates());
+    //   validateInput(Joi.object({
+      //     userId: ID_VALIDATOR.required(),
+      //  }),{userId})
+      console.log ( "update user state called")
+      this.aliveUsers.push(userId)
+      console.log("emmiting user states: " + JSON.stringify(this.GetUserStates()))
+    // this.server.emit('user_states', this.GetUserStates());
   }
 
   handleDisconnect(client: any) {
@@ -66,14 +66,14 @@ export class StateGateway
     }, 500);
   }
 
-  @SubscribeMessage('logout')
-  HandleLogout(client: Socket)
-  {
-    setTimeout(() => {
-      this.aliveUsers = []
-      this.server.emit('who_is_alive')
-    }, 500);
-  }
+  // @SubscribeMessage('logout')
+  // HandleLogout(client: Socket)
+  // {
+  //   setTimeout(() => {
+  //     this.aliveUsers = []
+  //     this.server.emit('who_is_alive')
+  //   }, 500);
+  // }
 
   GetUserStates() {
     // remove duplicates

@@ -130,7 +130,6 @@ export default defineComponent({
       elogin(loginData)
         .then((response) => {
           localStorage.setItem("token", response.data.token)
-          console.log("saving token: " + localStorage.getItem("token"))
 
           if (response.data.is2fa) {
             this.is2faCodeRequired.status = true
@@ -185,7 +184,6 @@ export default defineComponent({
     // Check token validity
     async tokenLogin() {
       if (localStorage.getItem("token") === null) {
-        console.log("Token login: No token found")
         return
       }
     },
@@ -206,7 +204,6 @@ export default defineComponent({
             isBanned: response.data.isBanned
           }
 
-          console.log("2fa token: " + localStorage.getItem("token"))
           localStorage.setItem("token", response.data.token)
 
           this.DoLogin(user)
@@ -217,7 +214,7 @@ export default defineComponent({
 
     DoLogin(user: any,) {
       this.io.socket.offAny();
-      this.io.socket.emit("alive", {userId: user.id})
+      // this.io.socket.emit("user_state_update", { userId: user.id });
       store.commit("changeUser", user)
       this.$router.push("/")
     }

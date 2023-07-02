@@ -83,21 +83,24 @@ export default defineComponent({
     this.isError = false;
 
     this.ioUserState.socket.offAny();
+    if (this.user.id == undefined || this.user.id == null || this.user.id == "")  {
+      console.log("user_state_update no emitido porque no hay id")
+    }
+    else {
+      console.log("user_state_update emitido: " + this.user.id)
+      this.ioUserState.socket.emit("user_state_update", {userId: this.user.id});
+    }
     
-    this.ioUserState.socket.on("user_states", (states: UserStateSocket[]) => {
-      if (!states.find((s) => s.userId === this.user.id)) {
-        this.ioUserState.socket.emit("alive", {userId: this.user.id});
-      }
-    })
+    // this.ioUserState.socket.on("user_states", (states: UserStateSocket[]) => {
+    //   if (!states.find((s) => s.userId === this.user.id)) {
+    //     this.ioUserState.socket.emit("alive", {userId: this.user.id});
+    //   }
+    // })
     
-    this.ioUserState.socket.on("who_is_alive", (payload: any) => {
-      console.log(this.user.id)
-      if (this.user.id === undefined)  {
-        console.log("no user id")
-        return
-      } 
-      this.ioUserState.socket.emit("alive", {userId: this.user.id});
-    })
+    // this.ioUserState.socket.on("who_is_alive", (payload: any) => {
+    //   console.log(this.user.id)
+    //   this.ioUserState.socket.emit("alive", {userId: this.user.id});
+    // })
     this.auth = isAuthenticated();
     console.log("created");
   },
