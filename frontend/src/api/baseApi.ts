@@ -8,8 +8,8 @@ const apiClient = axios.create({
 });
 
 function logOut() {
-  store.commit("changeUser", undefined)
   localStorage.removeItem(store.state.user.id);
+  store.commit("changeUser", undefined)
   window.location.href = 'http://localhost:8080/login?expired';
 }
 
