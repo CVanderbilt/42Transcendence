@@ -36,6 +36,7 @@ export interface Membership {
     chatRoom: ChatRoom
     bannedUntil?: any
     mutedUntil?: any
+    isPresent: boolean
 }
 
 // ----------------------------------------------

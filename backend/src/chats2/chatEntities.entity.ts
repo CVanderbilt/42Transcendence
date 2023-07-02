@@ -60,6 +60,9 @@ export class ChatMembershipEntity extends BaseEntity {
 
     @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     mutedUntil: Date
+
+    @Column({default: true})
+    isPresent: boolean
 }
 
 @Entity('chatMsg')
