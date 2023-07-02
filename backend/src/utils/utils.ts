@@ -141,7 +141,7 @@ export function addToBlacklist(id: string) {
 export function getAuthToken(request, validate = true) {
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer '))
-    throw new NotFoundException('Token not found');
+    throw new HttpException('Token not found', 442);
   try {
     const token = request.headers.authorization.split(' ')[1];
 
@@ -223,7 +223,9 @@ export function processError(error: Error, defaultMsg: string): HttpException {
   if (error instanceof HttpException)
     return error
 
+  console.log(error)
   return new HttpException(defaultMsg, HttpStatusCode.ImATeapot);
+
 }
 
 export const usersInGame = new Set<string>();

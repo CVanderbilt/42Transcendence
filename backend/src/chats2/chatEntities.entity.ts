@@ -15,11 +15,6 @@ export class ChatRoomEntity extends BaseEntity{
     @Column({default: false})
     isDirect: boolean
 
-    // por si no funciona con null 
-    // // is password protected   
-    // @Column({default: false})
-    // isPasswordProtected: boolean
-
     @Column({default: null})
     password: string
 

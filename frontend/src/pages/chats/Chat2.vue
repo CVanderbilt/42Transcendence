@@ -25,7 +25,7 @@
                         style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                         {{ item.chatRoom.name }}
                       </b-button>
-                      <button v-if="item.chatRoom.name !== generalRoom.name && user.role !== 'ADMIN'"
+                      <button v-if="item.chatRoom.name !== generalRoom.name && user.role === 'CUSTOMER'"
                         @click="leaveRoom(item.chatRoom.id)"> x
                       </button>
                     </div>
@@ -42,7 +42,7 @@
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                       {{ item.chatRoom.name }}
                     </b-button>
-                    <button v-if="user.role !== 'ADMIN'" @click="leaveRoom(item.chatRoom.id)"> x </button>
+                    <button v-if="user.role !== 'ADMIN' && user.role !== 'OWNER' " @click="leaveRoom(item.chatRoom.id)"> x </button>
                   </div>
                 </div>
               </div>
@@ -383,7 +383,7 @@ export default defineComponent({
       });
 
       this.io.socket.on("on_chat_updated", () => {
-        console.log("on_chat_updated")
+        alert("on_chat_updated")
         this.updateInfo(false);
       })
 
@@ -430,11 +430,9 @@ export default defineComponent({
     async updateInfo(updateMessages = true) {
       try {
         await this.fetchMemberships()
-        console.log("currentid", this.currentRoomId)
         
         let has2change = true
         this.userMemberships.forEach(m => {
-          console.log(m.chatRoom.id)
           if (m.chatRoom.id == this.currentRoomId)
             has2change = false
         }) 
@@ -566,6 +564,7 @@ export default defineComponent({
       const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
       if (membership) {
         try {
+          this.userMemberships = this.userMemberships.filter((membership) => membership.chatRoom.id !== roomId)
           await deleteChatRoomMembershipsReq(membership.id)
           this.notify()
           this.changeRoom(this.generalRoom.id)
@@ -601,7 +600,7 @@ export default defineComponent({
     async kickChatMember(membershipId: string) {
       try {
         await deleteChatRoomMembershipsReq(membershipId)
-        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => (membership.id !== membershipId && !membership.isOwner))
+        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => (membership.id !== membershipId))
       } catch (error: any) {
         handleHttpException(app, error)
       }
@@ -631,7 +630,7 @@ export default defineComponent({
       this.managedChatPassword = ""
       try {
         this.managedChatMemberships = (await getChatRoomMembershipsReq(this.currentRoomId)).data
-        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => (membership.user.id !== this.user?.id && !membership.isOwner))
+        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => (membership.user.id !== this.user?.id))
         // transform date to string and remove z at the end so it can be parsed by datepicker
         this.managedChatMemberships.forEach((membership) => {
           membership.bannedUntil = this.time2local(membership.bannedUntil)
@@ -668,7 +667,8 @@ export default defineComponent({
         await updateChatRoomPasswordReq(this.currentRoomId, this.managedChatPassword).catch(err => handleHttpException(app, err))
       }
       // update current chat members
-      this.managedChatMemberships.forEach(async (membership) => {
+      
+      this.managedChatMemberships.filter(m => !m.isOwner).forEach(async (membership) => {
         membership.bannedUntil = this.time2utc(membership.bannedUntil)
         membership.mutedUntil = this.time2utc(membership.mutedUntil)
         try {
