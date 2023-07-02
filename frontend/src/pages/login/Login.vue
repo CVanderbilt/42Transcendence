@@ -129,9 +129,6 @@ export default defineComponent({
       };
       elogin(loginData)
         .then((response) => {
-          // localStorage.setItem("token", response.data.token)
-          store.state.token = response.data.token
-
           if (response.data.is2fa) {
             this.is2faCodeRequired.status = true
           }
@@ -147,7 +144,7 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned,
             }
-            this.DoLogin(user)
+            this.DoLogin(user, response.data.token)
           }
         }).catch(err => handleHttpException(app, err))
     },
@@ -159,8 +156,6 @@ export default defineComponent({
       bodyFormData.append("code", code);
       get42Token(code)
         .then((response) => {
-          // localStorage.setItem("token", response.data.token)
-          store.state.token = response.data.token
           console.log("guardando token: " + localStorage.getItem("token"))
 
           if (response.data.is2fa) {
@@ -178,14 +173,14 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned
             }
-            this.DoLogin(user)
+            this.DoLogin(user, response.data.token)
           }
         }).catch(err => handleHttpException(app, err))
     },
 
     // Check token validity
     async tokenLogin() {
-      if (store.state.token === null) {
+      if(localStorage.getItem(store.state.user.id)) {
         console.log("tokenLogin: token null")
         return
       }
@@ -210,17 +205,15 @@ export default defineComponent({
             isBanned: response.data.isBanned
           }
 
-          // localStorage.setItem("token", response.data.token)
-          store.state.token = response.data.token;
-
-          this.DoLogin(user)
+          this.DoLogin(user, response.data.token)
         }).catch(error => {
           handleHttpException(app, error)
         })
     },
 
-    DoLogin(user: any,) {
+    DoLogin(user: any, token: string) {
       this.io.socket.emit("alive", { userId: user.id });
+      localStorage.setItem(user.id, token)
       store.commit("changeUser", user)
       this.$router.push("/")
     }
