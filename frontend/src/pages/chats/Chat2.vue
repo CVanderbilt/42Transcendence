@@ -485,7 +485,7 @@ export default defineComponent({
         roomId: this.currentRoomId,
         userName: this.user.username,
         message: this.message,
-        token: localStorage.getItem("token"),
+        token: localStorage.getItem(store.state.user.id),
         isChallenge: isChallenge,
       }
       this.io.socket.emit("event_message", msg2emit)
@@ -566,6 +566,7 @@ export default defineComponent({
       const membership = this.userMemberships.find((membership) => membership.chatRoom.id === roomId)
       if (membership) {
         try {
+          this.userMemberships = this.userMemberships.filter((membership) => membership.chatRoom.id !== roomId)
           await deleteChatRoomMembershipsReq(membership.id)
           this.notify()
           this.changeRoom(this.generalRoom.id)

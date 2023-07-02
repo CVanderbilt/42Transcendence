@@ -82,7 +82,6 @@ export default defineComponent({
 
   methods: {
 
-
     async updateInfo() {
       try {
         const allusers = await getAllUsers()

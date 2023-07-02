@@ -290,24 +290,23 @@ export class Chats2Service {
         return res.user
     }
 
-    findChatRoomMembers(id: number): Promise<ChatMembership[]> {
-        const res = this.chatMembershipsRepo.find({
+    async findChatRoomMembers(id: number): Promise<ChatMembership[]> {
+        const res = await this.chatMembershipsRepo.find({
             where: { chatRoom: { id: id } },
             relations: ['user', 'chatRoom']
         })
 
         // update isBanned and isMutted fields for each member depending on the date
-        res.then(memberships => {
-            memberships.forEach(membership => {
-                if (isPastDate(membership.bannedUntil)) {
-                    membership.isBanned = false
-                    this.chatMembershipsRepo.save(membership)
-                }
-                if (isPastDate(membership.mutedUntil)) {
-                    membership.isMuted = false
-                    this.chatMembershipsRepo.save(membership)
-                }
-            })
+
+        res.forEach(membership => {
+            if (isPastDate(membership.bannedUntil)) {
+                membership.isBanned = false
+                this.chatMembershipsRepo.save(membership)
+            }
+            if (isPastDate(membership.mutedUntil)) {
+                membership.isMuted = false
+                this.chatMembershipsRepo.save(membership)
+            }
         })
 
         return res
@@ -347,7 +346,7 @@ export class Chats2Service {
                 if (membership.chatRoom.isDirect) {
                     const roomMemberships = await this.findChatRoomMembers(membership.chatRoom.id) as any[]
                     const otherMember = roomMemberships.find(m => m.user.id !== userId)
-                    if (otherMember){
+                    if (otherMember) {
                         const names = [membership.user.username, otherMember.user.username]
                         names.sort()
                         membership.chatRoom.name = names.join(' - ')
@@ -435,6 +434,7 @@ export class Chats2Service {
         try {
             let deleteRoom = false;
             const membership = await this.chatMembershipsRepo.findOne({ where: { id: mshpId }, relations: ['chatRoom', 'user'] })
+            console.log(membership)
             const memberships = await this.findChatRoomMembers(membership.chatRoom.id)
             const room = membership.chatRoom
 
@@ -442,35 +442,34 @@ export class Chats2Service {
                 return new HttpException('Membership not found', HttpStatusCode.NotFound)
             const requesterMembership = await this.findMembershipByUserAndRoom(requesterId, membership.chatRoom.id)
             const requesterHasNotRightsErr = new HttpException("Requester doesnt have rights to delete membership", HttpStatusCode.Unauthorized)
-    
+
             if (!override) {
                 if (!requesterMembership.isOwner && !requesterMembership.isAdmin && membership.user.id != requesterId) {
                     throw requesterHasNotRightsErr
                 }
             }
-    
+
             // if the user is the owner of the room, assign the ownership to another member
-            if (membership.isOwner) { 
+            if (membership.isOwner) {
                 const newOwner = memberships.find(m => m.id !== membership.id)
                 if (newOwner) {
                     const entity = await this.chatMembershipsRepo.findOne({ where: { id: newOwner.id } })
                     entity.isOwner = true
-                    entity.save()
+                    await entity.save()
                 }
             }
             // if the user is the last member of the room, delete the room
-            if (memberships.length <= 1)
+            if (memberships.filter(m => m.isPresent).length <= 1)
                 deleteRoom = true;
             // if it was a direct room, delete the room
             if (membership.chatRoom.isDirect)
                 deleteRoom = true;
-    
+
             // await this.chatMembershipsRepo.delete({ id: mshpId })
             membership.isPresent = false
-            membership.save()
-    
-            if (deleteRoom)
-            {
+            await membership.save()
+
+            if (deleteRoom) {
                 const membershipsIds = memberships.map(m => m.id)
                 await this.chatMembershipsRepo.delete(membershipsIds)
                 await this.chatRoomsRepo.delete(room.id)
