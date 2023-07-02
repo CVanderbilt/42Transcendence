@@ -426,6 +426,7 @@ export default defineComponent({
     async updateInfo(updateMessages = true) {
       try {
         const memberships = await (await getUserMembershipsReq(this.user?.id as string)).data as Membership[]
+        console.log(memberships)
         this.userMemberships = memberships
         if (updateMessages)
           this.fetchMessages()
@@ -513,7 +514,8 @@ export default defineComponent({
         this.currentRoomName = membership.chatRoom.name;
         const payload = {
           roomId: this.currentRoomId,
-          token: localStorage.getItem('token'),
+          // token: localStorage.getItem('token'),
+          token: store.state.token,
         }
         this.io.socket.emit("event_join", payload);
 

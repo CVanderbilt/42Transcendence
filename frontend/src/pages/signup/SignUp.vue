@@ -86,7 +86,8 @@ export default defineComponent({
 
         console.log(JSON.stringify(response))
 
-        localStorage.setItem("token", response.data.token)
+        // localStorage.setItem("token", response.data.token)
+        store.state.token = response.data.token
 
         const user: IUser = {
           id: response.data.userId,

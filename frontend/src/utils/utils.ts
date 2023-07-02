@@ -31,7 +31,8 @@ export function handleHttpException(app:any, error: any) {
 }
 
 export function isAuthenticated() {
-  const token = localStorage.getItem('token')
+  // const token = localStorage.getItem('token')
+  const token = store.state.token
   if (!token)
     return false
   if (store.state.user.is2faEnabled && !store.state.user.is2fa)

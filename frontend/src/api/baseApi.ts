@@ -15,7 +15,8 @@ function logOut() {
 }
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  // const token = localStorage.getItem('token');
+  const token = store.state.token;
   if (token) {
     const decodedToken = jwtDecode<{ exp: number;[key: string]: any }>(token);
 

@@ -129,7 +129,8 @@ export default defineComponent({
       };
       elogin(loginData)
         .then((response) => {
-          localStorage.setItem("token", response.data.token)
+          // localStorage.setItem("token", response.data.token)
+          store.state.token = response.data.token
 
           if (response.data.is2fa) {
             this.is2faCodeRequired.status = true
@@ -158,7 +159,8 @@ export default defineComponent({
       bodyFormData.append("code", code);
       get42Token(code)
         .then((response) => {
-          localStorage.setItem("token", response.data.token)
+          // localStorage.setItem("token", response.data.token)
+          store.state.token = response.data.token
           console.log("guardando token: " + localStorage.getItem("token"))
 
           if (response.data.is2fa) {
@@ -183,9 +185,13 @@ export default defineComponent({
 
     // Check token validity
     async tokenLogin() {
-      if (localStorage.getItem("token") === null) {
+      if (store.state.token === null) {
+        console.log("tokenLogin: token null")
         return
       }
+      // if (localStorage.getItem("token") === null) {
+      //   return
+      // }
     },
 
     async submit2faCode() {
@@ -204,7 +210,8 @@ export default defineComponent({
             isBanned: response.data.isBanned
           }
 
-          localStorage.setItem("token", response.data.token)
+          // localStorage.setItem("token", response.data.token)
+          store.state.token = response.data.token;
 
           this.DoLogin(user)
         }).catch(error => {
