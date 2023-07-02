@@ -113,6 +113,7 @@ export default defineComponent({
     async executeAction(action: Action, param: any) {
       try {
         await action(param)
+        publishNotification("Action succesful", false)
         this.updateInfo()
       } catch (error: any) {
         handleHttpException(app, error)
@@ -122,31 +123,26 @@ export default defineComponent({
     async promoteUserAction(user: IUser) {
       if (!user)
         return
-      publishNotification(`Promoting user ${user.id}`, false)
       return (await promoteUser(user.id)).data
     },
     async demoteUserAction(user: IUser) {
       if (!user)
         return
-      publishNotification(`Demoting user ${user.id}`, false)
       return (await demoteUser(user.id)).data
     },
     async banUserAction(user: IUser) {
       if (!user)
         return
-      publishNotification(`Banning user ${user.id}`, false)
       return (await banUser(user.id)).data
     },
     async allowUserAction(user: IUser) {
       if (!user)
         return
-      publishNotification(`Allowing user ${user.id}`, false)
       return (await allowUser(user.id)).data
     },
     async banUserInChatAction(chat: ChatRoomRow) {
       if (!chat || !chat.userName || !chat.id)
         return
-      publishNotification(`Banning user: ${chat.userName} in chat: ${chat.name}`, false)
       try {
         return (await banUserFromChat(chat.userName, chat.id)).data
       } catch (error: any) { handleHttpException(app, error) }
@@ -155,7 +151,6 @@ export default defineComponent({
     async allowUserInChatAction(chat: ChatRoomRow) {
       if (!chat || !chat.userName || !chat.id)
         return
-      publishNotification(`Allowing user: ${chat.userName} in chat: ${chat.name}`, false)
       try {
         return (await allowUserFromChat(chat.userName, chat.id)).data
       } catch (error: any) { handleHttpException(app, error) }
@@ -164,7 +159,6 @@ export default defineComponent({
     async promoteUserInChatAction(chat: ChatRoomRow) {
       if (!chat || !chat.userName || !chat.id)
         return
-      publishNotification(`Promoting user: ${chat.userName} in chat: ${chat.name}`, false)
       try {
         return (await promoteUserInChat(chat.userName, chat.id)).data
       } catch (error: any) { handleHttpException(app, error) }
@@ -172,13 +166,11 @@ export default defineComponent({
     async demoteUserInChatAction(chat: ChatRoomRow) {
       if (!chat || !chat.userName || !chat.id)
         return
-      publishNotification(`Demoting user: ${chat.userName} in chat: ${chat.name}`, false)
       try {
         return (await demoteUserInChat(chat.userName, chat.id)).data
       } catch (error: any) { handleHttpException(app, error) }
     },
     async destroyChat(chat: ChatRoomRow) {
-      publishNotification(`Deleting chat ${chat.name}`, false)
       let res
       try {
         res = await (await deleteChatRoom(chat.id)).data
