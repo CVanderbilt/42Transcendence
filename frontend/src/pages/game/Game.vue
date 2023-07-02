@@ -84,7 +84,7 @@ export default defineComponent({
     this.io.socket.on("disconnect", () => {
       console.log("disconect inGame: " + this.inGame)
       if (this.inGame) {
-        throwFromAsync(app, "You left an ongoing game, try matchmaking to rejoin game (lag can make you leave a game)")
+        throwFromAsync(app, "You left an ongoing game, if you were playing try matchmaking to rejoin the game (lag can make you leave a game)")
         this.$router.push("/matchmaking")
       }
     });
