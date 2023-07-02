@@ -1,6 +1,5 @@
 import axios, { AxiosError } from "axios";
 import { API_END_POINT } from "@/config";
-import { publishNotification } from "@/utils/utils";
 import jwtDecode from 'jwt-decode';
 import { store } from "@/store/store";
 
@@ -10,7 +9,8 @@ const apiClient = axios.create({
 
 function logOut() {
   store.commit("changeUser", undefined)
-  localStorage.removeItem("token");
+  // localStorage.removeItem("token");
+  store.state.token = undefined
   window.location.href = 'http://localhost:8080/login?expired';
 }
 

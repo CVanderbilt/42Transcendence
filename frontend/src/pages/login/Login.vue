@@ -220,9 +220,11 @@ export default defineComponent({
     },
 
     DoLogin(user: any,) {
+      console.log("DoLogin")
       this.io.socket.emit("alive", { userId: user.id });
       store.commit("changeUser", user)
       this.$router.push("/")
+    
     }
   },
 

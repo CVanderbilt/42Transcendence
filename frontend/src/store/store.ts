@@ -27,7 +27,7 @@ export interface State {
   user: IUser
   notification: { message: string, isError: boolean }
   usersState: UserState[]
-  token: string
+  token: string | undefined
 }
 
 export interface UserState {

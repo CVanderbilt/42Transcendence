@@ -437,7 +437,7 @@ export class Chats2Service {
             const membership = await this.chatMembershipsRepo.findOne({ where: { id: mshpId }, relations: ['chatRoom', 'user'] })
             const memberships = await this.findChatRoomMembers(membership.chatRoom.id)
             const room = membership.chatRoom
-    
+
             if (!membership)
                 return new HttpException('Membership not found', HttpStatusCode.NotFound)
             const requesterMembership = await this.findMembershipByUserAndRoom(requesterId, membership.chatRoom.id)

@@ -180,30 +180,33 @@
           <!-- manage participants -->
           <div id="participants-list">
             <div class="participant-list-item" v-for="item in managedChatMemberships" v-bind:key="item.id">
-              <span>
-                <h4> {{ item.user.username }}</h4>
-              </span>
-              <span v-if="item.isOwner">Owner</span>
-              <form v-if="!item.isOwner">
-                <input type="checkbox" v-model="item.isAdmin" />
-                <label for="isAdmin">Admin</label>
+              <div v-if="item.isPresent">
+                <span>
+                  <h4> {{ item.user.username }}</h4>
+                </span>
+                <span v-if="item.isOwner">Owner</span>
+                <form v-if="!item.isOwner">
+                  <input type="checkbox" v-model="item.isAdmin" />
+                  <label for="isAdmin">Admin</label>
 
-                <input type="checkbox" v-model="item.isBanned" />
-                <label for="isBanned">Banned</label>
-                <div v-if="item.isBanned">
-                  <input type="datetime-local" step="60" v-model="item.bannedUntil" />
-                  <label for="bannedUntil">Banned until</label>
-                </div>
+                  <input type="checkbox" v-model="item.isBanned" />
+                  <label for="isBanned">Banned</label>
+                  <div v-if="item.isBanned">
+                    <input type="datetime-local" step="60" v-model="item.bannedUntil" />
+                    <label for="bannedUntil">Banned until</label>
+                  </div>
 
-                <input type="checkbox" v-model="item.isMuted" />
-                <label for="isMutted">Mutted</label>
-                <div v-if="item.isMuted">
-                  <input type="datetime-local" step="60" v-model="item.mutedUntil" />
-                  <label for="mutedUntil">Muted until</label>
-                </div>
+                  <input type="checkbox" v-model="item.isMuted" />
+                  <label for="isMutted">Mutted</label>
+                  <div v-if="item.isMuted">
+                    <input type="datetime-local" step="60" v-model="item.mutedUntil" />
+                    <label for="mutedUntil">Muted until</label>
+                  </div>
 
-                <b-button style="background-color: brown;" type="button" @click="kickChatMember(item.id)">Kick</b-button>
-              </form>
+                  <b-button style="background-color: brown;" type="button"
+                    @click="kickChatMember(item.id)">Kick</b-button>
+                </form>
+              </div>
             </div>
           </div>
 
@@ -401,7 +404,7 @@ export default defineComponent({
     }
 
   },
-  
+
   beforeRouteLeave() {
     this.io.socket.offAny();
   },
@@ -426,13 +429,30 @@ export default defineComponent({
 
     async updateInfo(updateMessages = true) {
       try {
-        let memberships = await (await getUserMembershipsReq(this.user?.id as string)).data as Membership[]
-        let filteredMemberships = memberships.find(m => this.dateOK(m.bannedUntil) && m.isPresent)
+        await this.fetchMemberships()
+        console.log("currentid", this.currentRoomId)
+        
+        let has2change = true
+        this.userMemberships.forEach(m => {
+          console.log(m.chatRoom.id)
+          if (m.chatRoom.id == this.currentRoomId)
+            has2change = false
+        }) 
+
+        if (has2change)
+          this.changeRoom(this.generalRoom.id)
+        
         if (updateMessages)
           this.fetchMessages()
         this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
       }
       catch (error: any) { handleHttpException(app, error) }
+    },
+
+    async fetchMemberships() {
+      let memberships = await (await getUserMembershipsReq(this.user?.id as string)).data as Membership[]
+      let filteredMemberships = memberships.filter(m => this.dateOK(m.bannedUntil) && m.isPresent)
+      this.userMemberships = filteredMemberships as Membership[]
     },
 
     async fetchMessages() {
@@ -465,7 +485,7 @@ export default defineComponent({
         roomId: this.currentRoomId,
         userName: this.user.username,
         message: this.message,
-        token: localStorage.getItem("token"),
+        token: store.state.token,
         isChallenge: isChallenge,
       }
       this.io.socket.emit("event_message", msg2emit)
@@ -494,7 +514,7 @@ export default defineComponent({
         // find membership
         this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
         let membership = this.userMemberships.find((membership) => membership.chatRoom.id == roomId)
-        if (!membership) {
+        if (!membership || !membership.isPresent) {
           const resp = await joinChatRoomReq(roomId, this.user?.id as string, password) // returns membership even if user is already a member of the room
           this.isAdmin = resp.data.isAdmin
           this.userMemberships.push(resp.data)
@@ -535,7 +555,7 @@ export default defineComponent({
         if (!room) {
           throw new Error("Room does not exist")
         }
-        
+
         await this.changeRoom(room.id, password)
       } catch (error: any) {
         handleHttpException(app, error)
