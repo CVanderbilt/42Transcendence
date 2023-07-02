@@ -28,7 +28,7 @@ import { ID_VALIDATOR, usersInGame, validateInput } from 'src/utils/utils';
 //   }
 
 //   aliveUsers = new Array<string>();
-  
+
 //   @SubscribeMessage('gimme')
 //   handleGimme(client: Socket) {
 //     client.emit('user_states', this.GetUserStates());
@@ -42,12 +42,12 @@ import { ID_VALIDATOR, usersInGame, validateInput } from 'src/utils/utils';
 //       // }), payload);
 //       // this.aliveUsers.push(payload.userId)
 //       // this.server.emit('user_states', this.GetUserStates());
-      
+
 //     } catch (error) {
 //       console.log("error handlealive: " + JSON.stringify(error))
 //     }
 //   }
-  
+
 //   @SubscribeMessage('user_state_update')
 //   UpdateUserState(userId: string) {
 //     //   validateInput(Joi.object({
@@ -104,7 +104,7 @@ export class StateGateway
   }
 
   aliveUsers = new Array<string>();
-  
+
   @SubscribeMessage('gimme')
   handleGimme(client: Socket) {
     client.emit('user_states', this.GetUserStates());
@@ -112,13 +112,20 @@ export class StateGateway
 
   @SubscribeMessage('alive')
   HandleAlive(client: Socket, payload: { userId: string }) {
-    this.aliveUsers.push(payload.userId)
-    this.server.emit('user_states', this.GetUserStates());
+    try {
+      validateInput(Joi.object({
+        userId: ID_VALIDATOR.optional()
+      }), payload);
+      this.aliveUsers.push(payload.userId)
+      this.server.emit('user_states', this.GetUserStates());
+    }
+    catch (error) {
+      console.log("error handlealive: " + JSON.stringify(error))
+    }
   }
 
   @SubscribeMessage('logout')
-  HandleLogout(client: Socket)
-  {
+  HandleLogout(client: Socket) {
     setTimeout(() => {
       this.aliveUsers = []
       this.server.emit('who_is_alive')
@@ -126,7 +133,6 @@ export class StateGateway
   }
 
   UpdateUserState(userId: string) {
-    console.log ( "update user state called")
     this.aliveUsers.push(userId)
     this.server.emit('user_states', this.GetUserStates());
   }

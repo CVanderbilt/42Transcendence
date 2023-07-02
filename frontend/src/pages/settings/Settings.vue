@@ -127,10 +127,14 @@ export default defineComponent({
       store.commit("logout");
 
       this.io.socket.offAny();
-      this.io.socket.emit("logout");
-
+      
       this.$router.push("/login");
       console.log("Bye bye");
+
+      //espera 500ms
+      setTimeout(() => {
+        this.io.socket.emit("logout");
+      }, 500); 
     },
   }
 })
