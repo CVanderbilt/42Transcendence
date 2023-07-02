@@ -295,6 +295,7 @@ export default defineComponent({
       isAdmin: false,
       isBanned: false,
       isMuted: false,
+      isPresent: true,
     }
 
     var generalRoom: ChatRoom = {
@@ -425,9 +426,8 @@ export default defineComponent({
 
     async updateInfo(updateMessages = true) {
       try {
-        const memberships = await (await getUserMembershipsReq(this.user?.id as string)).data as Membership[]
-        console.log(memberships)
-        this.userMemberships = memberships
+        let memberships = await (await getUserMembershipsReq(this.user?.id as string)).data as Membership[]
+        let filteredMemberships = memberships.find(m => this.dateOK(m.bannedUntil) && m.isPresent)
         if (updateMessages)
           this.fetchMessages()
         this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
@@ -657,7 +657,7 @@ export default defineComponent({
             isMuted: membership.isMuted,
             isAdmin: membership.isAdmin,
             bannedUntil: membership.bannedUntil,
-            mutedUntil: membership.mutedUntil
+            mutedUntil: membership.mutedUntil,
           })
         } catch (error: any) {
           handleHttpException(app, error)
@@ -675,6 +675,8 @@ export default defineComponent({
           handleHttpException(app, error)
         }
       })
+
+      this.notify()
     },
 
     async showUserActions(clickedUserId: string) {

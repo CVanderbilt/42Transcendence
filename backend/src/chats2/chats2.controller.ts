@@ -246,6 +246,7 @@ export class Chats2Controller {
                         bannedUntil: new Date(),
                         mutedUntil: new Date(),
                         chatRoom: room,
+                        isPresent: true,
                     }
                 })
 

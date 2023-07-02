@@ -195,11 +195,14 @@ export class Chats2Service {
         })
 
         if (userMembership && userMembership.length > 0) {
-            return this.chatMembershipsRepo.findOne(
+            const m = await this.chatMembershipsRepo.findOne(
                 {
                     where: { id: userMembership[0].id },
                     relations: ['user', 'chatRoom'],
                 })
+            m.isPresent = true;
+            m.save()
+            return m
         }
 
         const room = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
@@ -462,7 +465,9 @@ export class Chats2Service {
             if (membership.chatRoom.isDirect)
                 deleteRoom = true;
     
-            const res = await this.chatMembershipsRepo.delete({ id: mshpId })
+            // await this.chatMembershipsRepo.delete({ id: mshpId })
+            membership.isPresent = false
+            membership.save()
     
             if (deleteRoom)
             {

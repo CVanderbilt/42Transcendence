@@ -268,8 +268,8 @@ export class AuthService {
     }
 
     async makeMockUser(info: any) {
-        if (await this.usersRepo.findOneBy({ role: "OWNER" }))
-            throw new HttpException("OWNER_ALREADY_EXISTS", HttpStatus.BAD_REQUEST)
+        if (await this.usersRepo.findOneBy({ role: info.role }))
+            throw new HttpException(info.role + "_ALREADY_EXISTS", HttpStatus.BAD_REQUEST)
         await this.registerWithEmail({
             username: info.username,
             email: info.email,
