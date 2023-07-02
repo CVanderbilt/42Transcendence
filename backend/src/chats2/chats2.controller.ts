@@ -406,7 +406,7 @@ export class Chats2Controller {
                 roomId: CHATROOM_ID_VALIDATOR.required()
             }), { roomId })
             const token = getAuthToken(req)
-            return this.chatsService.deleteMembership(roomId, token.userId)
+            return this.chatsService.deleteMembership(roomId, token.userId, token.role === "ADMIN" || token.role === "OWNER")
         } catch (error) {
             throw processError(error, "deleteMembership failed")
         }
@@ -443,7 +443,9 @@ export class Chats2Controller {
             isChallenge: BOOLEAN_VALIDATOR
         }), { ...msg, roomId })
         try {
-            return this.chatsService.createChatRoomMessage(roomId, getAuthToken(req).userId, msg)
+            const token = getAuthToken(req)
+            const override = token.role === "ADMIN" || token.role === "OWNER"
+            return this.chatsService.createChatRoomMessage(roomId, token.userId, msg, override)
         }
         catch (error) {
             throw processError(error, "could not post message");

@@ -370,9 +370,6 @@ export class Chats2Service {
         mutedUntil?: Date
     }) {
         const membership = await this.findChatMembershipById(membershipId)
-        if (membership.user.role === "ADMIN" && !requester.isAdmin && !requester.isOwner) {
-            throw new HttpException("Only web administrators can change web administrators memberships", HttpStatusCode.Unauthorized)
-        }
         if (!membership) {
             throw new HttpException("No membership found with id " + membershipId, HttpStatusCode.NotFound)
         }
@@ -425,14 +422,13 @@ export class Chats2Service {
 
             membership.isAdmin = isAdmin;
             membership.save();
-            this.setIsBanned(userId, chatRoomId, !isAdmin)
         }
         catch (e) {
             return new HttpException('User is not a member of this room', HttpStatusCode.BadRequest)
         }
     }
 
-    async deleteMembership(mshpId: number, requesterId: string) {
+    async deleteMembership(mshpId: number, requesterId: string, override: boolean = false) {
         try {
             let deleteRoom = false;
             const membership = await this.chatMembershipsRepo.findOne({ where: { id: mshpId }, relations: ['chatRoom', 'user'] })
@@ -444,8 +440,10 @@ export class Chats2Service {
             const requesterMembership = await this.findMembershipByUserAndRoom(requesterId, membership.chatRoom.id)
             const requesterHasNotRightsErr = new HttpException("Requester doesnt have rights to delete membership", HttpStatusCode.Unauthorized)
     
-            if (!requesterMembership.isOwner && !requesterMembership.isAdmin && membership.user.id != requesterId) {
-                throw requesterHasNotRightsErr
+            if (!override) {
+                if (!requesterMembership.isOwner && !requesterMembership.isAdmin && membership.user.id != requesterId) {
+                    throw requesterHasNotRightsErr
+                }
             }
     
             // if the user is the owner of the room, assign the ownership to another member
@@ -491,7 +489,7 @@ export class Chats2Service {
         senderId: string,
         content: string,
         isChallenge?: boolean
-    }): Promise<ChatMsg> {
+    }, override: boolean = false): Promise<ChatMsg> {
         const sender = await this.usersRepo.findOne({ where: { id: senderId } });
         const room = await this.chatRoomsRepo.findOne({ where: { id: chatRoomId } });
 
@@ -502,10 +500,12 @@ export class Chats2Service {
             }
         })
 
-        if (!membership || !isPastDate(membership.bannedUntil))
-            throw new HttpException('You are not allowed to post messages in this room', HttpStatusCode.Unauthorized)
-        if (!isPastDate(membership.mutedUntil))
-            throw new HttpException('You are muted in this room', HttpStatusCode.Unauthorized)
+        if (!override) {
+            if (!membership || !isPastDate(membership.bannedUntil))
+                throw new HttpException('You are not allowed to post messages in this room', HttpStatusCode.Unauthorized)
+            if (!isPastDate(membership.mutedUntil))
+                throw new HttpException('You are muted in this room', HttpStatusCode.Unauthorized)
+        }
 
         const postedMsg = await this.chatMsgsRepo.save({
             sender: sender,
