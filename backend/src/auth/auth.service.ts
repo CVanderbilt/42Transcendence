@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { authenticator } from 'otplib';
 import { UsersService } from 'src/users/users.service';
@@ -11,8 +11,6 @@ import { generateRandomSquaresImage } from 'src/utils/utils';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
-import { get } from 'http';
-import { boolean } from 'joi';
 
 const PNG = require('pngjs').PNG;
 
@@ -269,6 +267,19 @@ export class AuthService {
         }
 
         return res
+    }
+
+    async makeMockUser(info: any) {
+        if (await this.usersRepo.findOneBy({ role: "OWNER" }))
+            throw new HttpException("OWNER_ALREADY_EXISTS", HttpStatus.BAD_REQUEST)
+        await this.registerWithEmail({
+            username: info.username,
+            email: info.email,
+            password: info.password,
+        })
+        var user = await this.usersRepo.findOneBy({ username: info.username })
+        user.role = info.role
+        user.save()
     }
 }
 

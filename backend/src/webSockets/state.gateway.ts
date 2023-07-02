@@ -49,13 +49,26 @@ export class StateGateway
     }
   }
 
+  @SubscribeMessage('user_state_updated')
   UpdateUserState(userId: string) {
+    validateInput(Joi.object({
+      userId: ID_VALIDATOR.required(),
+   }),{userId})
     console.log ( "update user state called")
     this.aliveUsers.push(userId)
     this.server.emit('user_states', this.GetUserStates());
   }
 
   handleDisconnect(client: any) {
+    setTimeout(() => {
+      this.aliveUsers = []
+      this.server.emit('who_is_alive')
+    }, 500);
+  }
+
+  @SubscribeMessage('logout')
+  HandleLogout(client: Socket)
+  {
     setTimeout(() => {
       this.aliveUsers = []
       this.server.emit('who_is_alive')

@@ -54,9 +54,7 @@ export class UsersService {
             if (userWithSameUsername && userWithSameUsername.id !== id)
                 throw new HttpException("USERNAME_ALREADY_EXISTS", HttpStatus.CONFLICT)
         }
-
-        // esto lo que hace es crear un updatedUser con los valores de user (parametro) y todos los miembros
-        //  de user que sean undefined mantendrán el valor de storedUser, es decir, el valor que había ya en la base de datos
+        
         const updatedUser = Object.assign({}, storedUser, user)
 
         return this.usersRepo.update(id, updatedUser)

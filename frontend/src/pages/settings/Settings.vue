@@ -126,8 +126,8 @@ export default defineComponent({
       localStorage.removeItem("token");
       store.commit("logout");
 
+      this.io.socket.emit("logout");
       this.io.socket.offAny();
-      this.io.socket.emit("user_logout", { userId: this.user.id, state: "offline" });
 
       this.$router.push("/login");
       console.log("Bye bye");

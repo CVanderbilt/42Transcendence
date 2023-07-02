@@ -83,23 +83,28 @@ export default defineComponent({
     this.isError = false;
 
     this.ioUserState.socket.offAny();
-    this.ioUserState.socket.emit("alive", {userId: this.user.id});
-
+    
     this.ioUserState.socket.on("user_states", (states: UserStateSocket[]) => {
       if (!states.find((s) => s.userId === this.user.id)) {
         this.ioUserState.socket.emit("alive", {userId: this.user.id});
       }
     })
-
+    
     this.ioUserState.socket.on("who_is_alive", (payload: any) => {
+      console.log(this.user.id)
+      if (this.user.id === undefined)  {
+        console.log("no user id")
+        return
+      } 
       this.ioUserState.socket.emit("alive", {userId: this.user.id});
     })
     this.auth = isAuthenticated();
     console.log("created");
   },
-
+  
   onmounted() {
     console.log("mounted");
+    console.log(this.user);
   },
 
   data() {
@@ -123,6 +128,7 @@ export default defineComponent({
   },
   methods: {
     searchFriend(username: string) { //todo: update para usar apis
+      alert("search friend se llama")
       getUserByName(username)
         .then((response) => {
           this.$router.push("/user?uuid=" + response.data.id);
@@ -133,11 +139,11 @@ export default defineComponent({
       this.$router.push("/settings");
     },
     generateImageURL,
-    logOut() {
-      this.$router.push("/login");
-      store.commit("changeUser", undefined)
-      localStorage.removeItem("token");
-    },
+    // logOut() {
+    //   this.$router.push("/login");
+    //   store.commit("changeUser", undefined)
+    //   localStorage.removeItem("token");
+    // },
   }
 });
 </script>

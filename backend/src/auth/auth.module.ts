@@ -8,7 +8,6 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import { Jwt2faStrategy } from './jwt-2fa-strategy';
 import { Chats2Service } from 'src/chats2/chats2.service';
-import { ChatRoomEntity } from 'src/chats2/chatEntities.entity';
 import { Chats2Module } from 'src/chats2/chats2.module';
 
 @Module({
@@ -19,6 +18,7 @@ import { Chats2Module } from 'src/chats2/chats2.module';
       signOptions: { expiresIn: "24h"},
     }),
     Chats2Module,
+    
   ],
   controllers: [AuthController],
   providers: [
@@ -28,6 +28,7 @@ import { Chats2Module } from 'src/chats2/chats2.module';
     JwtService,
     JwtStrategy,
     Jwt2faStrategy,
-  ]
+  ],
+  exports: [AuthService],
 })
 export class AuthModule {}

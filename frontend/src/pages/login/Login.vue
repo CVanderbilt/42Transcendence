@@ -91,6 +91,8 @@ export default defineComponent({
       io,
     };
   },
+
+
   async mounted() {
     // comprueba si ya hay un token válido
     await this.tokenLogin()
@@ -108,11 +110,13 @@ export default defineComponent({
   },
 
   setup() {
+    const io = stateSocketIO();
     const reactiveIs2fa = reactive({
       status: false
     })
 
     return {
+      ioState: io,
       is2faCodeRequired: reactiveIs2fa,
     }
   },
@@ -213,7 +217,7 @@ export default defineComponent({
 
     DoLogin(user: any,) {
       this.io.socket.offAny();
-      this.io.socket.emit("user_state_updated", { userId: user.id, state: "online" });
+      this.io.socket.emit("alive", {userId: user.id})
       store.commit("changeUser", user)
       this.$router.push("/")
     }
