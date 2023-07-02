@@ -1,0 +1,129 @@
+Python-dotenv could not parse statement starting at line 1
+Python-dotenv could not parse statement starting at line 7
+Python-dotenv could not parse statement starting at line 9
+Python-dotenv could not parse statement starting at line 12
+Python-dotenv could not parse statement starting at line 15
+Python-dotenv could not parse statement starting at line 19
+Python-dotenv could not parse statement starting at line 24
+Python-dotenv could not parse statement starting at line 27
+Building frontend
+#1 [internal] load build definition from Dockerfile
+#1 sha256:6f7fbeb0420bba09ee456b565e6131b888c27e796f127e4a9b1c4d52356332b9
+#1 transferring dockerfile: 38B done
+#1 DONE 0.0s
+
+#2 [internal] load .dockerignore
+#2 sha256:50036efaf399dc38667d7cebbbebfeb407569a25ed8c50e67140d2251c3de990
+#2 transferring context: 2B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:14.15
+#3 sha256:5c9f6e48634bbc6c2960b709783b80026420754af3c7f6f5fda147851e040590
+#3 DONE 0.7s
+
+#4 [1/5] FROM docker.io/library/node:14.15@sha256:1b1bf1f5023ddd7e08774fa5fcef15f3773833b194bac4e55134fa5f156dcdd6
+#4 sha256:b009803ba26367cf6f10aab27c7ecd8e627710f05faa1b7635706a44a32428b1
+#4 DONE 0.0s
+
+#6 [internal] load build context
+#6 sha256:aa951f128544d6f4e435da1819ab5b1a2d96f1dec510070ea5c475e4db820afc
+#6 transferring context: 2.55kB done
+#6 DONE 0.0s
+
+#5 [2/5] WORKDIR /app
+#5 sha256:86422be8cd598ffe8e2b722cb053659e56f42b36d18d251aa17147d29ba21539
+#5 CACHED
+
+#7 [3/5] COPY package.json /app
+#7 sha256:a928fbeb6659587db5b5ee12142bb75fc06bc78bf3262673a82703287373de53
+#7 CACHED
+
+#8 [4/5] RUN npm install
+#8 sha256:67bca1c127ca9c7fa8eb376c9b68e54fc2c7f9a8baf5ab3caa192817a3e7e078
+#8 CACHED
+
+#9 [5/5] COPY . .
+#9 sha256:b8c9d30864fdcfb6db3ef40c3dd5d68e996b13c8173afca5d0c7b67b84a4603c
+#9 CACHED
+
+#10 exporting to image
+#10 sha256:e8c613e07b0b7ff33893b694f7759a10d42e180f2b4dc349fb57dc6b71dcab00
+#10 exporting layers done
+#10 writing image sha256:ea3137d32a44913eb2c536beea7a82b7908fe249527f5d45dcc9aeaa6303b128 done
+#10 naming to docker.io/library/trans_frontend done
+#10 DONE 0.0s
+Building backend
+#1 [internal] load build definition from Dockerfile
+#1 sha256:27ae1939d49d33c0146efc76079f2faf8eea5756ba48fc0e7441de75dd7b4360
+#1 transferring dockerfile: 38B done
+#1 DONE 0.0s
+
+#2 [internal] load .dockerignore
+#2 sha256:b8c0d5ad52877aaffde97a454d963d03d527a65a5a66c3c5757467d255dfc8f6
+#2 transferring context: 34B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:16
+#3 sha256:fcebe6595ccabc9db4d2477733f2265fb18ca302607dd9a9e445f4ebdfd1189a
+#3 DONE 0.2s
+
+#4 [1/9] FROM docker.io/library/node:16@sha256:fddc8c24ce0bce462d5050667a80a3681c9c6f9d645c151d5a85e968b21e167a
+#4 sha256:1bf7abe38c024266ca834cf5bf16a36b1b0e8874f3cdaf9c2c9d616a8fc05a43
+#4 DONE 0.0s
+
+#6 [internal] load build context
+#6 sha256:8c5b2bf8acb3321c79f5e5fd97794d1d9e14661f62048f8caf8deafbdcc71c97
+#6 transferring context: 2.98kB done
+#6 DONE 0.0s
+
+#9 [5/9] RUN npm install node-gyp -g
+#9 sha256:effa967230d60921b7ca8c6b205358f74804817409c97f12848eea2691c48fd1
+#9 CACHED
+
+#12 [8/9] COPY . .
+#12 sha256:5f2bad54ea225be8b60a58bd8e4731822ffb131e9e18da6d44d025a2ffe001c5
+#12 CACHED
+
+#11 [7/9] RUN npm install bcrypt --save
+#11 sha256:655a8ca733176a83d0e9cdfb56e819db8b8271bca4da585098724dbb6393e27e
+#11 CACHED
+
+#8 [4/9] RUN npm install
+#8 sha256:aa184683d58e90ad02b5c780ed929352574809b978c2a6698fffb72d5979e6ba
+#8 CACHED
+
+#10 [6/9] RUN npm install bcrypt -g
+#10 sha256:67eff9eaa30b2b23ac0073ab90d35babab20a388d4bf2c1efaf12e9d1c03ef9f
+#10 CACHED
+
+#5 [2/9] WORKDIR /usr/src/app
+#5 sha256:f88ab4b0e7d3aeec6770b03aa7c3c5486cc8dff4c8d9ff54b1f6e0e9804aa2c3
+#5 CACHED
+
+#7 [3/9] COPY package*.json ./
+#7 sha256:3699f00301f5b4e9a0a1f5dd8e8b6814930f23fc56f4e711c717f81fbb14c1fa
+#7 CACHED
+
+#13 [9/9] RUN npm run build
+#13 sha256:6e9460772f77853508a201bdd788ac6c1969b1e8e67ae0deb2f9133fdc65863d
+#13 CACHED
+
+#14 exporting to image
+#14 sha256:e8c613e07b0b7ff33893b694f7759a10d42e180f2b4dc349fb57dc6b71dcab00
+#14 exporting layers done
+#14 writing image sha256:0860eafe84a9bc4cc3d67eb2dcca0a70469eb9d9e569bbe9f4432b2bf4c41d08 done
+#14 naming to docker.io/library/trans_backend done
+#14 DONE 0.0s
+Starting postgresnew ... 
+Starting trans_backend_1 ... 
+Starting trans_frontend_1 ... 
+Starting trans_backend_1  ... done
+Starting trans_frontend_1 ... done
+Starting postgresnew      ... done
+Stopping trans_backend_1  ... 
+Stopping trans_frontend_1 ... 
+Stopping postgresnew      ... 
+Stopping postgresnew      ... done
+Killing trans_backend_1   ... 
+Killing trans_frontend_1  ... 
+Aborting.

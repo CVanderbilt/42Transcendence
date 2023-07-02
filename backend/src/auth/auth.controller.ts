@@ -54,6 +54,7 @@ export class AuthController {
       const res = await this.authService.signIn42(data.code)
       return res
     } catch (error) {
+      console.log(error)
       throw processError(error, "problems during login")
     }
   }
