@@ -87,7 +87,6 @@ export default defineComponent({
         console.log(JSON.stringify(response))
 
         // localStorage.setItem("token", response.data.token)
-        store.state.token = response.data.token
 
         const user: IUser = {
           id: response.data.userId,
@@ -102,9 +101,10 @@ export default defineComponent({
         }
 
         this.io.socket.offAny();
-        this.io.socket.emit("user_state_updated", { userId: user.id, state: "online" });
+        
+        this.io.socket.emit("alive", { userId: user.id });
+        localStorage.setItem(user.id, response.data.token)
         store.commit("changeUser", user)
-
         this.$router.push("/settings")
       }
       catch (error) {
