@@ -213,8 +213,8 @@ export default defineComponent({
     },
 
     DoLogin(user: any,) {
-      this.io.socket.offAny();
-      // this.io.socket.emit("user_state_update", { userId: user.id });
+      // this.io.socket.offAny();
+      this.io.socket.emit("alive", { userId: user.id });
       store.commit("changeUser", user)
       this.$router.push("/")
     }

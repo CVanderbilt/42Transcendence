@@ -98,9 +98,10 @@ export default defineComponent({
   async mounted() {
     this.getFriendships()
 
-    // this.ioUserState.socket.offAny()
     this.ioUserState.socket.on("user_states", (states: UserState[]) => {
-      console.log("user_states", states)
+      console.log("user_states")
+      console.log(states)
+
       this.clearStates()
 
       states.forEach(element => {

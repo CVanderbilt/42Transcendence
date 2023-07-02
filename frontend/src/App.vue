@@ -88,19 +88,19 @@ export default defineComponent({
     }
     else {
       console.log("user_state_update emitido: " + this.user.id)
-      this.ioUserState.socket.emit("user_state_update", {userId: this.user.id});
+      this.ioUserState.socket.emit("alive", {userId: this.user.id});
     }
     
-    // this.ioUserState.socket.on("user_states", (states: UserStateSocket[]) => {
-    //   if (!states.find((s) => s.userId === this.user.id)) {
-    //     this.ioUserState.socket.emit("alive", {userId: this.user.id});
-    //   }
-    // })
+    this.ioUserState.socket.on("user_states", (states: UserStateSocket[]) => {
+      if (!states.find((s) => s.userId === this.user.id)) {
+        this.ioUserState.socket.emit("alive", {userId: this.user.id});
+      }
+    })
     
-    // this.ioUserState.socket.on("who_is_alive", (payload: any) => {
-    //   console.log(this.user.id)
-    //   this.ioUserState.socket.emit("alive", {userId: this.user.id});
-    // })
+    this.ioUserState.socket.on("who_is_alive", (payload: any) => {
+      this.ioUserState.socket.emit("alive", {userId: this.user.id});
+    })
+    
     this.auth = isAuthenticated();
     console.log("created");
   },

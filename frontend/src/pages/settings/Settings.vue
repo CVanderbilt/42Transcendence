@@ -127,8 +127,7 @@ export default defineComponent({
       store.commit("logout");
 
       this.io.socket.offAny();
-      this.io.socket.emit("user_logout", { userId: this.user.id, state: "offline" });
-      // this.io.socket.emit("logout");
+      this.io.socket.emit("logout");
 
       this.$router.push("/login");
       console.log("Bye bye");
