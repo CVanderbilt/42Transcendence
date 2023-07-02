@@ -82,7 +82,8 @@ export class MatchMaker {
             powerups,
             challenging: opponentName
           }).get(requesterName)
-          return await this.createMatch(requesterName, opponentName, false, powerups, true)
+          user.matchId = await this.createMatch(requesterName, opponentName, false, powerups, true)
+          return user.matchId
         } else {
           throw new HttpException("requester already in matchmaking", HttpStatusCode.Conflict)
         }
