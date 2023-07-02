@@ -86,8 +86,10 @@ export class ChatGateway
           { user: { id: decodedToken.userId }, chatRoom: { id: roomId } }
       })
 
-      if (!membership || (membership.isBanned || membership.isMuted)) {
-        return
+      if (decodedToken.role !== "ADMIN" && decodedToken.role !== "OWNER") {
+        if (!membership || (membership.isBanned || membership.isMuted)) {
+          return
+        }
       }
 
 

@@ -580,7 +580,7 @@ export default defineComponent({
     async kickChatMember(membershipId: string) {
       try {
         await deleteChatRoomMembershipsReq(membershipId)
-        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.id !== membershipId)
+        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => (membership.id !== membershipId && !membership.isOwner))
       } catch (error: any) {
         handleHttpException(app, error)
       }
@@ -610,7 +610,7 @@ export default defineComponent({
       this.managedChatPassword = ""
       try {
         this.managedChatMemberships = (await getChatRoomMembershipsReq(this.currentRoomId)).data
-        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => membership.user.id !== this.user?.id)
+        this.managedChatMemberships = this.managedChatMemberships.filter((membership) => (membership.user.id !== this.user?.id && !membership.isOwner))
         // transform date to string and remove z at the end so it can be parsed by datepicker
         this.managedChatMemberships.forEach((membership) => {
           membership.bannedUntil = this.time2local(membership.bannedUntil)
