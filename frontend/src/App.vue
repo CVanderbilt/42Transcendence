@@ -136,7 +136,6 @@ export default defineComponent({
   },
   methods: {
     searchFriend(username: string) { //todo: update para usar apis
-      alert("search friend se llama")
       getUserByName(username)
         .then((response) => {
           this.$router.push("/user?uuid=" + response.data.id);
