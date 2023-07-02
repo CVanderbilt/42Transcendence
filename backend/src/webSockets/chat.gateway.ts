@@ -10,7 +10,7 @@ import {
 import * as Joi from 'joi'
 import { Server, Socket } from 'socket.io';
 import { ChatMembershipEntity } from 'src/chats2/chatEntities.entity';
-import { BOOLEAN_VALIDATOR, CHATROOM_ID_VALIDATOR, ID_VALIDATOR, MESSAGE_VALIDATOR, USERNAME_VALIDATOR, decodeToken, validateInput } from 'src/utils/utils';
+import { BOOLEAN_VALIDATOR, CHATROOM_ID_VALIDATOR, ID_VALIDATOR, MESSAGE_VALIDATOR, USERNAME_VALIDATOR, decodeToken, isPastDate, validateInput } from 'src/utils/utils';
 import { Repository } from 'typeorm';
 
 @WebSocketGateway(81, {
@@ -87,7 +87,7 @@ export class ChatGateway
       })
 
       if (decodedToken.role !== "ADMIN" && decodedToken.role !== "OWNER") {
-        if (!membership || (membership.isBanned || membership.isMuted)) {
+        if (!membership || (!isPastDate(membership.bannedUntil) || !isPastDate(membership.mutedUntil))) {
           return
         }
       }
