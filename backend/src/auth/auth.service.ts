@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { authenticator } from 'otplib';
 import { UsersService } from 'src/users/users.service';
@@ -11,8 +11,6 @@ import { generateRandomSquaresImage } from 'src/utils/utils';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
-import { get } from 'http';
-import { boolean } from 'joi';
 
 const PNG = require('pngjs').PNG;
 
@@ -58,8 +56,7 @@ export class AuthService {
         return await this.getLoginDto(user.id)
     }
 
-    async getLoginDto(userId: string)
-    {
+    async getLoginDto(userId: string) {
         const user = await this.usersRepo.findOne({
             where: { id: userId },
             select: ["id", "email", "username", "password", "role", "is2fa", "isBanned"]
@@ -76,7 +73,7 @@ export class AuthService {
 
         if (user.isBanned)
             throw new HttpException(`User ${user.username} is banned`, HttpStatus.UNAUTHORIZED)
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: `${process.env.TOKEN_LIFETIME_MIN}m`})
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: `${process.env.TOKEN_LIFETIME_MIN}m` })
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -114,18 +111,17 @@ export class AuthService {
 
     // LOGIN WITH 42 -------------------------------------------------------------------
     async exchangeCodeForAccessData(code: string): Promise<any> {
-        var bodyFormData = new FormData();
-        bodyFormData.append("grant_type", "authorization_code");
-        bodyFormData.append("client_id", process.env.ID_42);
-        bodyFormData.append("client_secret", process.env.SECRET_42);
-        bodyFormData.append("code", code);
-        bodyFormData.append("redirect_uri", process.env.REDIRECT_URI);
-
         try {
             const res = axios({
                 method: "post",
                 url: "https://api.intra.42.fr/oauth/token",
-                data: bodyFormData,
+                data: {
+                    grant_type: "authorization_code",
+                    client_id: process.env.ID_42,
+                    client_secret: process.env.SECRET_42,
+                    code: code,
+                    redirect_uri: process.env.REDIRECT_URI,
+                },
                 headers: { "content-type": "application/json" },
             })
 
@@ -165,12 +161,12 @@ export class AuthService {
             let i = 1
             while (!nameAvailable) {
                 const existingUser = await this.usersService.findOneByName(name)
-                if (!existingUser) 
-                break;
+                if (!existingUser)
+                    break;
                 name = me42.login + i
                 i++
             }
-            
+
             // create user
             const newUserData: User = {
                 login42: me42.login,
@@ -195,7 +191,7 @@ export class AuthService {
 
         if (user.isBanned)
             throw new HttpException(`User ${user.username} is banned`, HttpStatus.UNAUTHORIZED)
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: `${process.env.TOKEN_LIFETIME_MIN}m`})
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: `${process.env.TOKEN_LIFETIME_MIN}m` })
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -258,7 +254,7 @@ export class AuthService {
 
         if (user.isBanned)
             throw new HttpException(`User ${user.username} is banned`, HttpStatus.UNAUTHORIZED)
-        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: `${process.env.TOKEN_LIFETIME_MIN}m`})
+        const token = this.jwtService.sign(payload, { secret: process.env.JWT_KEY, expiresIn: `${process.env.TOKEN_LIFETIME_MIN}m` })
         const res: LoginResDto = {
             "userId": user.id,
             "email": user.email,
@@ -269,6 +265,19 @@ export class AuthService {
         }
 
         return res
+    }
+
+    async makeMockUser(info: any) {
+        if (await this.usersRepo.findOneBy({ role: "OWNER" }))
+            throw new HttpException("OWNER_ALREADY_EXISTS", HttpStatus.BAD_REQUEST)
+        await this.registerWithEmail({
+            username: info.username,
+            email: info.email,
+            password: info.password,
+        })
+        var user = await this.usersRepo.findOneBy({ username: info.username })
+        user.role = info.role
+        user.save()
     }
 }
 

@@ -58,12 +58,10 @@ export class FriendshipsController {
         }), { ...data, friendshipId });
         try {
 
-            console.log("updating friendship");
             const token = getAuthToken(req)
             if (token.userId !== data.userId)
                 throw new UnauthorizedException("Unauthorized to update friendships on behalf of other users")
 
-            console.log("updating friendship2");
             return this.friendshipsService.updateFriendship(friendshipId, data);
         }
         catch (error) {

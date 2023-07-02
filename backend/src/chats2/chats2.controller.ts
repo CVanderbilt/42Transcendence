@@ -174,6 +174,7 @@ export class Chats2Controller {
         }), { ...data, roomId })
         const token = getAuthToken(req)
         try {
+            console.log(token.userId, roomId, data)
             return this.chatsService.inviteUser(token.userId, roomId, data)
         } catch (error) {
             throw processError(error, `Error inviting with input ${JSON.stringify({ ...data, roomId }, null, 2)}}`)

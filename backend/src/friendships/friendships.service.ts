@@ -41,7 +41,6 @@ export class FriendshipsService {
 
     //update a friendship
     async updateFriendship(friendshipId: string, data: FriendshipDto) {
-        console.log("updating friendship");
         try {
             const friendship = await this.friendshipsRepo.findOneOrFail({ where: { id: friendshipId } })
             if (data.isBlocked !== undefined)

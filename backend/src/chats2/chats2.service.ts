@@ -25,7 +25,6 @@ export class Chats2Service {
         private readonly chatMsgsRepo: Repository<ChatMsgEntity>,
         @InjectRepository(UserEntity)
         private readonly usersRepo: Repository<UserEntity>,
-        // private readonly chatGateway = new ChatGateway(chatMembershipsRepo),
     ) { }
 
     async createChatRoom(roomDto: ChatRoomDto, user: User = null, withOwner: boolean = true): Promise<ChatRoom> {

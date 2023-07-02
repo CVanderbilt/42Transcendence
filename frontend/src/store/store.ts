@@ -27,6 +27,7 @@ export interface State {
   user: IUser
   notification: { message: string, isError: boolean }
   usersState: UserState[]
+  token: string
 }
 
 export interface UserState {
@@ -44,6 +45,7 @@ export const store = createStore<State>({
     notification: { message: "message", isError: false},
     user : new IUser(),
     usersState: [],
+    token: "",
   },
 
   mutations: {

@@ -1,6 +1,6 @@
-<template>
+<template >
   <h1 style="color: white; padding-top: 20px; padding-bottom: 20px; font-family: 'Geneva'; font-weight:bolder;">Friends</h1>
-  <div style="display: flex; flex-direction: row;">
+  <div class="container ">
     <div v-for="fshp in friendships" v-bind:key="fshp.id">
       <div class="friend-block">
         <img :src="generateImageURL(fshp.friend.id)" class="rounded-circle" height="80
@@ -99,6 +99,9 @@ export default defineComponent({
     this.getFriendships()
 
     this.ioUserState.socket.on("user_states", (states: UserState[]) => {
+      console.log("user_states")
+      console.log(states)
+
       this.clearStates()
 
       states.forEach(element => {
@@ -160,9 +163,17 @@ export default defineComponent({
     <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .gradient-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+
   /* fallback for old browsers */
   height: 100vh;
   background: #3609da;
+  background-attachment: fixed;
 
   /* Chrome 10-25, Safari 5.1-6 */
   background: -webkit-linear-gradient(to right,
@@ -180,6 +191,10 @@ export default defineComponent({
   color: #dfdfdf;
 }
 
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+}
 .friend-block {
   background: #2a2a2a;
   color: #dfdfdf;
