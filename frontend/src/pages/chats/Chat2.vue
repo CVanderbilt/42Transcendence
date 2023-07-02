@@ -485,7 +485,7 @@ export default defineComponent({
         roomId: this.currentRoomId,
         userName: this.user.username,
         message: this.message,
-        token: localStorage.getItem("token"),
+        token: localStorage.getItem(store.state.user.id),
         isChallenge: isChallenge,
       }
       this.io.socket.emit("event_message", msg2emit)
