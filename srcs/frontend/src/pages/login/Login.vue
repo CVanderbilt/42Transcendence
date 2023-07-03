@@ -79,7 +79,7 @@ export default defineComponent({
   name: "Login",
 
   data() {
-    const io = stateSocketIO()
+    const io = stateSocketIO()    
     return {
       username: "",
       email: "",
@@ -144,8 +144,8 @@ export default defineComponent({
               is2faEnabled: response.data.is2faEnabled || false,
               role: response.data.role,
               isBanned: response.data.isBanned,
-            }
-            this.DoLogin(user, response.data.token)
+            }            
+            this.DoLogin(user, response.data.token, response.data.isNew)
           }
         }).catch(err => handleHttpException(app, err))
     },
@@ -174,7 +174,7 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned
             }
-            this.DoLogin(user, response.data.token)
+            this.DoLogin(user, response.data.token, response.data.isNew)
           }
         }).catch(err => handleHttpException(app, err))
     },
@@ -206,19 +206,21 @@ export default defineComponent({
             isBanned: response.data.isBanned
           }
 
-          this.DoLogin(user, response.data.token)
+          this.DoLogin(user, response.data.token, response.data.isNew)
         }).catch(error => {
           handleHttpException(app, error)
         })
     },
 
-    DoLogin(user: any, token: string) {
+    DoLogin(user: any, token: string, isNew: false) {
       this.io.socket.emit("alive", { userId: user.id });
       localStorage.setItem(user.id, token)
       localStorage.setItem("token", token)
       store.commit("changeUser", user)
-      this.$router.push("/")
-    
+      if (isNew)
+        this.$router.push("/settings")
+      else
+        this.$router.push("/")
     }
   },
 

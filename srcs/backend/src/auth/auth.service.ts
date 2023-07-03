@@ -153,8 +153,10 @@ export class AuthService {
 
         const me42 = await this.exchange42TokenForUserData(accessData.access_token)
 
+        let isNew = false
         var user = await this.usersService.findBy42Login(me42.login)
         if (!user) {
+            isNew = true
             // pick a name
             let nameAvailable = false
             let name = me42.login
@@ -187,6 +189,7 @@ export class AuthService {
             role: user.role,
             isTwoFactorAuthenticationEnabled: false,
             isTwoFactorAuthenticated: false,
+            isNew: isNew,
         }
 
         if (user.isBanned)
@@ -199,6 +202,7 @@ export class AuthService {
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
+            "isNew": isNew
         }
 
         return res
