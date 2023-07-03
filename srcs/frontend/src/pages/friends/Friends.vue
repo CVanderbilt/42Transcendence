@@ -1,11 +1,11 @@
 <template >
-  <h1 style="color: white; padding-top: 20px; padding-bottom: 20px; font-family: 'Geneva'; font-weight:bolder;">Friends</h1>
-  <div class="container">
+  <h1 style="color: white; padding-top: 20px; font-family: 'Geneva'; font-weight:bolder;">Friends</h1>
+  <div class="container" style="max-width: 90vw;">
     <div v-for="fshp in friendships" v-bind:key="fshp.id">
       <div class="friend-block">
         <img :src="generateImageURL(fshp.friend.id)" class="rounded-circle" height="80
                 " style="border-radius: 50%" alt="" loading="lazy" />
-        <h2>{{ fshp.friend.username }}</h2>
+        <h4 style="padding-top: 10px;">{{ fshp.friend.username }}</h4>
 
         <p v-if="friendsStates.find(x => x.userId == fshp.friend.id)?.state === 'online'" style="color: rgb(0, 255, 72);">
           {{ friendsStates.find(x => x.userId == fshp.friend.id)?.state }}
@@ -162,8 +162,6 @@ export default defineComponent({
     
     <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.gradient-custom {
-}
 
 .chat-button {
   background: #3466cb;
@@ -172,7 +170,7 @@ export default defineComponent({
 
 .container {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 .friend-block {
   background: #2a2a2a;
@@ -180,6 +178,8 @@ export default defineComponent({
   margin: 10px;
   padding: 10px;
   border-radius: 10px;
+  min-width: 17vw;
+  max-width: 22vw;
 }
 
 h2 {
