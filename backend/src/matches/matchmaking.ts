@@ -185,7 +185,7 @@ export class MatchMaker {
           //console.log(`${user.id} aquires other user mutex`)
           //console.log("mathing users succeded Creating random uuid for room")
           
-          const matchId = await this.createMatch(user.id, otherUser.id, true, user.powerups)
+          const matchId = await this.createMatch(user.id, otherUser.id, !user.isFriendly, user.powerups)
         
           otherUser.matchId = matchId
           user.matchId = matchId
