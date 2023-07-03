@@ -7,19 +7,19 @@
               <div class="col-xl-6">
                 <div class="card mb-4" style="background-color: #27292f;height: 100%;">
                   <div class="card-header" >
-                    <h3 >Exhibition Match</h3>
+                    <h3  style="color: white;">Exhibition Match</h3>
                     
                   </div>
                   <div class="card-body">
                     <div style="margin-bottom: 20px;">
-                      <p>Powerups</p>
+                      <p style="color: white;">Powerups</p>
                       <form style="display: flex; flex-direction: column;">
                         <div>
-                          <label for="isSmall" style="margin-right: 20px;">Small paddle</label>
+                          <label for="isSmall" style="color:pink margin-right: 20px;">Small paddle</label>
                           <input type="checkbox" v-model="options.smallPaddle" />
                         </div>
                         <div>
-                          <label for="isFast" style="margin-right: 20px;">Fast Serve</label>
+                          <label for="isFast" style="color:pink margin-right: 20px;">Fast Serve</label>
                           <input type="checkbox" v-model="options.fastServe" />
                         </div>
                       </form>
@@ -36,7 +36,7 @@
               <div class="col-xl-6">
                 <div class="card mb-4" style="background-color: #27292f; height: 100%;">
                   <div class="card-header">
-                    <h3>Competitive Match</h3>
+                    <h3  style="color: white;">Competitive Match</h3>
                     
                   </div>
                   <div class="card-body">
