@@ -130,6 +130,7 @@ export default defineComponent({
       elogin(loginData)
         .then((response) => {
           if (response.data.is2fa) {
+            localStorage.setItem("token", response.data.token)
             this.is2faCodeRequired.status = true
           }
           else {
@@ -214,6 +215,7 @@ export default defineComponent({
     DoLogin(user: any, token: string) {
       this.io.socket.emit("alive", { userId: user.id });
       localStorage.setItem(user.id, token)
+      localStorage.setItem("token", token)
       store.commit("changeUser", user)
       this.$router.push("/")
     
