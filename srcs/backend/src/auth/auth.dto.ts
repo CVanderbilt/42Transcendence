@@ -31,7 +31,6 @@ export class LoginResDto {
     token: string
     is2fa: boolean
     role: string
-    isNew?: boolean
 }
 
 export class Signin2faDto {

@@ -127,6 +127,8 @@ export class UsersController {
         }
     }
 
+    // todo: deberíamos probar a llamar a todas las apis comprobando todos los casos de unauthorized
+    // admins y el propio usuario a modificar (ese check es más complejo y se hace abajo con token.hasRightsOverUser)
     @UseGuards(JwtAuthenticatedGuard)
     @Put(':id')
     async update(@Body() user: User, @Param('id') id: string, @Req() request): Promise<UpdateResult> {
@@ -139,10 +141,8 @@ export class UsersController {
             is2fa: BOOLEAN_VALIDATOR,
             twofaSecret: BOOLEAN_VALIDATOR,
         }), { ...user, id });
-        try {            
-            const token = getAuthToken(request)            
-            if (user.is2fa && !user.twofaSecret)
-                throw new HttpException("data illformed", 400)
+        try {
+            const token = getAuthToken(request)
             if (token.hasRightsOverUser(token, await this.usersService.findOneById(id)))
                 return this.usersService.updateUser(id, user)
             throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to modify user ${id}`)

@@ -92,12 +92,6 @@ export default defineComponent({
       }
 
       try {
-        if (!this.is2fa)
-        {
-          this.user.is2fa = false
-          this.options.is2fa = this.is2fa
-        }
-        alert(JSON.stringify(this.options))
         const res = await (await updateUserReq(store.state.user.id, this.options)).data
         publishNotification("User updated", false)
       }

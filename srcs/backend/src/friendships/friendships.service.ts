@@ -52,21 +52,8 @@ export class FriendshipsService {
         console.log(friendship);
         
         return friendship
-    
-        // console.log("creating friendship");
-        // let friendship = await this.friendshipsRepo.findOne({ where: { user: { id: userId }, friend: { id: data.friendId } } })
-        // if (!friendship) {
-        //     friendship = new FriendshipEntity();
-        //     friendship.user = await this.usersRepo.findOneBy({ id: userId });
-        //     friendship.friend = await this.usersRepo.findOneBy({ id: data.friendId });
-        //     friendship.isBlocked = false;        
-        // }
-        
-        // console.log("is friend " + friendship.isFriend);
-        // friendship.isFriend = data.isFriend ? data.isFriend : true;
-        // friendship = await this.friendshipsRepo.save(friendship);
-        // return friendship
     }
+
 
     //update a friendship
     async updateFriendship(friendshipId: string, data: FriendshipDto) {

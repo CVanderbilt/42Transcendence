@@ -79,7 +79,7 @@ export default defineComponent({
   name: "Login",
 
   data() {
-    const io = stateSocketIO()    
+    const io = stateSocketIO()
     return {
       username: "",
       email: "",
@@ -144,8 +144,8 @@ export default defineComponent({
               is2faEnabled: response.data.is2faEnabled || false,
               role: response.data.role,
               isBanned: response.data.isBanned,
-            }            
-            this.DoLogin(user, response.data.token, response.data.isNew)
+            }
+            this.DoLogin(user, response.data.token)
           }
         }).catch(err => handleHttpException(app, err))
     },
@@ -160,7 +160,7 @@ export default defineComponent({
           console.log("guardando token: " + localStorage.getItem(response.data.userId))
 
           if (response.data.is2fa) {
-            localStorage.set("token", response.data.token)
+            localStorage.setItem("token", response.data.token)
             this.is2faCodeRequired.status = true
           }
           else {
@@ -175,7 +175,7 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned
             }
-            this.DoLogin(user, response.data.token, response.data.isNew)
+            this.DoLogin(user, response.data.token)
           }
         }).catch(err => handleHttpException(app, err))
     },
@@ -207,21 +207,19 @@ export default defineComponent({
             isBanned: response.data.isBanned
           }
 
-          this.DoLogin(user, response.data.token, response.data.isNew)
+          this.DoLogin(user, response.data.token)
         }).catch(error => {
           handleHttpException(app, error)
         })
     },
 
-    DoLogin(user: any, token: string, isNew: false) {
+    DoLogin(user: any, token: string) {
       this.io.socket.emit("alive", { userId: user.id });
       localStorage.setItem(user.id, token)
       localStorage.setItem("token", token)
       store.commit("changeUser", user)
-      if (isNew)
-        this.$router.push("/settings")
-      else
-        this.$router.push("/")
+      this.$router.push("/")
+    
     }
   },
 
