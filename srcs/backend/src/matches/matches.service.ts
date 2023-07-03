@@ -15,7 +15,7 @@ export class MatchesService {
         private readonly matchesRepo: Repository<MatchEntity>,
         @InjectRepository(UserEntity)
         private readonly usersRepo: Repository<UserEntity>
-    ) { 
+    ) {
         this.matchMaker = new MatchMaker(matchesRepo, usersRepo)
     }
 
@@ -53,20 +53,18 @@ export class MatchesService {
         type: "Competitive" | "Exhibition",
     ) {
         // console.log(`[${id}] -> players: {${players[0].name},${players[0].score}}, {${players[1].name},${players[1].score}}`)
-        
+
         const existingMatch = await this.matchesRepo.findOne({ where: { id } })
         if (existingMatch)
-           return
-        
+            return
+
         const user = await this.usersRepo.findOne({ where: { id: players[0].name } })
         const opponent = await this.usersRepo.findOne({ where: { id: players[1].name } })
-        if (!user)
-        {
+        if (!user) {
             // console.log(`no recieved player from: ${players} was user: ${user}`)
             return
         }
-        if (!opponent)
-        {
+        if (!opponent) {
             // console.log(`no recieved player from: ${players} was opponent: ${opponent}`)
             return
         }
@@ -81,16 +79,18 @@ export class MatchesService {
             winner: players[0].score > players[1].score ? user : opponent,
         })
 
-        if (players[0].score > players[1].score) {
-            match.user.victories++;
-            match.opponent.defeats++;
-            match.user.score ++;
-            match.opponent.score --;
-        } else {
-            match.opponent.victories++;
-            match.user.defeats++;
-            match.opponent.score ++;
-            match.user.score --;
+        if (type === 'Competitive') {
+            if (players[0].score > players[1].score) {
+                match.user.victories++;
+                match.opponent.defeats++;
+                match.user.score++;
+                match.opponent.score--;
+            } else {
+                match.opponent.victories++;
+                match.user.defeats++;
+                match.opponent.score++;
+                match.user.score--;
+            }
         }
 
         match.user.save()
@@ -107,7 +107,7 @@ export class MatchesService {
             opponent: matchEntity.opponent
         }
     }
-    
+
     async find(): Promise<Match[]> {
         const list = await MatchEntity
             .createQueryBuilder('match')
