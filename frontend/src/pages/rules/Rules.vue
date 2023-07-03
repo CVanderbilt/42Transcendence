@@ -24,14 +24,14 @@
           If a player fails to hit the ball and it touches the wall behind their paddle, their opponent scores a point.
         </li>
         <li>
-          The game continues until one player reaches 5 points. The player with the highest score at the end of the game
+          The game continues until one player reaches 7 points. The player with the highest score at the end of the game
           is declared the winner.
         </li>
       </ul>
     </div>
 
     <div class="rule">
-      <h3>Match Making</h3>
+      <h3>Match Making</h3>s
       <ul style="text-align: left;">
         <li>
           Matches players with similar scores. If matchmaking takes too much time it will try to match with a higher threshold until it eventually either times out or matches succesfully

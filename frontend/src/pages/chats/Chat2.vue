@@ -378,7 +378,7 @@ export default defineComponent({
           chatRoomId: roomId,
           isChallenge: isChallenge,
         }
-        alert(JSON.stringify(msg))
+        // alert(JSON.stringify(msg))
         this.messages.push(msg)
       });
 
