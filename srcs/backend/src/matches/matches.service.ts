@@ -79,18 +79,27 @@ export class MatchesService {
             winner: players[0].score > players[1].score ? user : opponent,
         })
 
+
         if (type === 'Competitive') {
-            if (players[0].score > players[1].score) {
-                match.user.victories++;
-                match.opponent.defeats++;
+            if (players[0].score > players[1].score) {                
                 match.user.score++;
                 match.opponent.score--;
-            } else {
-                match.opponent.victories++;
-                match.user.defeats++;
+            } else {                
                 match.opponent.score++;
                 match.user.score--;
             }
+        }
+
+        if (players[0].score > players[1].score) {
+            match.user.victories++;
+            match.opponent.defeats++;
+            match.user.score++;
+            match.opponent.score--;
+        } else {
+            match.opponent.victories++;
+            match.user.defeats++;
+            match.opponent.score++;
+            match.user.score--;
         }
 
         match.user.save()
