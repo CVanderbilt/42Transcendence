@@ -93,13 +93,9 @@ export class MatchesService {
         if (players[0].score > players[1].score) {
             match.user.victories++;
             match.opponent.defeats++;
-            match.user.score++;
-            match.opponent.score--;
         } else {
             match.opponent.victories++;
             match.user.defeats++;
-            match.opponent.score++;
-            match.user.score--;
         }
 
         match.user.save()
