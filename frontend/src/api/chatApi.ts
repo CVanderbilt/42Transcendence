@@ -104,7 +104,6 @@ export async function updateChatRoomMembershipsReq(membershipId: string, data: {
     bannedUntil?: Date,
     mutedUntil?: Date
 }) {
-    alert("calling with: " + JSON.stringify(data))
     return apiClient.put(`${URL}/memberships/${membershipId}`, data)
 }
 

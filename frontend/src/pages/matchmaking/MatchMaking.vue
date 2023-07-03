@@ -15,11 +15,11 @@
                       <p style="color: white;">Powerups</p>
                       <form style="display: flex; flex-direction: column;">
                         <div>
-                          <label for="isSmall" style="color:pink; margin-right: 20px;">Small paddle</label>
+                          <label for="isSmall" style="color:pink margin-right: 20px;">Small paddle</label>
                           <input type="checkbox" v-model="options.smallPaddle" />
                         </div>
                         <div>
-                          <label for="isFast" style="color:pink; margin-right: 20px;">Fast Serve</label>
+                          <label for="isFast" style="color:pink margin-right: 20px;">Fast Serve</label>
                           <input type="checkbox" v-model="options.fastServe" />
                         </div>
                       </form>
