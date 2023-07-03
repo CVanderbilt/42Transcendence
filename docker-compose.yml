@@ -12,14 +12,14 @@ services:
     ports:
       - 5432:5432
   frontend:
-    build: ./frontend
+    build: ./srcs/frontend
     ports:
       - 8080:8080
     volumes: 
-      - ./frontend:/app
+      - ./srcs/frontend:/app
       - /app/node_modules/
   backend: 
-    build: ./backend
+    build: ./srcs/backend
     ports: 
       - 3000:3000
       - 81:81
@@ -27,9 +27,9 @@ services:
       - 83:83
       - 84:84
     volumes:
-      - ./backend:/app
+      - ./srcs/backend:/app
       - /app/node_modules/
     env_file:
-      - ./backend/.env
+      - ./srcs/backend/.env
 volumes: 
   pgdata:

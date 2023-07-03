@@ -152,7 +152,27 @@ export default defineComponent({
 
 <style>
 .gradient-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
   /* fallback for old browsers */
+  height: 100vh;
+  background: #3609da;
+  background-attachment: fixed;
+
+  /* Chrome 10-25, Safari 5.1-6 */
+  background: -webkit-linear-gradient(to right,
+      rgba(4, 8, 22, 0.804),
+      rgb(252, 253, 254));
+
+  /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background: linear-gradient(to right,
+      rgba(4, 8, 22, 0.804),
+      rgb(249, 251, 255));
+
 }
 
 #app {
