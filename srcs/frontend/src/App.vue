@@ -1,5 +1,5 @@
 <template>
-  <div class="vh-100 gradient-custom">
+  <div class="gradient-custom" style="height: auto; min-height: 100vh;">
     <!-- Navbar -->
     <div v-if="user.username !== ''">
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -135,10 +135,10 @@ export default defineComponent({
     NotificationBanner
   },
   methods: {
-    searchFriend(username: string) { //todo: update para usar apis
+    searchFriend(username: string) {
       getUserByName(username)
         .then((response) => {
-          this.$router.push("/user?uuid=" + response.data.id);
+          window.location.href = `http://localhost:8080/user?uuid=${response.data.id}`;
         })
         .catch(err => handleHttpException(app, err))
     },
@@ -152,16 +152,11 @@ export default defineComponent({
 
 <style>
 .gradient-custom {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position:relative;
 
   /* fallback for old browsers */
-  height: 100vh;
   background: #3609da;
-  background-attachment: fixed;
+  background-attachment: scroll;
 
   /* Chrome 10-25, Safari 5.1-6 */
   background: -webkit-linear-gradient(to right,
