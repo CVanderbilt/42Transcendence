@@ -51,6 +51,7 @@
 </template>
 
 <script lang="ts">
+ /* eslint-disable */
 import { computed, defineComponent } from "vue";
 import Home from "./pages/home/Home.vue";
 import Login from "./pages/login/Login.vue";

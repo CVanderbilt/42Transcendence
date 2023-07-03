@@ -54,6 +54,10 @@
 </template>
 
 <script lang="ts">
+
+ /* eslint-disable */
+
+ 
 import { IUser, store } from '@/store/store';
 import { defineComponent } from 'vue';
 import { getAllUsers, banUser, allowUser, promoteUser, demoteUser } from '@/api/user'

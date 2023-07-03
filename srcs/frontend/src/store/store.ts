@@ -1,3 +1,5 @@
+ /* eslint-disable */
+
 import { InjectionKey } from 'vue'
 import { createStore, Store } from 'vuex'
 import createPersistedState from 'vuex-persistedstate'

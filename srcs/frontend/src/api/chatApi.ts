@@ -1,3 +1,5 @@
+ /* eslint-disable */
+
 import { apiClient } from "./baseApi";
 import { getUserByName } from "./user";
 

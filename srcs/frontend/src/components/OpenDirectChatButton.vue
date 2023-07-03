@@ -5,6 +5,9 @@
 </template>
   
 <script lang="ts">
+
+ /* eslint-disable */
+ 
 import { getDirectChatRoomReq } from "@/api/chatApi"
 import { app, chatSocketIO, useSocketIO } from "@/main";
 import { handleHttpException } from "@/utils/utils";

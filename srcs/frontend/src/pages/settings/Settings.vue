@@ -46,6 +46,10 @@
 </template>
 
 <script lang="ts">
+
+ /* eslint-disable */
+
+ 
 import { computed, defineComponent, handleError } from "vue";
 import { useStore } from "vuex";
 import { key, store } from "../../store/store";

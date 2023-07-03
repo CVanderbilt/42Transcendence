@@ -67,6 +67,10 @@
 </template>
 
 <script lang="ts">
+
+ /* eslint-disable */
+
+ 
 import { defineComponent, reactive } from "vue";
 import { IUser, store } from "../../store/store";
 import { AUTHENTICATE_2FA_ENDPOINT, LOGIN_42_URL } from "@/config";

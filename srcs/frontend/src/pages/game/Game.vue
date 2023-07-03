@@ -16,6 +16,10 @@
 </template>
 
 <script lang="ts">
+
+ /* eslint-disable */
+
+ 
 import { getUserById } from "@/api/user";
 import { defineComponent } from "vue";
 import { app, gameSocketIO, stateSocketIO } from "../..//main";

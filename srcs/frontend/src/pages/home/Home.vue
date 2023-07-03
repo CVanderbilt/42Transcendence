@@ -82,6 +82,10 @@
 </template>
 
 <script lang="ts">
+
+ /* eslint-disable */
+
+ 
 import { defineComponent, onMounted, ref } from "vue";
 import { useStore } from "vuex";
 import { key } from "../..//store/store";

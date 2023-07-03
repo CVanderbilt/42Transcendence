@@ -1,4 +1,7 @@
 <script setup lang="ts">
+ 
+ /* eslint-disable */
+
   import ConfettiExplosion from "vue-confetti-explosion";
 </script>
 

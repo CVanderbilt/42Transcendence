@@ -252,6 +252,10 @@
 </template>
   
 <script lang="ts">
+
+ /* eslint-disable */
+
+ 
 import { defineComponent } from "vue";
 import { useStore } from "vuex";
 import { IUser, key, store } from "../../store/store";

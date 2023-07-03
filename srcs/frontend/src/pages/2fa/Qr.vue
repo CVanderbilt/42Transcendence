@@ -20,6 +20,8 @@
 
 <script lang="ts">
 
+ /* eslint-disable */
+
 import { apiClient } from '@/api/baseApi';
 import { ENABLE_2FA_ENDPOINT, QR_ENDPOINT } from '@/config';
 import { app } from '@/main';

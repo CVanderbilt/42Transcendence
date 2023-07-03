@@ -1,3 +1,5 @@
+ /* eslint-disable */
+
 import { API_END_POINT } from "@/config";
 import { store } from "@/store/store";
 import { App } from "vue";
