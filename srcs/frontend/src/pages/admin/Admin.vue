@@ -128,7 +128,7 @@ export default defineComponent({
       }
     },
 
-    async promoteUserAction(user: IUser) {
+    async promoteUserAction(user: IUser): Promise<void> {
       if (!user)
         return
       return (await promoteUser(user.id)).data
@@ -151,32 +151,24 @@ export default defineComponent({
     async banUserInChatAction(chat: ChatRoomRow) {
       if (!chat || !chat.userName || !chat.id)
         return
-      try {
-        return (await banUserFromChat(chat.userName, chat.id)).data
-      } catch (error: any) { handleHttpException(app, error) }
+      return (await banUserFromChat(chat.userName, chat.id)).data
     },
 
-    async allowUserInChatAction(chat: ChatRoomRow) {
+    async allowUserInChatAction(chat: ChatRoomRow): Promise<void> {
       if (!chat || !chat.userName || !chat.id)
         return
-      try {
-        return (await allowUserFromChat(chat.userName, chat.id)).data
-      } catch (error: any) { handleHttpException(app, error) }
+      return (await allowUserFromChat(chat.userName, chat.id)).data
     },
 
     async promoteUserInChatAction(chat: ChatRoomRow) {
       if (!chat || !chat.userName || !chat.id)
         return
-      try {
-        return (await promoteUserInChat(chat.userName, chat.id)).data
-      } catch (error: any) { handleHttpException(app, error) }
+      return (await promoteUserInChat(chat.userName, chat.id)).data
     },
     async demoteUserInChatAction(chat: ChatRoomRow) {
       if (!chat || !chat.userName || !chat.id)
         return
-      try {
-        return (await demoteUserInChat(chat.userName, chat.id)).data
-      } catch (error: any) { handleHttpException(app, error) }
+      return (await demoteUserInChat(chat.userName, chat.id)).data
     },
     async destroyChat(chat: ChatRoomRow) {
       let res

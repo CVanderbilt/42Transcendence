@@ -93,7 +93,7 @@ export class UsersController {
             const users = await this.usersService.findAllUsers()
             return users.map(user => new UserDto(user))
         } catch (error) {
-            throw processError(error, "allow failed")
+            throw processError(error, "find failed")
         }
     }
 
@@ -110,7 +110,7 @@ export class UsersController {
 
             return new UserDto(user)
         } catch (error) {
-            throw processError(error, "allow failed")
+            throw processError(error, "can not find user")
         }
     }
     
@@ -123,7 +123,7 @@ export class UsersController {
         try {
             return new UserDto( await this.usersService.findOneById(id) )
         } catch (error) {
-            throw processError(error, "allow failed")
+            throw processError(error, "can not get user")
         }
     }
 
@@ -147,7 +147,7 @@ export class UsersController {
                 return this.usersService.updateUser(id, user)
             throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to modify user ${id}`)
         } catch (error) {
-            throw processError(error, "allow failed")
+            throw processError(error, "can not update user")
         }
     }
 
@@ -163,7 +163,7 @@ export class UsersController {
             return this.usersService.deleteUser(id)
             throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to delete user ${id}`)
         } catch (error) {
-            throw processError(error, "allow failed")
+            throw processError(error, "can not delete user")
         }
     }
 
@@ -181,7 +181,7 @@ export class UsersController {
             
             stream.pipe(response);
         } catch (error) {
-            throw processError(error, "allow failed")
+            throw processError(error, "can not get image")
         }
     }
 
@@ -198,7 +198,7 @@ export class UsersController {
             return this.usersService.uploadDatabaseFile(file.buffer, id)
             throw new UnauthorizedException(`Requester (${token.userId}) is not allowed to change image of user: ${id}`)
         } catch (error) {
-            throw processError(error, "allow failed")
+            throw processError(error, "can not set image")
         }
     }
 
@@ -208,7 +208,7 @@ export class UsersController {
         try {
             return this.usersService.getLadder()
         } catch (error) {
-            throw processError(error, "allow failed")
+            throw processError(error, "can not get ladder")
         }
     }
 }
