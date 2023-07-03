@@ -9,13 +9,16 @@ const apiClient = axios.create({
 
 function logOut() {
   localStorage.removeItem(store.state.user.id);
+  localStorage.removeItem("token")
   store.commit("changeUser", undefined)
   window.location.href = 'http://localhost:8080/login?expired';
 }
 
 apiClient.interceptors.request.use((config) => {
   // const token = localStorage.getItem('token');
-  const token = localStorage.getItem(store.state?.user?.id)
+  let token = localStorage.getItem(store.state?.user?.id)
+  if (!token)
+    token = localStorage.getItem("token")
   if (token) {
     const decodedToken = jwtDecode<{ exp: number;[key: string]: any }>(token);
 

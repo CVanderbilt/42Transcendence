@@ -110,7 +110,7 @@ export class AuthController {
     }), {twoFactorCode});
 
     try {
-      const authToken = getAuthToken(request)
+      const authToken = getAuthToken(request, false)
       return await this.authService.loginWith2fa(authToken.userId, twoFactorCode);
     } catch (error) {
       throw processError(error, "problems during authenticate")
