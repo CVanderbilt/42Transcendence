@@ -92,7 +92,6 @@ export class ChatGateway
         }
       }
 
-
       this.server.to(`room_${payload.roomId}`).emit('new_message', payload.message, payload.userName, decodedToken.userId, roomId, payload.isChallenge);
     } catch (error) {
       console.log(error)

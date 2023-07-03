@@ -378,12 +378,11 @@ export default defineComponent({
           chatRoomId: roomId,
           isChallenge: isChallenge,
         }
-
+        alert(JSON.stringify(msg))
         this.messages.push(msg)
       });
 
       this.io.socket.on("on_chat_updated", () => {
-        alert("on_chat_updated")
         this.updateInfo(false);
       })
 
@@ -449,8 +448,14 @@ export default defineComponent({
 
     async fetchMemberships() {
       let memberships = await (await getUserMembershipsReq(this.user?.id as string)).data as Membership[]
-      let filteredMemberships = memberships.filter(m => this.dateOK(m.bannedUntil) && m.isPresent)
-      this.userMemberships = filteredMemberships as Membership[]
+      if (this.user.role === "CUSTOMER")
+      {
+        let filteredMemberships = memberships.filter(m => this.dateOK(m.bannedUntil) && m.isPresent)
+        this.userMemberships = filteredMemberships as Membership[]
+      }
+      else {
+        this.userMemberships = memberships as Membership[]
+      }
     },
 
     async fetchMessages() {
