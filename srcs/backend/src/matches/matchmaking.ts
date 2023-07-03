@@ -96,8 +96,8 @@ export class MatchMaker {
           id,
           score: -424242,
           mutex: new Mutex(),
-          isFriendly: false,
-          powerups: ["N"], // lo ignorará porq se está uniendo a una partida ya empezada
+          isFriendly: true,
+          powerups: ["N"], 
           challenging,
           matchId
         }).get(id)
@@ -107,14 +107,11 @@ export class MatchMaker {
     
     private async createMatch(userName: string, opponentName: string, isCompetitive: boolean, powerups: string[], isChallenge: boolean = false): Promise<string> {
       try {
-          //console.log("creating competitive match")
-          //console.log(`contestants: (${userName} and ${opponentName})`)
-          //console.log("usersRepo: " + this.usersRepo)
-          //console.log("matchesRepo: " + this.matchesRepo)
+
           const user = await this.usersRepo.findOne({ where: { id: userName } })
-          //console.log("user: " + user)
+
           const opponent = await this.usersRepo.findOne({ where: { id: opponentName } })
-          //console.log("opponent: " + opponent)
+
           if (!user)
             throw new HttpException("Create match failed, user: " + userName + " not found", HttpStatusCode.NotFound)
           if (!opponent)
@@ -151,9 +148,6 @@ export class MatchMaker {
           }
           return id
       } catch (error) {
-          //console.log("!!!!!!!!ERROR AQUI!!!!!!!!")
-          //todo: relanzar por ahora servirá, si falla un usuario en matchmaking puede que se bloquee hata que de tiemout pero ya
-          //console.log(error)
           throw error
       }
   }
@@ -219,9 +213,8 @@ export class MatchMaker {
         })
         return null;
       }
-//todo random: hacer que si un usuario ya está en matchmaking pero no ha encontrado partida, las requests de hacer matchmaking devuelvan already created o algo así, si un usuario ha empezado matchmaking y cerró la request la manera de encontrar la partida será ir probando varias llamadas hasta que una le diga el matchId normal
+
       private async checkForMatch(id: string, score: number, isFriendly: boolean, powerups: string[]): Promise<string> {
-        // crear o encontrar usuario
         let user = this.usersAlt.get(id)
         if (!user) {
           user = this.usersAlt.set(id, {
@@ -232,17 +225,12 @@ export class MatchMaker {
             powerups,
           }).get(id)
           if (user.matchId) {
-            //console.log(`user currently in a match with id: ${user.matchId}`)
-            //todo: mecanismo de seguridad por si fuera un match antiguo no borrado -> ex:
-            //    si el match tiene más de x(5?) mins de antigüedad borrarlo(el user del mapa de matchmaking) y hacer matchmaking normal
             return user.matchId
           }
         }
         return this.checkForMatchLoop(user, 10);
       }
 
-      //todo: hacer que no se fíe del nombre del usuario (esto en verdad va en gamegateway) en vez de eso espera recibir un token válido con el nombre del usuario (el de 2fa no vale)
-      //todo: al parecer crea varios matches que luego no usa, revisar porq (en gamegateway revisar como llamos a create match) <- creo que ya no pasa
       private async checkForMatchLoop(user: QueuedUser, threshold: number): Promise<string> {
         let match = null
         do {
@@ -265,18 +253,12 @@ export class MatchMaker {
               this.cancel(user.id)
               didCancel = true
             } catch (error) {
-              //console.log("Couldnt timeout because mutex is locked")
-            } //todo: mecanismo seguridad por si se quedan locks bloqueados mucho tiempo -> cancelar igualmente, borrar queued user y cancelar la partida en la que esté
-            /* para esto podemos hacer que un usuario pueda cancelar una partida, se borra la partida si:
-              - No hay room con ese id
-              - Hay room pero el otro jugador no está
-              - Ha pasado 10 mins desde que la partida fue creada
-              En cualquier caso no es prioritario porq esto no debería pasar
-            */
+
+            } 
             if (didCancel)
               throw new HttpException("Cant find a match right now, not enough players. Try againg later", HttpStatusCode.RequestTimeout)
           }
-          //console.log(`No match found for ${user.id}. Checking again... (${threshold})`);
+
           await sleep(random(3000, 6000))
         } while (true);
         //console.log(`Match found! ${user.id} in room: ${match}`);
