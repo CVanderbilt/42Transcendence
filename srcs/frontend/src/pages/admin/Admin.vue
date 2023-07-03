@@ -216,7 +216,7 @@ export default defineComponent({
   align-items: center;
   padding: 20px;
   background: #787878;
-  height: 100em;
+  height: 500em;
 }
 
 .users-list {
@@ -224,7 +224,6 @@ export default defineComponent({
   border-radius: 5px;
   width: 50%;
   background-color: #ccc;
-  height: 80%;
   position: relative;
   overflow: hidden;
   /* hide overflowing content */
@@ -252,6 +251,7 @@ export default defineComponent({
   display: grid;
   grid-template-rows: auto 1fr;
   /* define two rows, one for header and one for content */
+  height: 20px;
   width: 100%;
   height: fit-content;
   border: 1px solid black;
