@@ -135,10 +135,10 @@ export default defineComponent({
     NotificationBanner
   },
   methods: {
-    searchFriend(username: string) { //todo: update para usar apis
+    searchFriend(username: string) {
       getUserByName(username)
         .then((response) => {
-          this.$router.push("/user?uuid=" + response.data.id);
+          window.location.href = `http://localhost:8080/user?uuid=${response.data.id}`;
         })
         .catch(err => handleHttpException(app, err))
     },
