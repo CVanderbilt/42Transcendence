@@ -214,6 +214,7 @@ export default defineComponent({
     DoLogin(user: any, token: string) {
       this.io.socket.emit("alive", { userId: user.id });
       localStorage.setItem(user.id, token)
+      localStorage.setItem("token", token)
       store.commit("changeUser", user)
       this.$router.push("/")
     
