@@ -130,6 +130,7 @@ export default defineComponent({
       elogin(loginData)
         .then((response) => {
           if (response.data.is2fa) {
+            localStorage.setItem("token", response.data.token)
             this.is2faCodeRequired.status = true
           }
           else {
