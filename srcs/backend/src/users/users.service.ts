@@ -56,6 +56,7 @@ export class UsersService {
         }
         
         const updatedUser = Object.assign({}, storedUser, user)
+        console.log(updatedUser)
 
         return this.usersRepo.update(id, updatedUser)
     }
