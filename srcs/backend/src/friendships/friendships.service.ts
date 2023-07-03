@@ -24,19 +24,48 @@ export class FriendshipsService {
 
     //create a friendship
     async createFriendship(userId: string, data: FriendshipDto) {
-        console.log("creating friendship");
         let friendship = await this.friendshipsRepo.findOne({ where: { user: { id: userId }, friend: { id: data.friendId } } })
-        if (!friendship) {
-            friendship = new FriendshipEntity();
-            friendship.user = await this.usersRepo.findOneBy({ id: userId });
-            friendship.friend = await this.usersRepo.findOneBy({ id: data.friendId });
-            friendship.isBlocked = false;        
-        }
         
-        console.log("is friend " + friendship.isFriend);
+        const user = await this.usersRepo.findOneBy({ id: userId })
+        const friend = await this.usersRepo.findOneBy({ id: data.friendId })
+
+
+        if (!friendship) {
+            friendship = await new FriendshipEntity();
+            friendship.user = user;
+            friendship.friend = friend;
+            friendship.isBlocked = data.isBlocked ? data.isBlocked : false,
+            friendship.isFriend = data.isFriend ? data.isFriend : true
+            await friendship.save();
+
+            console.log("creating friendship");
+            console.log(friendship);
+
+            return friendship
+        }
+
         friendship.isFriend = data.isFriend ? data.isFriend : true;
-        friendship = await this.friendshipsRepo.save(friendship);
+        friendship.isBlocked = data.isBlocked ? data.isBlocked : false;
+        await friendship.save();
+
+        console.log("creating friendship");
+        console.log(friendship);
+        
         return friendship
+    
+        // console.log("creating friendship");
+        // let friendship = await this.friendshipsRepo.findOne({ where: { user: { id: userId }, friend: { id: data.friendId } } })
+        // if (!friendship) {
+        //     friendship = new FriendshipEntity();
+        //     friendship.user = await this.usersRepo.findOneBy({ id: userId });
+        //     friendship.friend = await this.usersRepo.findOneBy({ id: data.friendId });
+        //     friendship.isBlocked = false;        
+        // }
+        
+        // console.log("is friend " + friendship.isFriend);
+        // friendship.isFriend = data.isFriend ? data.isFriend : true;
+        // friendship = await this.friendshipsRepo.save(friendship);
+        // return friendship
     }
 
     //update a friendship

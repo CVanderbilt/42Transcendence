@@ -35,9 +35,10 @@ async function unfriendRequest(userId: string, friendshipId: string) {
     return apiClient.post(`${URL}/${friendshipId}`, { userId:userId, isFriend: false });
 }
 
-async function setBlockFriendRequest(userId: string, friendshipId: string, isBlocked: boolean) {
-    console.log("setBlockFriendRequest", friendshipId, isBlocked)
-    return apiClient.post(`${URL}/${friendshipId}`, { userId:userId, isBlocked: isBlocked });
+async function setBlockFriendRequest(userId: string, friendId: string, isBlocked: boolean) {
+    console.log("setBlockFriendRequest", friendId, isBlocked)
+    // return apiClient.post(`${URL}/${friendshipId}`, { userId:userId, isBlocked: isBlocked });
+    return apiClient.post(`${URL}`, { userId:userId, friendId:friendId, isBlocked: isBlocked });
 }
 
 export { makeFriendshipRequest, getFriendshipsRequest, unfriendRequest, setBlockFriendRequest }

@@ -189,7 +189,7 @@ export default defineComponent({
 
     setBlock(isBlocked: boolean) {
       try {
-        setBlockFriendRequest(this.currentUser.id, this.friendshipId, isBlocked)
+        setBlockFriendRequest(this.currentUser.id, this.lookedUpId, isBlocked)
         this.isBlocked = isBlocked
       }
       catch (err) {
