@@ -42,7 +42,7 @@ const movementDistance = 7;
 const ballRadius = 5;
 const ballMaxY = canvasHeight - ballRadius;
 const ballMinY = ballRadius;
-const goalsForVictory = 5;
+const goalsForVictory = 7;
 
 @WebSocketGateway(82, {
   cors: { origin: '*' },
