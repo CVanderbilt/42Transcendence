@@ -97,8 +97,8 @@ export default defineComponent({
   padding: 10px;
   border-radius: 10px;
 
-  margin-left: 40vh;
-  margin-right: 40vh;
+  margin-left: 20vw;
+  margin-right: 20vw;
 }
 
 h2 {
