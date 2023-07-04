@@ -56,7 +56,6 @@ import { generateImageURL, handleHttpException, publishNotification } from "@/ut
 import { IUserAPI, putImage, updateUserReq } from "@/api/user";
 import { app, stateSocketIO } from "@/main";
 
-//todo: que cuando se modifique el usuario se recarge la informacion del usuario (la imagen se tiene que volver a descargar y el store.user tiene que actualizarse)
 export default defineComponent({
   name: "Settings",
   setup() {

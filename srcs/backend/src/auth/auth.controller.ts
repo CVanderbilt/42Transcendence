@@ -34,7 +34,7 @@ export class AuthController {
     }
   }
 
-  @HttpCode(200) // cambia el código por defecto que en post es 201
+  @HttpCode(200) 
   @Post('elogin')
   async loginEmail(@Body() data: LoginEmailDto) {
     validateInput(Joi.object({
@@ -103,7 +103,7 @@ export class AuthController {
 
   @Post('2fa/authenticate/:code')
   @HttpCode(200)
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async authenticate(@Req() request, @Param('code') twoFactorCode: string) {
     validateInput(Joi.object({
       twoFactorCode: Joi.string().pattern(/^\d{6}$/).required()

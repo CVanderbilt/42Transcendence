@@ -100,7 +100,6 @@ export default defineComponent({
     if (this.$route.query.expired !== undefined)
       throwFromAsync(app, "Token expired, you have to log in again")
 
-    // comprueba si hay un codigo en la url
     if (this.$route.query.code) {
       console.log("42 url code: " + this.$route.query.code)
       this.code = this.$route.query.code as string
