@@ -42,7 +42,8 @@
                       style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0;">
                       {{ item.chatRoom.name }}
                     </b-button>
-                    <button v-if="user.role !== 'ADMIN' && user.role !== 'OWNER' " @click="leaveRoom(item.chatRoom.id)"> x </button>
+                    <button v-if="user.role !== 'ADMIN' && user.role !== 'OWNER'" @click="leaveRoom(item.chatRoom.id)"> x
+                    </button>
                   </div>
                 </div>
               </div>
@@ -253,9 +254,9 @@
   
 <script lang="ts">
 
- /* eslint-disable */
+/* eslint-disable */
 
- 
+
 import { defineComponent } from "vue";
 import { useStore } from "vuex";
 import { IUser, key, store } from "../../store/store";
@@ -382,8 +383,13 @@ export default defineComponent({
           chatRoomId: roomId,
           isChallenge: isChallenge,
         }
-        // alert(JSON.stringify(msg))
-        this.messages.push(msg)
+
+        // filter messages
+        const blocked = this.userFriendships.find((friendship) =>
+          friendship.friendId == senderId && friendship.isBlocked)
+
+        if (!blocked)
+          this.messages.push(msg)
       });
 
       this.io.socket.on("on_chat_updated", () => {
@@ -395,8 +401,9 @@ export default defineComponent({
 
       // join queried room
       const requestedRoomId = this.$route.query.roomId as string;
-      if (requestedRoomId)
+      if (requestedRoomId) {
         await this.changeRoom(requestedRoomId)
+      }
       else {
         this.generalRoom = await (await getGeneralRoom()).data
         await this.changeRoom(this.generalRoom.id)
@@ -433,16 +440,19 @@ export default defineComponent({
     async updateInfo(updateMessages = true) {
       try {
         await this.fetchMemberships()
-        
-        let has2change = true
-        this.userMemberships.forEach(m => {
-          if (m.chatRoom.id == this.currentRoomId)
-            has2change = false
-        }) 
 
-        if (has2change)
-          this.changeRoom(this.generalRoom.id)
-        
+        if (this.user.role === "CUSTOMER") {
+          let has2change = true
+          this.userMemberships.forEach(m => {
+            if (m.chatRoom.id == this.currentRoomId)
+              has2change = false
+          })
+
+          if (has2change)
+            this.changeRoom(this.generalRoom.id)
+        }
+
+
         if (updateMessages)
           this.fetchMessages()
         this.userFriendships = await getFriendshipsRequest(this.user?.id as string)
@@ -452,8 +462,7 @@ export default defineComponent({
 
     async fetchMemberships() {
       let memberships = await (await getUserMembershipsReq(this.user?.id as string)).data as Membership[]
-      if (this.user.role === "CUSTOMER")
-      {
+      if (this.user.role === "CUSTOMER") {
         let filteredMemberships = memberships.filter(m => this.dateOK(m.bannedUntil) && m.isPresent)
         this.userMemberships = filteredMemberships as Membership[]
       }
@@ -519,15 +528,22 @@ export default defineComponent({
 
       try {
         // find membership
-        this.userMemberships = (await (await getUserMembershipsReq(this.user?.id as string)).data)
-        let membership = this.userMemberships.find((membership) => membership.chatRoom.id == roomId)
+        const memberships = (await (await getUserMembershipsReq(this.user?.id as string)).data) as Membership[]
+        let membership = memberships.find((m) => m.chatRoom.id == roomId)
         if (!membership || !membership.isPresent) {
-          const resp = await joinChatRoomReq(roomId, this.user?.id as string, password) // returns membership even if user is already a member of the room
-          this.isAdmin = resp.data.isAdmin
-          this.userMemberships.push(resp.data)
-          membership = resp.data
+          const doPush = !membership
+          try {
+            const resp = (await joinChatRoomReq(roomId, this.user?.id as string, password)).data // returns membership even if user is already a member of the room
+            membership = resp as Membership
+            this.isAdmin = membership.isAdmin
+            if (doPush)
+              this.userMemberships.push(resp)
+          }
+          catch (error: any) {
+            throw error
+          }
         }
-        if (!membership) {
+        if (!membership || !membership.isPresent) {
           throw new Error("You are not a member of this room")
         }
         if (!this.dateOK(membership.bannedUntil)) {
@@ -610,6 +626,7 @@ export default defineComponent({
       try {
         await deleteChatRoomMembershipsReq(membershipId)
         this.managedChatMemberships = this.managedChatMemberships.filter((membership) => (membership.id !== membershipId))
+        this.notify()
       } catch (error: any) {
         handleHttpException(app, error)
       }
@@ -676,7 +693,7 @@ export default defineComponent({
         await updateChatRoomPasswordReq(this.currentRoomId, this.managedChatPassword).catch(err => handleHttpException(app, err))
       }
       // update current chat members
-      
+
       this.managedChatMemberships.filter(m => !m.isOwner).forEach(async (membership) => {
         membership.bannedUntil = this.time2utc(membership.bannedUntil)
         membership.mutedUntil = this.time2utc(membership.mutedUntil)

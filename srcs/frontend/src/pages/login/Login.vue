@@ -96,11 +96,7 @@ export default defineComponent({
     };
   },
 
-
   async mounted() {
-    // comprueba si ya hay un token válido
-    await this.tokenLogin()
-
     if (this.$route.query.expired !== undefined)
       throwFromAsync(app, "Token expired, you have to log in again")
 
@@ -109,7 +105,6 @@ export default defineComponent({
       console.log("42 url code: " + this.$route.query.code)
       this.code = this.$route.query.code as string
       await this.getToken(this.code)
-      await this.tokenLogin()
     }
   },
 
@@ -184,17 +179,6 @@ export default defineComponent({
         }).catch(err => handleHttpException(app, err))
     },
 
-    // Check token validity
-    async tokenLogin() {
-      if(localStorage.getItem(store.state.user.id)) {
-        console.log("tokenLogin: token null")
-        return
-      }
-      // if (localStorage.getItem("token") === null) {
-      //   return
-      // }
-    },
-
     async submit2faCode() {
       console.log("submitCode: " + this.twoFactorCode + "")
       apiClient.post(`${AUTHENTICATE_2FA_ENDPOINT}/${this.twoFactorCode}`)
@@ -218,6 +202,10 @@ export default defineComponent({
     },
 
     DoLogin(user: any, token: string, isNew = false) {
+      localStorage.removeItem(store.state.user.id);
+      localStorage.removeItem("token")
+      store.commit("logout");
+
       this.io.socket.emit("alive", { userId: user.id });
       localStorage.setItem(user.id, token)
       localStorage.setItem("token", token)

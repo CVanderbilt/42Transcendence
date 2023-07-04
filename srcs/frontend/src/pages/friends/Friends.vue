@@ -45,7 +45,7 @@ import { useStore } from "vuex";
 import { key } from "../../store/store";
 
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
-import { app, stateSocketIO } from "@/main";
+import { app, stateSocketIO, useSocketIO } from "@/main";
 import "@/style/styles.css";
 import { generateImageURL } from "@/utils/utils";
 import { handleHttpException } from "@/utils/utils";
@@ -67,8 +67,10 @@ export default defineComponent({
     let friendships: IFriendship[] = []
     const store = useStore(key);
     const user = store.state.user;
-
+    const ioChats = useSocketIO()
+    
     return {
+      ioChats: ioChats,
       friendships: friendships,
       user: user,
     };
@@ -137,21 +139,22 @@ export default defineComponent({
       }
     },
     generateImageURL,
-    setBlock(friendship: IFriendship, isBlocked: boolean) {
-      try {
-        console.log("setBlock")
-        setBlockReq(friendship.friend.id, isBlocked)
-        const f = this.friendships.find((fshp) => fshp.id === friendship.id)
+    async setBlock(friendship: IFriendship, isBlocked: boolean) {
+      try {        
+        await setBlockReq(friendship.friend.id, isBlocked)
+        const f = this.friendships.find((fshp) => fshp.id === friendship.id)        
         if (f)
           f.isBlocked = isBlocked
+
+        this.ioChats.socket.emit("chat_update");
         } catch (err) {
         handleHttpException(app, err)
       }
     },
 
-    unfriend(friendship : IFriendship) {
+    async unfriend(friendship : IFriendship) {
       try {
-        setFriendReq(friendship.friend.id, false)
+        await setFriendReq(friendship.friend.id, false)
         this.friendships = this.friendships.filter((fshp) => fshp.id !== friendship.id)
       } catch (err) {
         handleHttpException(app, err)

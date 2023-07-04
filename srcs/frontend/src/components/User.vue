@@ -75,7 +75,7 @@ import { getUserById } from "../api/user";
 
 import { generateImageURL, handleHttpException, throwFromAsync } from "@/utils/utils";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
-import { app } from "@/main";
+import { app, useSocketIO } from "@/main";
 import { Match, getMatchesReq } from "@/api/gameApi";
 import { getFriendshipsRequest, setBlockReq, setFriendReq } from "@/api/friendshipsApi";
 
@@ -99,11 +99,14 @@ export default defineComponent({
   },
 
   data() {
+    const io = useSocketIO();
+    
     const store = useStore(key);
     const user = store.state.user;
     const matches: Match[] = []
 
     return {
+      io: io,
       lookedUpId: "",
       lookedUpUserName: "",
       lookedUpEmail: "",
@@ -196,6 +199,8 @@ export default defineComponent({
       try {
         await setBlockReq(this.lookedUpId, isBlocked)
         this.isBlocked = isBlocked
+        this.io.socket.emit("chat_update");
+
       }
       catch (err) {
         handleHttpException(app, err)

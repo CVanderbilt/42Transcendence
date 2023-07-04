@@ -166,7 +166,6 @@ export class Chats2Controller {
     @Post('rooms/:roomId/invite')
     @UseGuards(JwtAuthenticatedGuard)
     async inviteUsers(@Req() req: any, @Param('roomId') roomId: number, @Body() data: JoinChatRoomDto) {
-        console.log("INVITING")
         validateInput(Joi.object({
             roomId: CHATROOM_ID_VALIDATOR.required(),
             userId: ID_VALIDATOR.required(),
@@ -439,6 +438,8 @@ export class Chats2Controller {
             roomId: CHATROOM_ID_VALIDATOR.required()
         }), { roomId })
         try {
+            if (roomId < 1) 
+                return null
             const token = getAuthToken(req, false)
             return await (this.chatsService.findChatRoomMessages(token, roomId))
         }

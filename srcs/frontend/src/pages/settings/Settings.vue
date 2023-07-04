@@ -1,11 +1,11 @@
 <template>
-  <section >
+  <section>
     <div class="container py-5 h-100">
       <div class="row d-flex justify-content-center align-items-center h-100">
         <div class="col-12 col-md-8 col-lg-6 col-xl-5">
           <div class="card bg-dark text-white" style="border-radius: 1rem">
             <div class="card-body p-5 text-center">
-                <div class="
+              <div class="
                   d-flex
                   justify-content-center
                   text-center
@@ -13,43 +13,42 @@
                   mb-5
                   pt-1
                 ">
-                  <img :src="generateImageURL()" height="200" style="border-radius: 50%" />
-                </div>
-                <h2 class="fw-bold mt-1 mb-5 text-uppercase">Modify Profile</h2>
-
-                <div class="form-outline form-white mb-2">
-                  <input type="username" id="typeUsername" class="form-control form-control-lg"
-                    :placeholder="user!.username" v-model="options.username" />
-                  <label class="form-label" for="typeUsername">Nickname</label>
-                </div>
-
-                <div class="form-outline form-white mb-2">
-                  <input type="file" ref="fileInput" accept="image/jpeg" @change="uploadImage" />
-                  <progress id="progress" value="0" max="100"></progress>
-                </div>
-
-                <div class="form-outline form-white mb-2">
-                  <input type="checkbox" id="is2fa" class="form-check-input" v-model="is2fa" />
-                  <label class="form-label" for="is2fa">Use 2 factor authentication</label>
-                </div>
-
-                <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="submit()">
-                  Change
-                </button>
+                <img :src="generateImageURL()" height="200" style="border-radius: 50%" />
               </div>
-              <button class="btn btn-outline-light mt-3 btn-lg px-5" v-on:click="logOut()">Logout</button>
+              <h2 class="fw-bold mt-1 mb-5 text-uppercase">Modify Profile</h2>
+
+              <div class="form-outline form-white mb-2">
+                <input type="username" id="typeUsername" class="form-control form-control-lg"
+                  :placeholder="user!.username" v-model="options.username" />
+                <label class="form-label" for="typeUsername">Nickname</label>
+              </div>
+
+
+              <div class="form-outline form-white mb-2">
+                <input type="file" ref="fileInput" accept="image/jpeg" @change="uploadImage" />
+              </div>
+
+              <div class="form-outline form-white mb-2" style="margin-top: 20px;">
+                <input type="checkbox" id="is2fa" class="form-check-input" v-model="is2fa" />
+                <label class="form-label" for="is2fa">Use 2 factor authentication</label>
+              </div>
+
+              <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit" v-on:click="submit()">
+                Change
+              </button>
             </div>
+            <button class="btn btn-outline-light mt-3 btn-lg px-5" v-on:click="logOut()">Logout</button>
           </div>
         </div>
       </div>
+    </div>
   </section>
 </template>
 
 <script lang="ts">
 
- /* eslint-disable */
+/* eslint-disable */
 
- 
 import { computed, defineComponent, handleError } from "vue";
 import { useStore } from "vuex";
 import { key, store } from "../../store/store";
@@ -75,7 +74,6 @@ export default defineComponent({
       username: '',
     }
 
-
     var selectedFile: File | undefined
     return {
       options,
@@ -83,6 +81,7 @@ export default defineComponent({
       is2fa: false,
     };
   },
+
   mounted() {
     this.options.username = this.user.username as string
     this.is2fa = this.user?.is2fa
@@ -96,7 +95,7 @@ export default defineComponent({
       }
 
       try {
-        const res = await (await updateUserReq(store.state.user.id, this.options)).data
+        await (await updateUserReq(store.state.user.id, this.options)).data
         publishNotification("User updated", false)
       }
       catch (error: any) {
@@ -106,7 +105,7 @@ export default defineComponent({
 
       store.commit("changeUserName", this.options.username)
 
-      if (this.selectedFile){
+      if (this.selectedFile) {
         try {
           await putImage(store.state.user.id, this.selectedFile)
         } catch (error) {
@@ -114,9 +113,15 @@ export default defineComponent({
         }
       }
 
-      // si el usuario quiere activar 2fa llevarlo a la pagina de 2fa
-      if (this.is2fa && !store.state.user.is2faEnabled) {
+      // user means to activate 2fa
+      if (this.is2fa && !store.state.user.is2faEnabled)
         this.$router.push("/qr");
+      else
+      {
+        // page reload
+        setTimeout(() => {
+          window.location.reload()
+        }, 500);
       }
     },
 
@@ -132,14 +137,14 @@ export default defineComponent({
       store.commit("logout");
 
       this.io.socket.offAny();
-      
+
       this.$router.push("/login");
       console.log("Bye bye");
 
       //espera 500ms
       setTimeout(() => {
         this.io.socket.emit("logout");
-      }, 500); 
+      }, 500);
     },
   }
 })

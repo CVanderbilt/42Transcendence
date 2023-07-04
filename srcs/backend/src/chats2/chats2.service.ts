@@ -12,6 +12,9 @@ import { isPastDate, processError } from 'src/utils/utils';
 import { HttpStatusCode } from 'axios';
 import { Namespace } from 'socket.io';
 import e from 'express';
+import { RouterModule } from '@nestjs/core';
+import { appendFile } from 'fs';
+import { env } from 'process';
 
 @Injectable()
 export class Chats2Service {
@@ -86,11 +89,11 @@ export class Chats2Service {
         return await this.chatRoomsRepo.save(room)
     }
 
+    // find user created chat rooms
     @UseGuards(JwtAdminGuard)
     async findAllChatRooms(): Promise<ChatRoom[]> {
-        const rooms = await this.chatRoomsRepo.find()
-
-        return rooms
+        const rooms = await this.chatRoomsRepo.find()        
+        return rooms.filter(room => room.name != process.env.GENERAL_CHAT_NAME)
     }
 
     findChatRoomById(id: number): Promise<ChatRoom> {
@@ -181,31 +184,43 @@ export class Chats2Service {
 
     async joinChatRoom(roomId: number, data: JoinChatRoomDto, override?: boolean): Promise<ChatMembership> {
         // check whether the room exists
-        const roomExists = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
-        if (!roomExists) {
+        const room = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
+        if (!room) {
             throw new NotFoundException('Room does not exist')
         }
 
         // find if the user is already a member of the room
-        const userMembership = await this.chatMembershipsRepo.find({
+        const chatMemberships = await this.chatMembershipsRepo.find({
             where: {
                 user: { id: data.userId },
                 chatRoom: { id: roomId }
             }
         })
 
-        if (userMembership && userMembership.length > 0) {
-            const m = await this.chatMembershipsRepo.findOne(
-                {
-                    where: { id: userMembership[0].id },
-                    relations: ['user', 'chatRoom'],
-                })
-            m.isPresent = true;
+        if (chatMemberships && chatMemberships.length > 0) {
+            const m = await this.chatMembershipsRepo.findOne({
+                where: { id: chatMemberships[0].id },
+                relations: ['user', 'chatRoom'],
+            })
+
+            if (m.isPresent)
+                return m
+
+            // if the room is private, check the password
+            if (room.isPrivate && !override) {
+                if (!data.password) {
+                    throw new UnauthorizedException('Password is required for this room')
+                }
+                if (!bcrypt.compareSync(data.password, room.password)) {
+                    throw new UnauthorizedException('Password is incorrect')
+                }
+            }
+
+            m.isPresent = true
             m.save()
             return m
         }
 
-        const room = await this.chatRoomsRepo.findOne({ where: { id: roomId } })
 
         // if it is a direct room, check if there are already two members
         if (room.isDirect) {

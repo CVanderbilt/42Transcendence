@@ -51,7 +51,9 @@
 </template>
 
 <script lang="ts">
+
  /* eslint-disable */
+ 
 import { computed, defineComponent } from "vue";
 import Home from "./pages/home/Home.vue";
 import Login from "./pages/login/Login.vue";
@@ -86,34 +88,24 @@ export default defineComponent({
     this.isError = false;
 
     this.ioUserState.socket.offAny();
-    if (this.user.id) {
-      console.log("user_state_update emitido: " + this.user.id)
+    if (this.user.id)
       this.ioUserState.socket.emit("alive", { userId: this.user.id });
-    }
 
     this.ioUserState.socket.on("user_states", (states: UserStateSocket[]) => {
-      if (!states.find((s) => s.userId === this.user.id)) {
-        if (this.user.id) {
-          console.log("user_state_update emitido2: " + this.user.id)
+      if (!states.find((s) => s.userId === this.user.id)) 
+        if (this.user.id) 
           this.ioUserState.socket.emit("alive", { userId: this.user.id });
-        }
-      }
     })
 
     this.ioUserState.socket.on("who_is_alive", (payload: any) => {
-      if (this.user.id) {
-        console.log("user_state_update emitido3: " + this.user.id)
+      if (this.user.id)
         this.ioUserState.socket.emit("alive", { userId: this.user.id });
-      }
     })
 
     this.auth = isAuthenticated();
-    console.log("created");
   },
 
   onmounted() {
-    console.log("mounted");
-    console.log(this.user);
   },
 
   data() {
