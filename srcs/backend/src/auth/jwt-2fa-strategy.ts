@@ -29,6 +29,5 @@ export class Jwt2faStrategy extends PassportStrategy(Strategy, 'jwt-2fa') {
       return user;
     }
 
-    // si no devuelve nada entonces no pasa la validacion
   }
 }

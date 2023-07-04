@@ -201,7 +201,7 @@ export class GameGateway
   }
 
   handleDisconnect(client: any) {
-    //todo: no se si aquí o en otro lado, pero countdown para que si un usuario se ausenta mucho tiempo acabe siendo victoria para el otro jugador
+    
     // console.log('handle disconnect')
   }
 
@@ -216,11 +216,11 @@ try{
       room: ID_VALIDATOR.required(),
       username: ID_VALIDATOR.required()
   }), payload);
-    //todo: revisar, error interno cuando un usuario intenta entrar en uan room o antigua o inexistente, no está claro -> creo q ya está bien
+    
     const _room = gameRooms[room]
     const gameServer = this.server;
     if (!_room){
-      //todo: revisar con pablo porq no va esto, si no hay soluciones cutres como revisar que el match exista con una api
+      
       gameServer.to(`room_${room}`).emit('endGame', "Match_doesnt_exist");
       return
     }

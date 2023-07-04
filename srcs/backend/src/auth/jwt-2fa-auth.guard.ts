@@ -7,7 +7,7 @@ export class Jwt2faAuthGuard extends AuthGuard('jwt-2fa') {
         return super.canActivate(context);
       }
     
-      handleRequest(err, userInToken, info) { // nota, esto es lo que devuelve la estrategia
+      handleRequest(err, userInToken, info) { 
         if (err || !userInToken) {
           throw err || new UnauthorizedException();
         }
