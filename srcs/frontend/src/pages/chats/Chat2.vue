@@ -10,7 +10,7 @@
             <div class="row chats-window">
               <!-- ------------------ chats list ------------------ -->
               <div class="col chats-list">
-                <b-button @click="updateInfo(false)" style="margin: 10px;">Update</b-button>
+                <b-button @click="reload()" style="margin: 10px;">Update</b-button>
                 <!-- chat rooms -->
                 <b-button v-on:click='changeRoom(generalRoom.id)'
                   style="width: 100%; background-color: #c2c1c1; color:black; border-radius: 0; margin-top: 30px;">
@@ -432,6 +432,9 @@ export default defineComponent({
   },
 
   methods: {
+    reload() {
+      window.location.reload()
+    },
     async notify() {
       await new Promise(r => setTimeout(r, 1000));
       this.io.socket.emit("chat_update");

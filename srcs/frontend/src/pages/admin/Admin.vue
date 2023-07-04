@@ -169,11 +169,13 @@ export default defineComponent({
         return
       return (await promoteUserInChat(chat.userName, chat.id)).data
     },
+
     async demoteUserInChatAction(chat: ChatRoomRow) {
       if (!chat || !chat.userName || !chat.id)
         return
       return (await demoteUserInChat(chat.userName, chat.id)).data
     },
+
     async destroyChat(chat: ChatRoomRow) {
       let res
       try {
