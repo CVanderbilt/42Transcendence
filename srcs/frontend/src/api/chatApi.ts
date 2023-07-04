@@ -98,7 +98,6 @@ export async function getChatRoomMembershipsReq(roomId: string) {
     return apiClient.get(`${URL}/rooms/${roomId}/members`)
 }
 
-//todo tocontinue -> dambiar data: Membership a solo lo q necesitamos, same en backend, empezar backend
 export async function updateChatRoomMembershipsReq(membershipId: string, data: {
     isBanned?: boolean,
     isMuted?: boolean,
