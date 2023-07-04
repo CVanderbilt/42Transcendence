@@ -16,11 +16,11 @@
                       justify-content-between
                     ">
                     <h2> Total matches: {{ competitions.length }}</h2>
-                    <div v-for="item in competitions" v-bind:key="item.id"
+                    <div class="row" v-for="item in competitions" v-bind:key="item.id"
                       style="display: flex; justify-content: space-around;">
-                      <p>{{ item.opponent?.username }}</p>
-                      <p>{{ item.userScore }} - {{ item.opponentScore }}</p>
-                      <p>{{ item.userScore > item.opponentScore ? 'WON' : 'LOST' }}</p>
+                      <p class="col-3">{{ item.opponent?.username }}</p>
+                      <p class="col-3">{{ item.userScore }} - {{ item.opponentScore }}</p>
+                      <p class="col-3">{{ item.userScore > item.opponentScore ? 'WON' : 'LOST' }}</p>
                     </div>
                   </div>
                 </div>
@@ -133,13 +133,13 @@ export default defineComponent({
 .my-table {
   border-collapse: separate;
   border-spacing: 10px;
-  /* Espacio entre las celdas */
+
 }
 
 .my-table th,
 .my-table td {
   padding: 8px;
-  /* Espacio interno de las celdas */
+
 }
 
 .alternate-row {

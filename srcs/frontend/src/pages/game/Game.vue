@@ -52,14 +52,6 @@ export default defineComponent({
       leftUserName: "",
       rightUserName: "",
 
-      // ball: null,
-      // x: 250,
-      // y: 280,
-      // leftPaddleW: 10,
-      // rightUserDownPressed: false,
-      // rightUserUpPressed: false,
-      // rightPaddleW: 10,
-      // playing: false
     };
   },
 
@@ -114,8 +106,7 @@ export default defineComponent({
       player1name: string,
       player2name: string,
     ) => {
-      //this.rightUserName = player2name; //todo: sacarlo de base de datos
-      //this.leftUserName = player1name;  //todo: sacarlo de base de datso
+
       if (!this.rightUserName || !this.leftUserName) {
         this.rightUserName = "loading..."
         this.leftUserName = "loading..."
@@ -129,7 +120,7 @@ export default defineComponent({
            this.rightUserName = (res.data as IUser).username 
         })).catch(err => handleHttpException(app, err))
       } else {
-        console.log("hola aqui llega")
+
       }
       this.leftUserScore = player1score;
       this.rightUserScore = player2score;
@@ -160,7 +151,7 @@ export default defineComponent({
       if (e.key == "Down" || e.key == "ArrowDown") {
         if (this.leftUserDownPressed == false) {
           this.io.socket.emit("move", {
-            room: this.room, username: this.user.id, movement: "down", type: "press", date: Date.now()// - 1100 // descomentar esto para simular lag
+            room: this.room, username: this.user.id, movement: "down", type: "press", date: Date.now()
           });
         }
       } else if (e.key == "Up" || e.key == "ArrowUp") {
