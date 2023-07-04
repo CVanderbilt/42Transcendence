@@ -22,6 +22,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             throw new UnauthorizedException("Two factor authentication is enabled but not authenticated")
         if (user === null)
             throw new NotFoundException()
-        return user // hay que devolver algo que no sea null para que el guard passe ok
+        return user 
     }
 }

@@ -6,8 +6,8 @@ const { PNG } = require('pngjs');
 import * as jwt from 'jsonwebtoken';
 import { User } from 'src/users/user.interface';
 
-export const USERNAME_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9-_]{1,22}$/);//TODO: revisar si funcionará con los usuarios con nombres de la intra -> a las malas se puede asegurar si al hacer signup desde la intra transformamos el nombre cambiando cualquier caracter distinto de los aceptados por - o _
-export const CHATNAME_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9-_?]+$/) //TODO: revisar con chatgpt si funciona con como creamos los chatnames
+export const USERNAME_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9-_]{1,22}$/);
+export const CHATNAME_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9-_?]+$/) 
 export const RESTRICTED_CHATNAME_VALIDATOR = Joi.string().regex(/^[a-zA-Z0-9-_]+$/)
 export const ID_VALIDATOR = Joi.string().guid()
 export const INT_VALIDATOR = Joi.number().allow(Joi.string())

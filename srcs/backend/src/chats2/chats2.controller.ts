@@ -112,7 +112,6 @@ export class Chats2Controller {
         name: string,
         password?: string
     }): Promise<ChatRoom> {
-        //todo: tambien hay un todo equivalente en frontend, revisar que pasa con el owner pasado como input que aqui no usamos y actualizar para que ponga de owner al usuario del token
         validateInput(Joi.object({
             name: CHATNAME_VALIDATOR.required(),
             password: PASSWORD_VALIDATOR
@@ -449,7 +448,7 @@ export class Chats2Controller {
     }
 
     // post chat message for room
-    @UseGuards(JwtAuthenticatedGuard) // todo: revisar si hace falta un shortcut para que admisn puedan sin llegar a hacer fetch memberships en repo
+    @UseGuards(JwtAuthenticatedGuard) 
     @Post('/messages/:roomId')
     async postRoomMessage(@Req() req, @Param('roomId') roomId: number, @Body() msg: {
         senderId: string,

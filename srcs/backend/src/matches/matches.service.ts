@@ -134,7 +134,7 @@ export class MatchesService {
             // .limit(10)
             .getMany();
 
-        return await (list as Match[]); // Hay una manera mejor ?
+        return await (list as Match[]);¡
     }
 
 
