@@ -136,6 +136,8 @@ export class GameGateway
         //crea match
         const id = uuidv4()
         console.log("  - hay contestant crea match con id: " + id)
+        const ballSpeed = payload.f ? 4 : 2
+        const paddleHeight = payload.s ? 30 : 75
         gameRooms[id] = {
           id,
           gameStatus: "WAITING",
@@ -143,7 +145,7 @@ export class GameGateway
           player1: {
             user: payload.userId,
             paddlePos: 115,
-            paddleHeight: 75,
+            paddleHeight,
             upPressed: false,
             downPressed: false,
             inGame: false,
@@ -152,13 +154,13 @@ export class GameGateway
           player2: {
             user: this.contestants[idx].userId,
             paddlePos: 115,
-            paddleHeight: 75,
+            paddleHeight,
             upPressed: false,
             downPressed: false,
             inGame: false,
             score: 0
           },
-          ballpos: { x: 250, y: 250, dx: 2, dy: 2 },
+          ballpos: { x: 250, y: 250, dx: ballSpeed, dy: ballSpeed },
           isCompetitive: true,
           isChallenge: false
         }
