@@ -33,22 +33,6 @@
                   </div>
                 </div>
               </div>
-              <div class="col-xl-6">
-                <div class="card mb-4" style="background-color: #27292f; height: 100%;">
-                  <div class="card-header">
-                    <h3  style="color: white;">Competitive Match</h3>
-                    
-                  </div>
-                  <div class="card-body">
-                    <b-button v-on:click="enterCompetitiveMatch()"
-                      style="width: fit-content; background-color: #4e92f2; color:rgb(248, 248, 248); border-radius: 0; position: relative; top: 70%; "
-                      :disabled="inMatchmaking"
-                      :class="{ 'disabled': inMatchmaking }">
-                    Competitive Match
-                    </b-button>
-                  </div>
-                </div>
-              </div>
             </div>
             
             
@@ -71,7 +55,7 @@ import { key } from "../..//store/store";
 import { cancelMatchmaking, enterCompetitiveGameApi, enterExhibitionGameApi } from "../../api/gameApi";
 import "@/style/styles.css";
 import { handleHttpException, publishNotification, throwFromAsync } from "@/utils/utils";
-import { app } from "@/main";
+import { app, gameSocketIO } from "@/main";
 
 export default defineComponent({
   name: "Matchmaking",
@@ -84,7 +68,9 @@ export default defineComponent({
   },
 
   data() {
+    const io = gameSocketIO();
     return {
+      io,
       options: {
         smallPaddle: false,
         fastServe: false,
@@ -92,57 +78,35 @@ export default defineComponent({
       inMatchmaking: false
     };
   },
+  mounted() {
+    this.io.socket.on("game_start", (payload: {matchId: string}) => {
+      this.inMatchmaking = false
+      this.$router.push("/game?id=" + payload.matchId);
+    });
+    this.io.socket.on("matchmaking_canceled", (payload: {msg: string, isError: boolean}) => {
+      try {
+        publishNotification(payload.msg, payload.isError)
+        if (!payload.msg.startsWith("Cant"))
+          this.inMatchmaking = false
+      } catch (error) {
+        this.inMatchmaking = false
+        publishNotification("something wrong happened canceling", true)
+      }
+    });
+  },
 
 
   methods: {
     cancelMatchmakingAction() {
-      cancelMatchmaking()
-      .then((res) => {
-        console.log("matchmaking canceled succeded: " + JSON.stringify(res, null, 2))
-        if (this.inMatchmaking)
-        publishNotification("Matchmaking cancelation in process...", false)
-      })
-      .catch((err) => handleHttpException(app, err))
+      this.io.socket.emit("cancel_matchmaking", {userId: this.user.id})
     },
     modifyProfileRoute() {
       this.$router.push("/settings");
     },
-    async enterCompetitiveMatch() {
-      this.inMatchmaking = true
-      enterCompetitiveGameApi(this.user.id)
-      .then(response => {
-        if (response.data.statusCode === 202) {
-          this.inMatchmaking = false
-          publishNotification("Matchmaking canceled succesfully", false)
-        } else {
-          //alert("will reroute: " + JSON.stringify(response, null, 2))
-          this.$router.push("/game?id=" + response.data);
-        }
-      }).catch(err => {
-        this.inMatchmaking = false
-        handleHttpException(app, err)
-      })
-    },
     async enterExhibitionMatch() {
       this.inMatchmaking = true
-      let powerups = "";
-      powerups = powerups.concat(this.options.smallPaddle ? "S" : "");
-      powerups = powerups.concat(this.options.fastServe ? "F" : "");
-      if (powerups === "") {
-        powerups = "N";
-      }
-      enterExhibitionGameApi(this.user.id, powerups)
-      .then(response => {
-        if (response.data.statusCode === 202) {
-          this.inMatchmaking = false
-          publishNotification("Matchmaking canceled succesfully", false)
-        } else {
-          this.$router.push("/game?id=" + response.data);
-        }
-      }).catch(err => {
-        this.inMatchmaking = false
-        handleHttpException(app, err)
-      })
+      //alert("entering match with usrId: " + this.user.id)
+      this.io.socket.emit("event_search_game", { userId: this.user.id, f: this.options.fastServe, s: this.options.smallPaddle });
     }
   },
 });

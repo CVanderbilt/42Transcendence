@@ -11,6 +11,8 @@ import { Server, Socket } from 'socket.io';
 import { DATE_VALIDATOR, ID_VALIDATOR, usersInGame, validateInput } from 'src/utils/utils';
 import { MatchesService} from '../matches/matches.service'; 
 import { StateGateway } from 'src/webSockets/state.gateway';
+import { Mutex } from 'async-mutex';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Player {
   user: string;
@@ -35,6 +37,7 @@ interface GameRoom {
 }
 
 
+export const user_games_map: string[] = []
 export const gameRooms: GameRoom[] = [];
 const canvasHeight = 300;
 const canvasWidth = 500;
@@ -51,7 +54,134 @@ export class GameGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 
-  constructor(private matchesService: MatchesService, private stateGateway: StateGateway) {}
+  //private userIds: { userId: string, sockets: Socket[]}[];
+  private lock: Mutex;
+  private intervalId: NodeJS.Timeout | null;
+  
+  constructor(private matchesService: MatchesService, private stateGateway: StateGateway) {
+    //this.userIds = [];
+    this.lock = new Mutex();
+    this.intervalId = null;
+    this.contestants = [null, null, null, null]
+  }
+
+  private contestants: ({ userId: string, client: Socket } | null)[] = [];
+
+  getContestantIndex(userId: string, f: boolean, s: boolean) {
+    for (let idx = 0; idx < this.contestants.length; idx++) {
+      const c = this.contestants[idx];
+      if (c?.userId) {
+        console.log(`  - checking if ${userId} already a contestant with id ${c.userId}`);
+      }
+      if (userId === c?.userId) {
+        console.log("  - already a contestant: " + idx);
+        return idx;
+      }
+    }
+
+    if (f && !s) return 1
+    if (!f && s) return 2
+    if (f && s) return 3
+    return 0
+  }
+
+  @SubscribeMessage('cancel_matchmaking')
+  async cancelMatchmaking(client: Socket, payload: { userId: string }) {
+    console.log("(attemtping matchmakign cancelation)")
+    if (user_games_map[payload.userId]) {
+      console.log("return, cant cancel ongoing match")
+      client.emit("matchmaking_canceled",  { msg: "Cant cancel ongoing match", isError: true })
+      return
+    }
+    const releaseLock = await this.lock.acquire();
+    console.log("lock aquired")
+    for (let idx = 0; idx < this.contestants.length; idx++) {
+      const c = this.contestants[idx];
+      if (c?.userId) {
+        console.log(`  - checking if ${payload.userId} already a contestant with id ${c.userId}`);
+      }
+      if (payload.userId === c?.userId) {
+        console.log("  - already a contestant: " + idx);
+        this.contestants[idx].client.emit("matchmaking_canceled", { msg: "matchmaking succesfully canceled", isError: false })
+        this.contestants[idx] = undefined
+        releaseLock();
+        return
+      }
+    }
+    console.log("lockReleased")
+    client.emit("matchmaking_canceled", { msg: "nothing to cancel", isError: true })
+    releaseLock();
+  }
+
+  @SubscribeMessage('event_search_game')
+  async addUserId(client: Socket, payload: { userId: string, f: boolean, s: boolean }): Promise<void> {
+    console.log("serach with input: " + JSON.stringify(payload))
+    console.log(`wait for lock: ${payload.userId}`)
+    const releaseLock = await this.lock.acquire();
+    const alreadyMatchId = user_games_map[payload.userId]
+    if (alreadyMatchId) {
+      client.emit("game_start", { matchId: alreadyMatchId })
+      releaseLock()
+      return
+    }
+    console.log(`- aquire lock: ${payload.userId}`)
+    try {
+      const idx = this.getContestantIndex(payload.userId, payload.f, payload.s)
+
+      console.log("  - Will interact with contestatn in index: " + idx + "; contestant: " + this.contestants[idx]?.userId)
+      if (!this.contestants[idx]) {
+        console.log("  - no hay contestant, se pone como contestant")
+        this.contestants[idx] = { userId: payload.userId, client: client }
+      } else if (this.contestants[idx].userId !== payload.userId) {
+        //crea match
+        const id = uuidv4()
+        console.log("  - hay contestant crea match con id: " + id)
+        gameRooms[id] = {
+          id,
+          gameStatus: "WAITING",
+          numPlayers: 0,
+          player1: {
+            user: payload.userId,
+            paddlePos: 115,
+            paddleHeight: 75,
+            upPressed: false,
+            downPressed: false,
+            inGame: false,
+            score: 0
+          },
+          player2: {
+            user: this.contestants[idx].userId,
+            paddlePos: 115,
+            paddleHeight: 75,
+            upPressed: false,
+            downPressed: false,
+            inGame: false,
+            score: 0
+          },
+          ballpos: { x: 250, y: 250, dx: 2, dy: 2 },
+          isCompetitive: false,
+          isChallenge: false
+        }
+        //emite partido a los dos clients
+        client.emit("game_start", { matchId: id })
+        user_games_map[payload.userId] = id
+        user_games_map[this.contestants[idx].userId] = id
+        //this.contestants[idx].clients.forEach(c => c.emit("game_start", { matchId: id }))
+        this.contestants[idx].client.emit("game_start", { matchId: id })
+        this.contestants[idx] = null
+      } else {
+        console.log("  - el mismo, se hace push de ste cliente en contstant.client")
+        this.contestants[idx].client.emit("matchmaking_canceled", { msg: "matchmaking canceled because started searching again", isError: true })
+        this.contestants[idx].client = client
+      }
+    } finally {
+      console.log("  - contestants after changes: " + JSON.stringify(this.contestants.map(c => {
+        if (c?.userId) return c.userId; return "undefined"
+      }), null, 2))
+      console.log(`- release lock: ${payload.userId}`)
+      releaseLock();
+    }
+  }
 
   afterInit(server: any) {
     // console.log('Iniciamos server para pong');
@@ -82,32 +212,23 @@ export class GameGateway
     const gameServer = this.server;
     if (!_room){
       //todo: revisar con pablo porq no va esto, si no hay soluciones cutres como revisar que el match exista con una api
-      gameServer.to(`room_${room}`).emit('endGame', "Match_doesnt_exist_(si_eso_buscar_en_db_y_diferente_mensaje_para_unexistent_match_y_para_old_match)");
+      gameServer.to(`room_${room}`).emit('endGame', "Match_doesnt_exist");
       return
     }
-    // console.log("is challenge? " + _room.isChallenge)
+    if (usersInGame.has(username) || (user_games_map[username] && user_games_map[username] !== room)) {
+      client.emit("endGame", "Cant_join_while_in_another_match")
+      return
+    }
+
     const activePlayer = getActivePlayer(_room, username)
     if (activePlayer != null) {
       usersInGame.add(username);
+      user_games_map[username] = room
       this.stateGateway.UpdateUserState(username)
-      // console.log(`${username} is ${activePlayer}`)
-      if (activePlayer == "player2") {
-        // lock player in matchmaking, if locking it failed cancel this
-        if (_room.isChallenge && !this.matchesService.acceptChallenge(_room.id, _room.player2.user, _room.player1.user)) {
-          gameServer.to(`room_${_room.id}`).emit('endGame', `Match_closed_because_${_room.player2.user}_couldnt_join`);
-          this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
-          console.log(`${username} deleting room ${room}(1)`)
-          delete gameRooms[_room.id]
-          usersInGame.delete(username);
-          this.stateGateway.UpdateUserState(username)
-        }
-      }
-      // console.log(`${username} is ${activePlayer}`)
       const player = _room[activePlayer]
       if (!player.inGame) {
         player.inGame = true;
         _room.numPlayers++;
-        // console.log("numplayer++ = " + _room.numPlayers)
       }
       
       _room.gameStatus = "PLAYING";
@@ -191,6 +312,8 @@ export class GameGateway
               delete gameRooms[_room.id]
               usersInGame.delete(_room.player1.user);
               usersInGame.delete(_room.player2.user);
+              user_games_map[_room.player1.user] = undefined
+              user_games_map[_room.player2.user] = undefined
               this.stateGateway.UpdateUserState(username)
             }
           }
@@ -216,8 +339,11 @@ export class GameGateway
         //todo: añadir aqui la logica de ver la recompensa/penalización para cada usuario
         this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
         // console.log(`${username} deleting room ${room}(3)`)
+        usersInGame.delete(_room.player1.user);
+        usersInGame.delete(_room.player2.user);
+        user_games_map[_room.player1.user] = undefined
+        user_games_map[_room.player2.user] = undefined
         delete gameRooms[_room.id]
-        usersInGame.delete(username);
         this.stateGateway.UpdateUserState(username)
       }
 

@@ -54,7 +54,11 @@ export default defineComponent({
     try {
       if (this.$route.query.reason !== undefined ) {
         this.message = (this.$route.query.reason as string).replace(/_/g, " ");
-        
+
+        if (this.message === "Cant join while in another match") {
+          throwFromAsync(app, this.message)
+          this.$router.push("/matchmaking")
+        }
         // parse message
         if (this.message.split(" ")[0] === "winner") {
           const winnerId = this.message.split(" ").slice(2).join(" "); 

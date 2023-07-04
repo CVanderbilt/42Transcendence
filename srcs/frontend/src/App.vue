@@ -62,8 +62,8 @@ import { useStore } from "vuex";
 import { key, store } from "./store/store";
 import { RouterView } from "vue-router";
 import { getUserByName } from "./api/user";
-import { isAuthenticated, generateImageURL, handleHttpException } from "./utils/utils";
-import { app, stateSocketIO } from "./main";
+import { isAuthenticated, generateImageURL, handleHttpException, publishNotification } from "./utils/utils";
+import { app, gameSocketIO, stateSocketIO } from "./main";
 
 import { UserStateSocket } from "./utils/types";
 
@@ -106,6 +106,14 @@ export default defineComponent({
   },
 
   onmounted() {
+    console.log("mounted");
+    console.log(this.user);
+    gameSocketIO().socket.on("matchmaking_canceled", (payload: {msg: string, isError: boolean}) => {
+      publishNotification(payload.msg, payload.isError)
+    });
+    gameSocketIO().socket.on("game_start", (payload: {matchId: string}) => {
+      this.$router.push("/game?id=" + payload.matchId);
+    });
   },
 
   data() {

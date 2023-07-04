@@ -755,7 +755,7 @@ export default defineComponent({
         .then(response => {
           const opponentMembership = response.data.find((membership: any) => membership.user.id != this.user.id)
           if (opponentMembership) {
-            challenge(store.state.user.id, opponentMembership.user.id)
+            challenge(opponentMembership.user.id)
               .then(response => {
                 const gameId = response.data
                 this.message = gameId;

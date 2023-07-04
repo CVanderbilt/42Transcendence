@@ -87,22 +87,13 @@ export class MatchesController {
 
     @UseGuards(JwtAuthenticatedGuard)
     @Post('challenge')
-    async challenge(@Body() data: { requesterName: string, opponentName: string, powerups: string }) {
+    async challenge(@Req() req, @Body() data: { opponentId: string, powerups: string }) {
         validateInput(Joi.object({
-            requesterName: ID_VALIDATOR.required(),
-            opponentName: ID_VALIDATOR.required(),
+            opponentId: ID_VALIDATOR.required(),
             powerups: POWERUPS_VALIDATOR.required()
         }), data);
-        try {
-        console.log("challenge y tal")
-        const powerupsList: string[] = []
-            for (let i = 0; i < data.powerups.length; i++)
-                powerupsList.push(data.powerups[i])
-            return await this.matchesService.challenge(data.requesterName, data.opponentName, powerupsList)
-        } catch (error) {
-            if (error instanceof HttpException) throw (error)
-            throw new HttpException("competitive matchmaking failed", HttpStatusCode.ImATeapot);
-        }
+        const token = getAuthToken(req)
+        return this.matchesService.challenge(token.userId, data.opponentId, data.powerups)
     }
 
     @UseGuards(JwtAuthenticatedGuard)
