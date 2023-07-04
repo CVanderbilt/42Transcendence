@@ -1,7 +1,6 @@
 export const API_END_POINT = "http://localhost:3000"
 export const REDIRECT_URI = "http://localhost:8080/login"
 
-// pablo application
 export const CLIENT_ID = "u-s4t2ud-bcbd5f2bd7917dd3c51484264704d1fe2c12babdb7ae552b16f69b3492e8d4a5"
 
 
