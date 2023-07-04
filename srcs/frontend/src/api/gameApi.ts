@@ -28,10 +28,9 @@ export async function enterExhibitionGameApi(userId: string, powerups: string) {
     return apiClient.get(`${URL}/exhibitionMatch/${userId}/${powerups.toString()}`)
 }
 
-export async function challenge(userId: string, opponentName: string) {
+export async function challenge(opponentId: string) {
     return apiClient.post(`${URL}/challenge`, {
-        requesterName: userId,
-        opponentName: opponentName,
+        opponentId,
         powerups: "N"
     })
 }

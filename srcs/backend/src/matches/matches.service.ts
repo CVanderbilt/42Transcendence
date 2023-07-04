@@ -6,6 +6,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { User } from 'src/users/user.interface';
 import { MatchMaker } from './matchmaking';
+import { gameRooms, user_games_map } from 'src/gameSocket/game.gateway';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class MatchesService {
@@ -20,7 +22,7 @@ export class MatchesService {
     }
 
     getCurrentMatch(userName: string): string {
-        return this.matchMaker.getCurrentMatch(userName)
+        return user_games_map[userName]
     }
 
     cancel(userName: string): boolean {
@@ -31,8 +33,37 @@ export class MatchesService {
         this.matchMaker.cancelV2(userId)
     }
 
-    async challenge(requesterName: string, opponentName: string, powerups: string[]): Promise<string> {
-        return await this.matchMaker.challenge(requesterName, opponentName, powerups)
+    challenge(requesterName: string, opponentName: string, powerups: string): string {
+        //return await this.matchMaker.challenge(requesterName, opponentName, powerups)
+        const id = uuidv4()
+          //generate uuid
+          const ballSpeed = powerups.includes("F") ? 4 : 2
+          const paddleHeight = powerups.includes("S") ? 30 : 75
+          gameRooms[id] = {
+            id,
+            gameStatus: "WAITING",
+            numPlayers: 0,
+            player1: {
+              user: requesterName,
+              paddlePos: 115,
+              paddleHeight,
+              upPressed: false,
+              downPressed: false,
+              inGame: false,
+              score: 0
+            },
+            player2: {
+              user: opponentName,
+              paddlePos: 115,
+              paddleHeight,
+              upPressed: false,
+              downPressed: false,
+              inGame: false,
+              score: 0
+            },
+            ballpos: { x: 250, y: 250, dx: ballSpeed, dy: ballSpeed },
+          }
+          return id
     }
 
     acceptChallenge(gameId: string, userName: string, challengedBy: string): boolean {

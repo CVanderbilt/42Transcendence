@@ -37,6 +37,7 @@ interface GameRoom {
 }
 
 
+export const user_games_map: string[] = []
 export const gameRooms: GameRoom[] = [];
 const canvasHeight = 300;
 const canvasWidth = 500;
@@ -54,7 +55,6 @@ export class GameGateway
   @WebSocketServer() server: Server;
 
   //private userIds: { userId: string, sockets: Socket[]}[];
-  private users: string[]
   private lock: Mutex;
   private intervalId: NodeJS.Timeout | null;
   
@@ -63,7 +63,6 @@ export class GameGateway
     this.lock = new Mutex();
     this.intervalId = null;
     this.contestants = [null, null, null, null]
-    this.users = []
   }
 
   private contestants: ({ userId: string, client: Socket } | null)[] = [];
@@ -89,7 +88,7 @@ export class GameGateway
   @SubscribeMessage('cancel_matchmaking')
   async cancelMatchmaking(client: Socket, payload: { userId: string }) {
     console.log("(attemtping matchmakign cancelation)")
-    if (this.users[payload.userId]) {
+    if (user_games_map[payload.userId]) {
       console.log("return, cant cancel ongoing match")
       client.emit("matchmaking_canceled",  { msg: "Cant cancel ongoing match", isError: true })
       return
@@ -118,12 +117,13 @@ export class GameGateway
   async addUserId(client: Socket, payload: { userId: string, f: boolean, s: boolean }): Promise<void> {
     console.log("serach with input: " + JSON.stringify(payload))
     console.log(`wait for lock: ${payload.userId}`)
-    const alreadyMatchId = this.users[payload.userId]
+    const releaseLock = await this.lock.acquire();
+    const alreadyMatchId = user_games_map[payload.userId]
     if (alreadyMatchId) {
       client.emit("game_start", { matchId: alreadyMatchId })
+      releaseLock()
       return
     }
-    const releaseLock = await this.lock.acquire();
     console.log(`- aquire lock: ${payload.userId}`)
     try {
       const idx = this.getContestantIndex(payload.userId, payload.f, payload.s)
@@ -164,8 +164,8 @@ export class GameGateway
         }
         //emite partido a los dos clients
         client.emit("game_start", { matchId: id })
-        this.users[payload.userId] = id
-        this.users[this.contestants[idx].userId] = id
+        user_games_map[payload.userId] = id
+        user_games_map[this.contestants[idx].userId] = id
         //this.contestants[idx].clients.forEach(c => c.emit("game_start", { matchId: id }))
         this.contestants[idx].client.emit("game_start", { matchId: id })
         this.contestants[idx] = null
@@ -215,33 +215,20 @@ export class GameGateway
       gameServer.to(`room_${room}`).emit('endGame', "Match_doesnt_exist");
       return
     }
-    if (usersInGame.has(username)) {
-      client.emit("endGame", "Cant_join_a_match_twice")
+    if (usersInGame.has(username) || (user_games_map[username] && user_games_map[username] !== room)) {
+      client.emit("endGame", "Cant_join_while_in_another_match")
       return
     }
-    // console.log("is challenge? " + _room.isChallenge)
+
     const activePlayer = getActivePlayer(_room, username)
     if (activePlayer != null) {
       usersInGame.add(username);
+      user_games_map[username] = room
       this.stateGateway.UpdateUserState(username)
-      // console.log(`${username} is ${activePlayer}`)
-      if (activePlayer == "player2") {
-        // lock player in matchmaking, if locking it failed cancel this <-- esto se podra borrar, es de los challenges
-        if (_room.isChallenge && !this.matchesService.acceptChallenge(_room.id, _room.player2.user, _room.player1.user)) {
-          gameServer.to(`room_${_room.id}`).emit('endGame', `Match_closed_because_${_room.player2.user}_couldnt_join`);
-          this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
-          console.log(`${username} deleting room ${room}(1)`)
-          delete gameRooms[_room.id]
-          usersInGame.delete(username);
-          this.stateGateway.UpdateUserState(username)
-        }
-      }
-      // console.log(`${username} is ${activePlayer}`)
       const player = _room[activePlayer]
       if (!player.inGame) {
         player.inGame = true;
         _room.numPlayers++;
-        // console.log("numplayer++ = " + _room.numPlayers)
       }
       
       _room.gameStatus = "PLAYING";
@@ -325,8 +312,8 @@ export class GameGateway
               delete gameRooms[_room.id]
               usersInGame.delete(_room.player1.user);
               usersInGame.delete(_room.player2.user);
-              this.users[_room.player1.user] = undefined
-              this.users[_room.player2.user] = undefined
+              user_games_map[_room.player1.user] = undefined
+              user_games_map[_room.player2.user] = undefined
               this.stateGateway.UpdateUserState(username)
             }
           }
@@ -354,8 +341,8 @@ export class GameGateway
         // console.log(`${username} deleting room ${room}(3)`)
         usersInGame.delete(_room.player1.user);
         usersInGame.delete(_room.player2.user);
-        this.users[_room.player1.user] = undefined
-        this.users[_room.player2.user] = undefined
+        user_games_map[_room.player1.user] = undefined
+        user_games_map[_room.player2.user] = undefined
         delete gameRooms[_room.id]
         this.stateGateway.UpdateUserState(username)
       }
