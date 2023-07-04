@@ -71,7 +71,7 @@ import { key } from "../..//store/store";
 import { cancelMatchmaking, enterCompetitiveGameApi, enterExhibitionGameApi } from "../../api/gameApi";
 import "@/style/styles.css";
 import { handleHttpException, publishNotification, throwFromAsync } from "@/utils/utils";
-import { app } from "@/main";
+import { app, gameSocketIO } from "@/main";
 
 export default defineComponent({
   name: "Matchmaking",
@@ -84,13 +84,26 @@ export default defineComponent({
   },
 
   data() {
+    const io = gameSocketIO();
     return {
+      io,
       options: {
         smallPaddle: false,
         fastServe: false,
       },
       inMatchmaking: false
     };
+  },
+  mounted() {
+    this.io.socket.on("game_start", (payload: {matchId: string}) => {
+      //alert("game start triggered -> " + payload.matchId)
+      this.inMatchmaking = false
+      this.$router.push("/game?id=" + payload.matchId);
+    });
+    this.io.socket.on("matchmaking_canceled", (payload: {msg: string, isError: boolean}) => {
+      publishNotification(payload.msg, payload.isError)
+      this.inMatchmaking = false
+    });
   },
 
 
@@ -108,7 +121,7 @@ export default defineComponent({
       this.$router.push("/settings");
     },
     async enterCompetitiveMatch() {
-      this.inMatchmaking = true
+      /*this.inMatchmaking = true
       enterCompetitiveGameApi(this.user.id)
       .then(response => {
         if (response.data.statusCode === 202) {
@@ -120,29 +133,13 @@ export default defineComponent({
         }
       }).catch(err => {
         this.inMatchmaking = false
-        handleHttpException(app, err)
-      })
+        handleHttpException(app, efrr)
+      })//*/
     },
     async enterExhibitionMatch() {
       this.inMatchmaking = true
-      let powerups = "";
-      powerups = powerups.concat(this.options.smallPaddle ? "S" : "");
-      powerups = powerups.concat(this.options.fastServe ? "F" : "");
-      if (powerups === "") {
-        powerups = "N";
-      }
-      enterExhibitionGameApi(this.user.id, powerups)
-      .then(response => {
-        if (response.data.statusCode === 202) {
-          this.inMatchmaking = false
-          publishNotification("Matchmaking canceled succesfully", false)
-        } else {
-          this.$router.push("/game?id=" + response.data);
-        }
-      }).catch(err => {
-        this.inMatchmaking = false
-        handleHttpException(app, err)
-      })
+      //alert("entering match with usrId: " + this.user.id)
+      this.io.socket.emit("event_search_game", { userId: this.user.id, f: this.options.fastServe, s: this.options.smallPaddle });
     }
   },
 });
