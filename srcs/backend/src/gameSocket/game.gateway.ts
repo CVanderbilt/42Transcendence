@@ -86,6 +86,34 @@ export class GameGateway
     return 0
   }
 
+  @SubscribeMessage('cancel_matchmaking')
+  async cancelMatchmaking(client: Socket, payload: { userId: string }) {
+    console.log("(attemtping matchmakign cancelation)")
+    if (this.users[payload.userId]) {
+      console.log("return, cant cancel ongoing match")
+      client.emit("matchmaking_canceled",  { msg: "Cant cancel ongoing match", isError: true })
+      return
+    }
+    const releaseLock = await this.lock.acquire();
+    console.log("lock aquired")
+    for (let idx = 0; idx < this.contestants.length; idx++) {
+      const c = this.contestants[idx];
+      if (c?.userId) {
+        console.log(`  - checking if ${payload.userId} already a contestant with id ${c.userId}`);
+      }
+      if (payload.userId === c?.userId) {
+        console.log("  - already a contestant: " + idx);
+        this.contestants[idx].client.emit("matchmaking_canceled", { msg: "matchmaking succesfully canceled", isError: false })
+        this.contestants[idx] = undefined
+        releaseLock();
+        return
+      }
+    }
+    console.log("lockReleased")
+    client.emit("matchmaking_canceled", { msg: "nothing to cancel", isError: true })
+    releaseLock();
+  }
+
   @SubscribeMessage('event_search_game')
   async addUserId(client: Socket, payload: { userId: string, f: boolean, s: boolean }): Promise<void> {
     console.log("serach with input: " + JSON.stringify(payload))
@@ -143,7 +171,7 @@ export class GameGateway
         this.contestants[idx] = null
       } else {
         console.log("  - el mismo, se hace push de ste cliente en contstant.client")
-        this.contestants[idx].client.emit("matchmaking_canceled", { msg: "canceled because started searching again", isError: true })
+        this.contestants[idx].client.emit("matchmaking_canceled", { msg: "matchmaking canceled because started searching again", isError: true })
         this.contestants[idx].client = client
       }
     } finally {
