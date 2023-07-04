@@ -71,11 +71,13 @@ import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
 import { key } from "../store/store";
 import { getUserById } from "../api/user";
-import { getFriendshipsRequest, makeFriendshipRequest, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
+// import { getFriendshipsRequest, makeFriendshipRequest, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
+
 import { generateImageURL, handleHttpException, throwFromAsync } from "@/utils/utils";
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
 import { app } from "@/main";
 import { Match, getMatchesReq } from "@/api/gameApi";
+import { getFriendshipsRequest, setBlockReq, setFriendReq } from "@/api/friendshipsApi";
 
 export default defineComponent({
   name: "User",
@@ -169,7 +171,7 @@ export default defineComponent({
 
     async makeFriend() {
       try {
-        const res = await makeFriendshipRequest(this.currentUser.id as string, this.lookedUpId)
+        const res = await setFriendReq(this.lookedUpId, true)
         if (res.status === 201) {
           this.areFriends = res.data.isFriend
           this.friendshipId = res.data.id
@@ -179,9 +181,9 @@ export default defineComponent({
       }
     },
 
-    unfriend() {
+    async unfriend() {
       try {
-        unfriendRequest(this.currentUser.id, this.friendshipId)
+        await setFriendReq(this.lookedUpId, false)
         this.areFriends = false
         this.friendshipId = ""
       }
@@ -190,9 +192,9 @@ export default defineComponent({
       }
     },
 
-    setBlock(isBlocked: boolean) {
+    async setBlock(isBlocked: boolean) {
       try {
-        setBlockFriendRequest(this.currentUser.id, this.friendshipId, isBlocked)
+        await setBlockReq(this.lookedUpId, isBlocked)
         this.isBlocked = isBlocked
       }
       catch (err) {

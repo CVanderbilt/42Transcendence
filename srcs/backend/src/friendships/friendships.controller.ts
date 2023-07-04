@@ -24,45 +24,22 @@ export class FriendshipsController {
         }
     }
 
-    @Post()
+    @Post("/v2")
     @UseGuards(JwtAuthenticatedGuard)
-    createFriendship(@Body() data: FriendshipDto, @Req() req) {
+    UpdateFriendshipV2(@Body() data: FriendshipDto, @Req() req) {
         validateInput(Joi.object({
-            userId: ID_VALIDATOR.required(),
+            friendId: ID_VALIDATOR.required(),
             isBlocked: Joi.boolean(),
             isFriend: Joi.boolean(),
-            friendId: ID_VALIDATOR,
         }), data);
-        try {
-            const token = getAuthToken(req)
-            if (token.userId !== data.userId)
-                throw new UnauthorizedException("Unauthorized to create friendships on behalf of other users")
-            if (data.userId === data.friendId)
-                throw new UnauthorizedException("You can not befriend yourself")
 
-            return this.friendshipsService.createFriendship(token.userId, data);
-        }
-        catch (error) {
-            throw processError(error, "can not create friendships");
-        }
-    }
-
-    @Post("/:friendshipId")
-    @UseGuards(JwtAuthenticatedGuard)
-    updateFriendship(@Param('friendshipId') friendshipId: string, @Body() data: FriendshipDto, @Req() req) {
-        validateInput(Joi.object({
-            userId: ID_VALIDATOR.required(),
-            friendshipId: INT_VALIDATOR.required(),
-            isBlocked: Joi.boolean(),
-            isFriend: Joi.boolean(),
-        }), { ...data, friendshipId });
         try {
 
             const token = getAuthToken(req)
-            if (token.userId !== data.userId)
-                throw new UnauthorizedException("Unauthorized to update friendships on behalf of other users")
+            if (token.userId === data.friendId)
+                throw new UnauthorizedException("User and requester are the same")
 
-            return this.friendshipsService.updateFriendship(friendshipId, data);
+            return this.friendshipsService.updateFriendship2(token.userId, data.friendId, data);
         }
         catch (error) {
             throw processError(error, "can not update friendships");
