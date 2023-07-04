@@ -151,7 +151,7 @@ export default defineComponent({
       if (e.key == "Down" || e.key == "ArrowDown") {
         if (this.leftUserDownPressed == false) {
           this.io.socket.emit("move", {
-            room: this.room, username: this.user.id, movement: "down", type: "press", date: Date.now() - 1100 // descomentar esto para simular lag
+            room: this.room, username: this.user.id, movement: "down", type: "press", date: Date.now()
           });
         }
       } else if (e.key == "Up" || e.key == "ArrowUp") {
