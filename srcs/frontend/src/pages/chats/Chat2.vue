@@ -762,7 +762,7 @@ export default defineComponent({
                 this.sendMessage(true)
 
                 this.$router.push("/game?id=" + response.data);
-              })
+              }).catch(err => handleHttpException(app, err))
           }
         }).catch(err => handleHttpException(app, err))
     },
