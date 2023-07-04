@@ -115,7 +115,10 @@ export default defineComponent({
 
       // user means to activate 2fa
       if (this.is2fa && !store.state.user.is2faEnabled)
-        this.$router.push("/qr");
+      setTimeout(() => {
+          window.location.href = "/qr";
+        }, 500);
+        // this.$router.push("/qr");
       else
       {
         // page reload
