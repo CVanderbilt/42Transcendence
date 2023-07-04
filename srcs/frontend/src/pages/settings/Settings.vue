@@ -93,6 +93,9 @@ export default defineComponent({
         return;
       }
 
+      if (!this.is2fa)
+        this.options.is2fa = false
+
       try {
         await (await updateUserReq(store.state.user.id, this.options)).data
         publishNotification("User updated", false)
@@ -111,6 +114,7 @@ export default defineComponent({
           handleHttpException(app, error)
         }
       }
+      
 
       // user means to activate 2fa
       if (this.is2fa && !store.state.user.is2faEnabled)
@@ -121,6 +125,7 @@ export default defineComponent({
       else
       {
         // page reload
+        this.logOut()
         setTimeout(() => {
           window.location.reload()
         }, 500);
