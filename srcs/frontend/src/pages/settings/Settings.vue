@@ -55,6 +55,7 @@ import { key, store } from "../../store/store";
 import { generateImageURL, handleHttpException, publishNotification } from "@/utils/utils";
 import { IUserAPI, putImage, updateUserReq } from "@/api/user";
 import { app, stateSocketIO } from "@/main";
+import User from "@/components/User.vue";
 
 export default defineComponent({
   name: "Settings",
@@ -125,20 +126,8 @@ export default defineComponent({
       else
       {
         // page reload
-        this.logOut()
-        setTimeout(() => {
-          window.location.reload()
-        }, 500);
-      }
-    },
+        if (store.state.user.is2fa && !this.is2fa){
 
-    generateImageURL,
-    uploadImage(event: Event) {
-      const input = event.target as HTMLInputElement;
-      this.selectedFile = input.files![0]
-    },
-
-    logOut() {
       localStorage.removeItem(store.state.user.id);
       localStorage.removeItem("token")
       store.commit("logout");
@@ -152,6 +141,36 @@ export default defineComponent({
       setTimeout(() => {
         this.io.socket.emit("logout");
       }, 500);
+        }
+        setTimeout(() => {
+          window.location.reload()
+        }, 500);
+      }
+    },
+
+    generateImageURL,
+    uploadImage(event: Event) {
+      const input = event.target as HTMLInputElement;
+      this.selectedFile = input.files![0]
+    },
+
+    logOut() {
+      if (store.state.user.is2fa == this.is2fa)
+      { 
+      localStorage.removeItem(store.state.user.id);
+      localStorage.removeItem("token")
+      store.commit("logout");
+
+      this.io.socket.offAny();
+
+      this.$router.push("/login");
+      console.log("Bye bye");
+
+      //espera 500ms
+      setTimeout(() => {
+        this.io.socket.emit("logout");
+      }, 500);
+    }
     },
   }
 })
