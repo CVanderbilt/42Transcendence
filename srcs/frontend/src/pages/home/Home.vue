@@ -7,27 +7,9 @@
           <div class="container-fluid px-4 mt-10">
             <h1 class="mt-10" style="color: white; padding-top: 50px; padding-bottom: 30px; font-family: 'Geneva'; font-weight:bolder;">FT_TRASCENDENCE</h1>
             <div class="row">
-              <div class="col-xl-6 col-md-12">
-                <div class="card bg-primary text-white mb-4">
-                  <div class="card-body">Exhibition games played</div>
-                  <div class="
-                      card-footer
-                      align-items-center
-                      justify-content-between
-                    ">
-                    <h2> Total matches: {{ exhibitions.length }}</h2>
-                    <div v-for="item in exhibitions" v-bind:key="item.id"
-                      style="display: flex; justify-content: space-around;">
-                      <p>{{ item.opponent?.username }}</p>
-                      <p>{{ item.userScore }} - {{ item.opponentScore }}</p>
-                      <p>{{ item.userScore > item.opponentScore ? 'WON' : 'LOST' }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-xl-6 col-md-12">
-                <div class="card bg-warning text-white mb-4">
-                  <div class="card-body">Competition games played</div>
+              <div class="col-xl-12 col-md-12">
+                <div class="card  text-black mb-4">
+                  <div class="card-body">Games played</div>
                   <div class="
                       card-footer
                       align-items-center
