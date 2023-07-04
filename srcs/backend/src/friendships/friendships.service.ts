@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
 import { FriendshipEntity } from './friendship.entity';
 import { FriendshipDto } from './friendships.dtos';
+import { HttpStatusCode } from 'axios';
 
 @Injectable()
 export class FriendshipsService {
@@ -22,52 +23,30 @@ export class FriendshipsService {
         return friendships;
     }
 
-    //create a friendship
-    async createFriendship(userId: string, data: FriendshipDto) {
-        let friendship = await this.friendshipsRepo.findOne({ where: { user: { id: userId }, friend: { id: data.friendId } } })
+    async updateFriendship2(userId: string, friendId: string, data: FriendshipDto) {
+        let friendship = await this.friendshipsRepo.findOne({where: {user: {id: userId}, friend: {id: friendId}}})
         
-        const user = await this.usersRepo.findOneBy({ id: userId })
-        const friend = await this.usersRepo.findOneBy({ id: data.friendId })
-
-
         if (!friendship) {
-            friendship = await new FriendshipEntity();
-            friendship.user = user;
-            friendship.friend = friend;
-            friendship.isBlocked = data.isBlocked ? data.isBlocked : false,
-            friendship.isFriend = data.isFriend ? data.isFriend : true
-            await friendship.save();
+            const user = await this.usersRepo.findOne({where: {id: userId}})
+            const friend = await this.usersRepo.findOne({where: {id: friendId}})
+            if (!user || !friend)
+                throw new HttpException("User or friend not found", HttpStatusCode.NotFound)
 
-            console.log("creating friendship");
-            console.log(friendship);
-
-            return friendship
+            friendship = new FriendshipEntity();
+            friendship.user = user
+            friendship.friend = friend
+            friendship.isBlocked = false;
+            friendship.isFriend = false;
+            friendship = await this.friendshipsRepo.save(friendship);
         }
 
-        friendship.isFriend = data.isFriend ? data.isFriend : true;
-        friendship.isBlocked = data.isBlocked ? data.isBlocked : false;
-        await friendship.save();
+        if (data.isBlocked !== undefined)
+            friendship.isBlocked = data.isBlocked;
+        if (data.isFriend !== undefined)
+            friendship.isFriend = data.isFriend;
 
-        console.log("creating friendship");
-        console.log(friendship);
-        
-        return friendship
-    }
+        friendship = await this.friendshipsRepo.save(friendship);
 
-
-    //update a friendship
-    async updateFriendship(friendshipId: string, data: FriendshipDto) {
-        try {
-            const friendship = await this.friendshipsRepo.findOneOrFail({ where: { id: friendshipId } })
-            if (data.isBlocked !== undefined)
-                friendship.isBlocked = data.isBlocked;
-            if (data.isFriend !== undefined)
-                friendship.isFriend = data.isFriend;
-            await this.friendshipsRepo.save(friendship);
-            return friendship;
-        }
-        catch (err) {
-            console.log(err);
-        }
+        return friendship;
     }
 }

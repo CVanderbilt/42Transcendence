@@ -26,13 +26,13 @@
 
         <div>
           <button v-if="!fshp.isBlocked" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
-            v-on:click="setBlock(fshp.id as string, true)">Block
+            v-on:click="setBlock(fshp, true)">Block
           </button>
           <button v-if="fshp.isBlocked" class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
-            v-on:click="setBlock(fshp.id as string, false)">Unblock
+            v-on:click="setBlock(fshp, false)">Unblock
           </button>
           <button class="btn btn-outline-light mt-3 btn-lg px-5" type="submit"
-            v-on:click="unfriend(fshp.id as string)">Unfriend</button>
+            v-on:click="unfriend(fshp)">Unfriend</button>
         </div>
       </div>
     </div>
@@ -43,12 +43,13 @@
 import { defineComponent, ref } from "vue";
 import { useStore } from "vuex";
 import { key } from "../../store/store";
-import { getFriendshipsRequest, IFriendship, setBlockFriendRequest, unfriendRequest } from "@/api/friendshipsApi";
+
 import OpenDirectChatButton from "@/components/OpenDirectChatButton.vue";
 import { app, stateSocketIO } from "@/main";
 import "@/style/styles.css";
 import { generateImageURL } from "@/utils/utils";
 import { handleHttpException } from "@/utils/utils";
+import { IFriendship, getFriendshipsRequest, setBlockReq, setFriendReq } from "@/api/friendshipsApi";
 
 interface UserState {
   userId: string;
@@ -136,10 +137,11 @@ export default defineComponent({
       }
     },
     generateImageURL,
-    setBlock(friendshipId: string, isBlocked: boolean) {
+    setBlock(friendship: IFriendship, isBlocked: boolean) {
       try {
-        setBlockFriendRequest(this.user.id, friendshipId, isBlocked)
-        const f = this.friendships.find((fshp) => fshp.id === friendshipId)
+        console.log("setBlock")
+        setBlockReq(friendship.friend.id, isBlocked)
+        const f = this.friendships.find((fshp) => fshp.id === friendship.id)
         if (f)
           f.isBlocked = isBlocked
         } catch (err) {
@@ -147,10 +149,10 @@ export default defineComponent({
       }
     },
 
-    unfriend(frienshipId: string) {
+    unfriend(friendship : IFriendship) {
       try {
-        unfriendRequest(this.user.id, frienshipId)
-        this.friendships = this.friendships.filter((fshp) => fshp.id !== frienshipId)
+        setFriendReq(friendship.friend.id, false)
+        this.friendships = this.friendships.filter((fshp) => fshp.id !== friendship.id)
       } catch (err) {
         handleHttpException(app, err)
       }

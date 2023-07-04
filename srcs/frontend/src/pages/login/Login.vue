@@ -179,7 +179,7 @@ export default defineComponent({
               role: response.data.role,
               isBanned: response.data.isBanned
             }
-            this.DoLogin(user, response.data.token)
+            this.DoLogin(user, response.data.token, response.data.isNew)
           }
         }).catch(err => handleHttpException(app, err))
     },
@@ -217,12 +217,15 @@ export default defineComponent({
         })
     },
 
-    DoLogin(user: any, token: string) {
+    DoLogin(user: any, token: string, isNew = false) {
       this.io.socket.emit("alive", { userId: user.id });
       localStorage.setItem(user.id, token)
       localStorage.setItem("token", token)
       store.commit("changeUser", user)
-      this.$router.push("/")
+      if (isNew)
+        this.$router.push("/settings")
+      else
+        this.$router.push("/")
     
     }
   },

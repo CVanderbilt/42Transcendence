@@ -15,10 +15,11 @@ export class UsersService {
         private readonly usersRepo: Repository<UserEntity>,
     ) { }
 
-    async createUser(user: User): Promise<User> {
+    async createUser(user: User, join2general = true): Promise<User> {
         user.is2fa = false;
         const newUser = this.usersRepo.save(user)
-        this.chatsService.joinUser2GeneralChat(user.id)
+        if (join2general)
+            this.chatsService.joinUser2GeneralChat(user.id)
         return newUser
     }
 
