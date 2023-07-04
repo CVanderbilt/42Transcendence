@@ -150,9 +150,10 @@ export class AuthService {
 
     async signIn42(code: string): Promise<LoginResDto> {
         const accessData = await this.exchangeCodeForAccessData(code)
-
+        
         const me42 = await this.exchange42TokenForUserData(accessData.access_token)
-
+        
+        let isNew = false
         var user = await this.usersService.findBy42Login(me42.login)
         if (!user) {
             // pick a name
@@ -178,6 +179,8 @@ export class AuthService {
             const png = generateRandomSquaresImage();
             const buffer = PNG.sync.write(png);
             await this.usersService.uploadDatabaseFile(buffer, user.id);
+
+            isNew = true
         }
 
         const payload = {
@@ -199,6 +202,7 @@ export class AuthService {
             "token": token,
             "is2fa": user.is2fa,
             "role": user.role,
+            "isNew": isNew,
         }
 
         return res
@@ -261,23 +265,32 @@ export class AuthService {
             "name": user.username,
             "token": token,
             "is2fa": user.is2fa,
-            "role": user.role,
+            "role": user.role,            
         }
 
         return res
     }
 
-    async makeMockUser(info: any) {
-        if (await this.usersRepo.findOneBy({ role: info.role }))
-            throw new HttpException(info.role + "_ALREADY_EXISTS", HttpStatus.BAD_REQUEST)
-        await this.registerWithEmail({
-            username: info.username,
-            email: info.email,
-            password: info.password,
-        })
-        var user = await this.usersRepo.findOneBy({ username: info.username })
-        user.role = info.role
-        user.save()
+    async makeMockUser(data: any) {
+        if (await this.usersRepo.findOneBy({ role: data.role }))
+            throw new HttpException(data.role + "_ALREADY_EXISTS", HttpStatus.BAD_REQUEST)
+
+        // create user
+        const saltOrRounds = 10;
+        const hashed = await bcrypt.hash(data.password, saltOrRounds);
+        var userDto: User = {
+            email: data.email,
+            username: data.username,
+            password: hashed,
+            isBanned: false,
+            role: data.role,
+        }
+
+        const user: User = await this.usersService.createUser(userDto, false)
+
+        const png = generateRandomSquaresImage();
+        const buffer = PNG.sync.write(png);
+        await this.usersService.uploadDatabaseFile(buffer, user.id);
     }
 }
 

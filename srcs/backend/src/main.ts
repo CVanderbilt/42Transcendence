@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { Chats2Service } from './chats2/chats2.service';
-import { UsersService } from './users/users.service';
+import { AuthService } from './auth/auth.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,35 +26,26 @@ async function bootstrap() {
   }
       
   const chats2Service = app.get(Chats2Service)
-  try{
-     const generalRoom = await chats2Service.createChatRoom(generalChatRoomDto)
-     const m = await chats2Service.findChatRoomMembers(generalRoom.id)
-     console.log("General chat room created")
-     console.log(m.length)
-    }
+  try{ await chats2Service.createChatRoom(generalChatRoomDto) }
   catch(error){ console.log("General chat room already exists") }
 
+  const authService = app.get(AuthService)
   const ownerMock = {
     username: process.env.OWNER_USERNAME,
     email: process.env.OWNER_EMAIL,
     password: process.env.OWNER_PASSWORD,
-    isBanned: false,
     role: "OWNER"
   }
   const adminMock = {
     username: process.env.ADMIN_USERNAME,
     email: process.env.ADMIN_EMAIL,
     password: process.env.ADMIN_PASSWORD,
-    isBanned: false,
     role: "ADMIN"
   }
 
-  const usersService = app.get(UsersService)
-  
-
-  try { await usersService.createUser(ownerMock, false) }
+  try { await authService.makeMockUser(ownerMock) }
   catch(error) { console.log("Owner already exists") }
-  try { await usersService.createUser(adminMock, false) }
+  try { await authService.makeMockUser(adminMock) }
   catch(error) { console.log("Admin already exists") }
 }
 

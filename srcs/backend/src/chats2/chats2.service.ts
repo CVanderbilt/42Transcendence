@@ -43,11 +43,8 @@ export class Chats2Service {
             isDirect: roomDto.isDirect
         })
 
-        console.log("Room created")
-        console.log(user)
         // if a user is provided add it as owner to the room
         if (user != null) {
-            console.log("Adding user as owner")
             await this.chatMembershipsRepo.save({
                 user: { id: user.id },
                 chatRoom: { id: room.id },
@@ -263,8 +260,10 @@ export class Chats2Service {
             }
         })
 
-        if (userMembership.length == 0) {
-            throw new UnauthorizedException('You are not a member of this room')
+        const user = await this.usersRepo.findOne({ where: { id: inviterId } })
+        if (user.role != "ADMIN" && user.role != "OWNER") {
+            if (userMembership.length == 0)
+                throw new UnauthorizedException('You are not a member of this room')
         }
 
         this.joinChatRoom(id, data, true)
