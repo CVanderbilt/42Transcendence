@@ -52,7 +52,7 @@
 import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
 import { key } from "../..//store/store";
-import { cancelMatchmaking, enterCompetitiveGameApi, enterExhibitionGameApi } from "../../api/gameApi";
+//import { cancelMatchmaking, enterCompetitiveGameApi, enterExhibitionGameApi } from "../../api/gameApi"
 import "@/style/styles.css";
 import { handleHttpException, publishNotification, throwFromAsync } from "@/utils/utils";
 import { app, gameSocketIO } from "@/main";
