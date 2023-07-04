@@ -26,6 +26,9 @@ export class MatchesService {
 
     challenge(requesterName: string, opponentName: string, powerups: string): string {
         //return await this.matchMaker.challenge(requesterName, opponentName, powerups)
+        const mid = user_games_map[requesterName]
+        if (mid)
+            throw new HttpException("User already in a match: " + mid, HttpStatus.CONFLICT)
         const id = uuidv4()
           //generate uuid
           const ballSpeed = powerups.includes("F") ? 4 : 2

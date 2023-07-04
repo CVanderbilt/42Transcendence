@@ -8,7 +8,7 @@ import {
 } from '@nestjs/websockets';
 import * as Joi from 'joi'
 import { Server, Socket } from 'socket.io';
-import { DATE_VALIDATOR, ID_VALIDATOR, usersInGame, validateInput } from 'src/utils/utils';
+import { DATE_VALIDATOR, ID_VALIDATOR, processError, usersInGame, validateInput } from 'src/utils/utils';
 import { MatchesService} from '../matches/matches.service'; 
 import { StateGateway } from 'src/webSockets/state.gateway';
 import { Mutex } from 'async-mutex';
@@ -87,6 +87,7 @@ export class GameGateway
 
   @SubscribeMessage('cancel_matchmaking')
   async cancelMatchmaking(client: Socket, payload: { userId: string }) {
+    try {
     console.log("(attemtping matchmakign cancelation)")
     if (user_games_map[payload.userId]) {
       console.log("return, cant cancel ongoing match")
@@ -111,10 +112,14 @@ export class GameGateway
     console.log("lockReleased")
     client.emit("matchmaking_canceled", { msg: "nothing to cancel", isError: true })
     releaseLock();
+  } catch (error) {
+      
+  }
   }
 
   @SubscribeMessage('event_search_game')
   async addUserId(client: Socket, payload: { userId: string, f: boolean, s: boolean }): Promise<void> {
+    try {
     console.log("serach with input: " + JSON.stringify(payload))
     console.log(`wait for lock: ${payload.userId}`)
     const releaseLock = await this.lock.acquire();
@@ -183,6 +188,7 @@ export class GameGateway
       console.log(`- release lock: ${payload.userId}`)
       releaseLock();
     }
+  } catch (error) {}
   }
 
   afterInit(server: any) {
@@ -204,7 +210,8 @@ export class GameGateway
     // console.log('event_join_game' + client.id)
     const { room, username } = payload
     
-    
+    // console.log("validating: " + JSON.stringify(payload, null, 2))
+try{
     validateInput(Joi.object({
       room: ID_VALIDATOR.required(),
       username: ID_VALIDATOR.required()
@@ -319,34 +326,39 @@ export class GameGateway
             }
           }
         }, 1000 / 60);
+      // console.log(_room);
     }
 
     client.on("disconnect", (reason) => {
-      const activePlayer = getActivePlayer(_room, username);
-      if (!activePlayer) {
-        // console.log("Viewer disconected")
-        return ;
-      }
-      usersInGame.delete(username);
-      // console.log(`${activePlayer} se va, quedan: ${_room.numPlayer - 1}`);
-      clearInterval(_room.intervalRefreshId);
-      _room[activePlayer].inGame = false;
-      _room.numPlayers--;
-      _room.gameStatus = "MISSING_PLAYER";
-
-      if (_room.numPlayers <= 0) {
-        usersInGame.delete(_room.player1.user);
-        usersInGame.delete(_room.player2.user);
-        user_games_map[_room.player1.user] = undefined
-        user_games_map[_room.player2.user] = undefined
-        delete gameRooms[_room.id]
-        this.stateGateway.UpdateUserState(username)
-      }
+      try {
+        
+        const activePlayer = getActivePlayer(_room, username);
+        if (!activePlayer) {
+          // console.log("Viewer disconected")
+          return ;
+        }
+        usersInGame.delete(username);
+        // console.log(`${activePlayer} se va, quedan: ${_room.numPlayer - 1}`);
+        clearInterval(_room.intervalRefreshId);
+        _room[activePlayer].inGame = false;
+        _room.numPlayers--;
+        _room.gameStatus = "MISSING_PLAYER";
+        
+        if (_room.numPlayers <= 0) {
+          usersInGame.delete(_room.player1.user);
+          usersInGame.delete(_room.player2.user);
+          user_games_map[_room.player1.user] = undefined
+          user_games_map[_room.player2.user] = undefined
+          delete gameRooms[_room.id]
+          this.stateGateway.UpdateUserState(username)
+        }
+      } catch (error) {}
 
       // console.log(`socket ${client.id} disconnected due to ${reason}`);
     });
 
     client.join(`room_${_room.id}`);
+  } catch (error) {}
   }
 
   @SubscribeMessage('move') //TODO Backend
@@ -354,6 +366,7 @@ export class GameGateway
     cliWent: Socket,
     payload: { room: string, username: string, movement: "down" | "up", type: "press" | "release", date: number },
   ) {
+    try {
     validateInput(Joi.object({
       room: ID_VALIDATOR.required(),
       username: ID_VALIDATOR.required(),
@@ -390,19 +403,23 @@ export class GameGateway
     const action = movement == "up" ? "upPressed" : "downPressed"
 
     _room[activePlayer][action] = type == "press"
+  }catch(err){}
   }
 
   @SubscribeMessage('event_leave')
   handleRoomLeave(client: Socket, payload: { room: string, username: string }) {
-    const { room, username } = payload;
-    validateInput(Joi.object({
-      room: ID_VALIDATOR.required(),
-      username: ID_VALIDATOR.required()
-  }), payload);
-    // console.log(`${username} se salio del juego ${room}`)
-    client.leave(`room_${room}`);
+    try {
+      
+      const { room, username } = payload;
+      validateInput(Joi.object({
+        room: ID_VALIDATOR.required(),
+        username: ID_VALIDATOR.required()
+      }), payload);
+      // console.log(`${username} se salio del juego ${room}`)
+      client.leave(`room_${room}`);
+    } catch (error) {}
+    }
   }
-}
 
 const getActivePlayer = (room: GameRoom, playerName: string): "player1" | "player2" => {
   if (room.player1.user === playerName) {
