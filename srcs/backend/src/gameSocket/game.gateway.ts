@@ -338,6 +338,7 @@ try{
           return ;
         }
         usersInGame.delete(username);
+        this.stateGateway.UpdateUserState(username)
         // console.log(`${activePlayer} se va, quedan: ${_room.numPlayer - 1}`);
         clearInterval(_room.intervalRefreshId);
         _room[activePlayer].inGame = false;

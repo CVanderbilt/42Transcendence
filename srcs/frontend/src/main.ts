@@ -39,7 +39,7 @@ const routes = [
   { path: '/matchmaking', name: 'matchmaking', component: Matchmaking, meta: { requiresAuth: true } },
   { path: '/endgame', name: 'endGame', component: EndGame, meta: { requiresAuth: true } },
   { path: '/admin', name: 'adminPage', component: Admin, meta: { requiresAuth: true } },
-  { path: '/rules', name: 'rules', component: Rules, meta: { requiresAuth: false } },
+  { path: '/rules', name: 'rules', component: Rules, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
