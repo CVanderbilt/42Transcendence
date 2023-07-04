@@ -4,7 +4,7 @@
             <h1 style="color: white; padding-top: 30px;">PONG!</h1>
 
             <div class="row" style="padding-left: 3%; padding-right: 3%; color: white; height: max-content;">
-              <div class="col-xl-6">
+              <div class="col-xl-12">
                 <div class="card mb-4" style="background-color: #27292f;height: 100%;">
                   <div class="card-header" >
                     <h3  style="color: white;">Exhibition Match</h3>
@@ -25,21 +25,22 @@
                       </form>
                     </div>
                     <b-button v-on:click="enterExhibitionMatch()"
-                      style="width: fit-content; background-color: #4e92f2; color:rgb(248, 248, 248); border-radius: 0; margin-top: 30px;"
+                      style="width: 20vw; background-color: #4e92f2; color:rgb(248, 248, 248); border-radius: 0; margin-top: 30px; margin-right: 1vw;"
                       :disabled="inMatchmaking"
                       :class="{ 'disabled': inMatchmaking }">
                     Search Match
                     </b-button>
+                    <b-button v-on:click="cancelMatchmakingAction()"
+                  style="width: 20vw; background-color:rgb(255, 82, 82); border-radius: 0; margin-top: 30px; margin-left: 1vw;">
+                Cancel matchmaking
+                </b-button>
                   </div>
                 </div>
               </div>
             </div>
             
             
-                <b-button v-on:click="cancelMatchmakingAction()"
-                  style="width: fit-content; background-color:rgb(255, 82, 82); border-radius: 0; margin-top: 30px;">
-                Cancel matchmaking
-                </b-button>
+                
         </main>
   </section>
 </template>
