@@ -9,42 +9,9 @@ import { UsersService } from 'src/users/users.service';
 
 const POWERUPS_VALIDATOR = Joi.string().regex(/^[A-Z]+$/)
 
-let counter = 0
 @Controller('matches')
 export class MatchesController {
     constructor(private matchesService: MatchesService, private usersService: UsersService) { }
-
-    //Todo: cambiar todos los nombred de atributos (especialmente de cara a llamar las apis) de username a userid
-    @UseGuards(JwtAuthenticatedGuard)
-    @Get('competitiveMatch/:userName')
-    async getCompetitiveMatch(@Param('userName') userName: string, @Req() req): Promise<string> {
-        validateInput(Joi.object({
-            userName: ID_VALIDATOR.required()
-        }), { userName });
-        const token = getAuthToken(req)
-        if (userName !== token.userId)
-            throw new HttpException("UserId in query and in token missmatch", HttpStatusCode.BadRequest)        
-    
-            // OJO aunq se llama username es userids
-            try {
-        const user = await this.usersService.findOneById(userName)
-            console.log("getCompetitiveMatch called with userId " + userName + " and score: " + user.score + " _" + counter)
-            counter++
-            const gameId = await this.matchesService.makeMatch(userName, user.score, false, []);
-            console.log("makeMatch funcionó y devuelve:")
-            console.log(gameId)
-            return gameId;
-            //return await this.matchesService.joinMatch(userId, "competitive");
-        } catch (error) {
-            //Logger2.error(error)
-            console.log("error getting competitive match")
-            //console.log(error)
-            if (error instanceof HttpException) throw (error)
-            throw new HttpException("competitive matchmaking failed", HttpStatusCode.ImATeapot);
-        }
-    }
-
-    //----------------------------------------------
 
     @UseGuards(JwtAuthenticatedGuard)
     @Get('user/:userId')
@@ -57,31 +24,6 @@ export class MatchesController {
         } catch (error) {
             console.log (error)
             throw new HttpException("error getting matches", HttpStatusCode.ImATeapot);
-        }
-    }
-
-    @UseGuards(JwtAuthenticatedGuard)
-    @Get('exhibitionMatch/:userName/:powerups')
-    async getExhibitionMatch(
-        @Param('userName') userName: string,
-        @Param('powerups') powerups: string,
-    ): Promise<string> {
-        validateInput(Joi.object({
-            userName: ID_VALIDATOR.required(),
-            powerups: POWERUPS_VALIDATOR.required()
-        }), { userName, powerups });
-        try {
-            console.log("friendly match called with userName: " + userName)
-            const powerupsList: string[] = []
-            for (let i = 0; i < powerups.length; i++)
-                powerupsList.push(powerups[i])
-            const gameId = await this.matchesService.makeMatch(userName, 100, true, powerupsList);
-            console.log("makeMatch funcionó y devuelve:")
-            console.log(gameId)
-            return gameId;
-        } catch (error) {
-            if (error instanceof HttpException) throw (error)
-            throw new HttpException("friendly matchmaking failed", HttpStatusCode.ImATeapot);
         }
     }
 
@@ -107,20 +49,6 @@ export class MatchesController {
         } catch (error) {
             if (error instanceof HttpException) throw (error)
             throw new HttpException("get current match failed", HttpStatusCode.ImATeapot);
-        }
-    }
-
-    @UseGuards(JwtAuthenticatedGuard)
-    @Post('cancelMatchmaking')
-    async cancelMatchmaking(@Req() req) {
-        try {
-            const token = getAuthToken(req)
-            this.matchesService.cancelV2(token.userId)
-        } catch (error) {
-            console.log("processing error: " + JSON.stringify(error))
-            if (error instanceof HttpException) throw (error)
-            throw new HttpException("get current match failed", HttpStatusCode.ImATeapot);
-            //throw processError(error, "cancel matchmaking failed")
         }
     }
 }

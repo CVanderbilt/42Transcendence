@@ -159,7 +159,7 @@ export class GameGateway
             score: 0
           },
           ballpos: { x: 250, y: 250, dx: 2, dy: 2 },
-          isCompetitive: false,
+          isCompetitive: true,
           isChallenge: false
         }
         //emite partido a los dos clients
@@ -302,7 +302,6 @@ export class GameGateway
               clearInterval(_room.intervalRefreshId);
               const winner = _room.player1.score == goalsForVictory ? _room.player1.user : _room.player2.user
               gameServer.to(`room_${_room.id}`).emit('endGame', "winner_is_" + winner);
-              this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
               this.matchesService.matchAftermath(_room.id, [
                 { name: _room.player1.user, score: _room.player1.score },
                 { name: _room.player2.user, score: _room.player2.score },
@@ -336,9 +335,6 @@ export class GameGateway
       _room.gameStatus = "MISSING_PLAYER";
 
       if (_room.numPlayers <= 0) {
-        //todo: añadir aqui la logica de ver la recompensa/penalización para cada usuario
-        this.matchesService.matchEnded(_room.player1.user, _room.player2.user)
-        // console.log(`${username} deleting room ${room}(3)`)
         usersInGame.delete(_room.player1.user);
         usersInGame.delete(_room.player2.user);
         user_games_map[_room.player1.user] = undefined

@@ -1,36 +1,27 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { MatchEntity } from './match.entity';
 import { Match } from './match.interface';
 import { IsNull, Not, RemoveOptions, Repository, SaveOptions } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { User } from 'src/users/user.interface';
-import { MatchMaker } from './matchmaking';
 import { gameRooms, user_games_map } from 'src/gameSocket/game.gateway';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class MatchesService {
-    private readonly matchMaker: MatchMaker
     constructor(
         @InjectRepository(MatchEntity)
         private readonly matchesRepo: Repository<MatchEntity>,
         @InjectRepository(UserEntity)
         private readonly usersRepo: Repository<UserEntity>
-    ) {
-        this.matchMaker = new MatchMaker(matchesRepo, usersRepo)
-    }
+    ) {}
 
     getCurrentMatch(userName: string): string {
-        return user_games_map[userName]
-    }
-
-    cancel(userName: string): boolean {
-        return this.matchMaker.cancel(userName)
-    }
-
-    cancelV2(userId: string) {
-        this.matchMaker.cancelV2(userId)
+        const matchId = user_games_map[userName]
+        if (!matchId)
+            throw new HttpException("No ongoing match", HttpStatus.UNAUTHORIZED)
+        return matchId
     }
 
     challenge(requesterName: string, opponentName: string, powerups: string): string {
@@ -62,20 +53,10 @@ export class MatchesService {
               score: 0
             },
             ballpos: { x: 250, y: 250, dx: ballSpeed, dy: ballSpeed },
+            isCompetitive: false,
+            isChallenge: true
           }
           return id
-    }
-
-    acceptChallenge(gameId: string, userName: string, challengedBy: string): boolean {
-        return this.matchMaker.lockPlayerFromChallenge(gameId, userName, challengedBy)
-    }
-
-    async makeMatch(userId: string, score: number, isFriendly: boolean, powerups: string[]): Promise<string> {
-        return await this.matchMaker.makeMatch(userId, score, isFriendly, powerups)
-    }
-
-    matchEnded(user1: string, user2: string) {
-        this.matchMaker.matchEnded(user1, user2)
     }
 
     async matchAftermath(

@@ -28,7 +28,7 @@
                       style="width: fit-content; background-color: #4e92f2; color:rgb(248, 248, 248); border-radius: 0; margin-top: 30px;"
                       :disabled="inMatchmaking"
                       :class="{ 'disabled': inMatchmaking }">
-                    Friendly Match
+                    Search Match
                     </b-button>
                   </div>
                 </div>
