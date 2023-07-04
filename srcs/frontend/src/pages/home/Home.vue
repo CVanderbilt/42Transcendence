@@ -133,13 +133,13 @@ export default defineComponent({
 .my-table {
   border-collapse: separate;
   border-spacing: 10px;
-  /* Espacio entre las celdas */
+
 }
 
 .my-table th,
 .my-table td {
   padding: 8px;
-  /* Espacio interno de las celdas */
+
 }
 
 .alternate-row {

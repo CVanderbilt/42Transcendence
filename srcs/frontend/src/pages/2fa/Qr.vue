@@ -69,7 +69,6 @@ export default defineComponent({
 
         async submitCode() {
             //Validate the user's code and redirect them to the appropriate page
-
             try {
                 const response = await (await apiClient.post(ENABLE_2FA_ENDPOINT + "/" + this.code));
                 if (response.status === 200) {
@@ -79,7 +78,6 @@ export default defineComponent({
             }
             catch (error) {
                 handleHttpException(app, error);
-                // publishNotification('Invalid code, please try again.', true);
             }
         }
     }
